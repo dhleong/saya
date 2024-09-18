@@ -31,7 +31,9 @@
   (set! (.-title js/process) "saya")
 
   (p/do!
-   (activate-alternate-screen)
+   (activate-alternate-screen
+    :on-deactivate #(when-some [ink @ink-instance]
+                      (.unmount ink)))
 
    (logging/patch)
    (re-frame/dispatch-sync [::events/initialize-db])

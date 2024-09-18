@@ -35,7 +35,7 @@
 (def ^:private ansi-enter-alternate-screen "\u001b[?1049h")
 (def ^:private ansi-leave-alternate-screen "\u001b[?1049l")
 
-(defn activate-alternate-screen []
+(defn activate-alternate-screen [& {:keys [on-deactivate]}]
   ; NOTE: Somewhat hacky way to use the alternate screen:
   (let [active? (atom false)
         write (fn write [s]
@@ -52,7 +52,11 @@
                       (write ansi-enter-alternate-screen)))
         deactivate! (fn deactivate []
                       (when (compare-and-set! active? true false)
-                        (write ansi-leave-alternate-screen)))]
+                        (p/do!
+                         (when on-deactivate
+                           (on-deactivate))
+                         (write ansi-leave-alternate-screen)
+                         (js/process.exit))))]
     (p/do!
      (activate!)
      (js/process.on "SIGINT" deactivate!)
