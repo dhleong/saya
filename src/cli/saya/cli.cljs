@@ -6,6 +6,7 @@
    [reagent.core :as r]
    [saya.cli.fullscreen :refer [activate-alternate-screen]]
    [saya.events :as events]
+   [saya.fx]
    [saya.subs]
    [saya.util.logging :as logging]
    [saya.views :as views]))

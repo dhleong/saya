@@ -1,6 +1,8 @@
 (ns saya.modules.home.core
   (:require
    ["ink" :as k]
+   [archetype.util :refer [<sub]]
+   [saya.modules.command.view :refer [command-line-mode-view]]
    [saya.modules.logging.view :refer [logging-view]]))
 
 (defn- home-content []
@@ -11,8 +13,13 @@
              :align-items :center}
    [:> k/Text "Hi from home"]])
 
-(defn- status-bar []
-  [:> k/Text "Status"])
+(defn- status-area []
+  (let [mode (<sub [:mode])]
+    (case mode
+      :command [command-line-mode-view]
+
+      ; Default:
+      [:> k/Text "Status"])))
 
 (defn home-view []
   [:> k/Box {:flex-direction :column
@@ -27,4 +34,4 @@
 
    [:> k/Box {:align-self :bottom
               :width :100%}
-    [status-bar]]])
+    [status-area]]])

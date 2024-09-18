@@ -20,7 +20,7 @@
                        (apply @console-error args)))]
     (re-frame/set-loggers!
      {:log      (partial nop :info)
-      :warn     (partial nop :warn)
+      :warn     (partial log :warn)
       :error    (partial log :error)
       :debug    (partial nop :debug)
       :group    (partial nop :info)

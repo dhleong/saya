@@ -4,11 +4,13 @@
    [saya.modules.logging.core :refer [log]]))
 
 (reg-fx
- :exit
+ :quit
  (fn [_]
    (js/process.emit "exit")))
 
 (reg-fx
  :log
- (fn [& parts]
-   (apply log parts)))
+ (fn [parts]
+   (if (coll? vals)
+     (apply log parts)
+     (log parts))))

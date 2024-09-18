@@ -4,3 +4,4 @@
 
 (reg-sub :page :page)
 (reg-sub :dimens :dimens)
+(reg-sub :mode :mode)
