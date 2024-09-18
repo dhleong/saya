@@ -23,7 +23,7 @@
       (.clear ink)
       (.unmount ink))
 
-    (reset! ink-instance (k/render app))))
+    (reset! ink-instance (k/render app #js {:exitOnCtrlC false}))))
 
 (defn ^:export init []
   (set! (.-title js/process) "saya")
