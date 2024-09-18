@@ -27,6 +27,13 @@
 (defn ^:export init []
   (set! (.-title js/process) "saya")
 
+  ; NOTE: Somewhat hacky way to use the alternate screen:
+  (letfn [(write [s]
+            (js/process.stdout.write s))]
+    (write "\u001b[?1049h")
+    (js/process.on "SIGINT" #(do
+                               (write "\u001b[?1049l"))))
+
   (logging/patch)
   (re-frame/dispatch-sync [::events/initialize-db])
 

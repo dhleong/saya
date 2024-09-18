@@ -1,7 +1,11 @@
 (ns saya.views.home.core
   (:require
-   ["ink" :as k]))
+   ["ink" :as k]
+   [archetype.util :refer [<sub]]))
 
 (defn home-view []
-  [:> k/Box {:flex-direction :row}
-   [:> k/Text "Hi from home"]])
+  (let [{:keys [width height]} (<sub [:dimens])]
+    [:> k/Box {:flex-direction :row
+               :width width
+               :height height}
+     [:> k/Text "Hi from home"]]))

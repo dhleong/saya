@@ -2,6 +2,7 @@
   (:require
    ["ink" :as k]
    [archetype.util :refer [<sub]]
+   [saya.cli.dimens :refer [dimens-tracker]]
    [saya.views.home.core :refer [home-view]]))
 
 (def ^:private pages
@@ -12,6 +13,8 @@
         page-fn (get pages page)
         page-form [:f> page-fn args]]
     [:<>
+     [:f> dimens-tracker]
+
      (cond
        (not page-fn)
        [:> k/Text
