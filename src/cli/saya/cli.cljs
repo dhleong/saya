@@ -18,12 +18,12 @@
   (let [app (r/as-element [views/main])]
     ; NOTE: This hack was from gakki to fix hot reloads. Keeping
     ; it around in case it's still necessary...
-    #_(when-let [^js instance @ink-instance]
-        (.clear instance)
-        (.unmount instance))
+    #_(when-let [^js ink @ink-instance]
+        (.clear ink)
+        (.unmount ink))
 
-    (if-let [^js instance @ink-instance]
-      (.rerender instance app)
+    (if-let [^js ink @ink-instance]
+      (.rerender ink app)
 
       (reset! ink-instance (k/render app)))))
 
@@ -32,7 +32,7 @@
 
   (p/do!
    (activate-alternate-screen
-    :on-deactivate #(when-some [ink @ink-instance]
+    :on-deactivate #(when-some [^js ink @ink-instance]
                       (.unmount ink)))
 
    (logging/patch)
