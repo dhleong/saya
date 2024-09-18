@@ -1,0 +1,45 @@
+{
+  "name": "saya",
+  "version": "1.0.0",
+  "description": "saya",
+  "main": "resources/cli.js",
+  "bin": {
+    "saya": "resources/cli.js"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "shadow-cljs start && shadow-cljs watch :cli",
+    "cli": "node resources/cli.js",
+    "start": "shadow-cljs start",
+    "stop": "shadow-cljs stop",
+    "build:release": "shadow-cljs release :cli",
+    "check": "yarn lint && yarn test",
+    "lint": "clojure -Sdeps '{:deps {clj-kondo {:mvn/version \"RELEASE\"}}}' -m clj-kondo.main --lint src --config .clj-kondo/config.edn",
+    "old:clojure": "clojure -Sdeps '{:deps {antq/antq {:mvn/version \"RELEASE\"}}}' -m antq.core",
+    "old": "yarn old:clojure; yarn outdated",
+    "clean": "rm -rf resources/public/js/* && rm -rf target",
+    "test:node": "shadow-cljs compile ci-node && node target/ci-node.js",
+    "test": "yarn test:node"
+  },
+  "keywords": [
+    "shadow-cljs",
+    "reagent"
+  ],
+  "author": "Daniel Leong",
+  "license": "MIT",
+  "devDependencies": {
+    "shadow-cljs": "^2.28.15",
+    "ws": "^8.18.0"
+  },
+  "dependencies": {
+    "env-paths": "^3.0.0",
+    "figures": "^3.2.0",
+    "highlight.js": "11.0.1",
+    "ink": "^5.0.1",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "ink-use-stdout-dimensions": "^1.0.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
