@@ -2,7 +2,7 @@
   (:require
    ["ink" :as k]
    [archetype.util :refer [<sub]]
-   [saya.cli.dimens :refer [dimens-tracker]]
+   [saya.cli.fullscreen :refer [dimens-tracker fullscreen-box]]
    [saya.views.home.core :refer [home-view]]))
 
 (def ^:private pages
@@ -15,13 +15,14 @@
     [:<>
      [:f> dimens-tracker]
 
-     (cond
-       (not page-fn)
-       [:> k/Text
-        [:> k/Text {:background-color "red"} " ERROR "]
-        " No page registered for: "
-        [:> k/Text {:color "gray"} ; TODO: Theming?
-         (str [page args])]]
+     [fullscreen-box {:flex-direction :column}
+      (cond
+        (not page-fn)
+        [:> k/Text
+         [:> k/Text {:background-color "red"} " ERROR "]
+         " No page registered for: "
+         [:> k/Text {:color "gray"} ; TODO: Theming?
+          (str [page args])]]
 
-       :else
-       page-form)]))
+        :else
+        page-form)]]))
