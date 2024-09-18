@@ -6,8 +6,9 @@
 
 (defn logging-view []
   (let [messages (<sub [::subs/recent-logs])]
-    [:> k/Box {:max-height 2
-               :flex-direction :column}
+    [:> k/Box {:height (min 2 (count messages))
+               :flex-direction :column
+               :overflow :hidden}
      (for [{:keys [timestamp text]} messages]
        ^{:key timestamp}
        [:> k/Text text])]))
