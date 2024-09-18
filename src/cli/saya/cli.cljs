@@ -16,16 +16,14 @@
   (re-frame/clear-subscription-cache!)
 
   (let [app (r/as-element [views/main])]
-    ; NOTE: This hack was from gakki to fix hot reloads. Keeping
-    ; it around in case it's still necessary...
-    #_(when-let [^js ink @ink-instance]
-        (.clear ink)
-        (.unmount ink))
+    ; NOTE: This hack is from gakki to fix hot reloads. They
+    ; *mostly* work without, but... still not totally consistent,
+    ; and this will only matter in dev anyway.
+    (when-let [^js ink @ink-instance]
+      (.clear ink)
+      (.unmount ink))
 
-    (if-let [^js ink @ink-instance]
-      (.rerender ink app)
-
-      (reset! ink-instance (k/render app)))))
+    (reset! ink-instance (k/render app))))
 
 (defn ^:export init []
   (set! (.-title js/process) "saya")

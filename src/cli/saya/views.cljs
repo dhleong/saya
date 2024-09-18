@@ -3,7 +3,8 @@
    ["ink" :as k]
    [archetype.util :refer [<sub]]
    [saya.cli.fullscreen :refer [dimens-tracker fullscreen-box]]
-   [saya.views.home.core :refer [home-view]]))
+   [saya.cli.input :as input]
+   [saya.modules.home.core :refer [home-view]]))
 
 (def ^:private pages
   {:home #'home-view})
@@ -14,6 +15,7 @@
         page-form [:f> page-fn args]]
     [:<>
      [:f> dimens-tracker]
+     [:f> input/dispatcher]
 
      [fullscreen-box {:flex-direction :column}
       (cond

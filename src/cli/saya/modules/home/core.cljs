@@ -1,6 +1,7 @@
-(ns saya.views.home.core
+(ns saya.modules.home.core
   (:require
-   ["ink" :as k]))
+   ["ink" :as k]
+   [saya.modules.logging.view :refer [logging-view]]))
 
 (defn- home-content []
   [:> k/Box {:flex-direction :column
@@ -17,6 +18,9 @@
   [:> k/Box {:flex-direction :column
              :height :100%
              :width :100%}
+   ; TODO: Eventually, hide this by default
+   [logging-view]
+
    [:> k/Box {:flex-grow 1
               :width :100%}
     [home-content]]
