@@ -5,6 +5,7 @@
    [re-frame.core :as re-frame]
    [reagent.core :as r]
    [saya.cli.fullscreen :refer [activate-alternate-screen]]
+   [saya.env :as env]
    [saya.events :as events]
    [saya.fx]
    [saya.subs]
@@ -37,4 +38,6 @@
    (logging/patch)
    (re-frame/dispatch-sync [::events/initialize-db])
 
-   (mount-root)))
+   (mount-root)
+
+   (env/initialize)))
