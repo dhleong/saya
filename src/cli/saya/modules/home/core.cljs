@@ -3,6 +3,7 @@
    ["ink" :as k]
    [archetype.util :refer [<sub]]
    [saya.modules.command.view :refer [command-line-mode-view]]
+   [saya.modules.kodachi.subs :as kodachi]
    [saya.modules.logging.view :refer [logging-view]]))
 
 (defn- home-content []
@@ -11,7 +12,12 @@
              :width :100%
              :justify-content :center
              :align-items :center}
-   [:> k/Text "Hi from home"]])
+   [:> k/Text "Welcome to saya"]
+
+   (case (<sub [::kodachi/state])
+     :unavailable [:> k/Text "Could not locate or install kodachi"]
+     :initializing [:> k/Text "..."]
+     (nil :ready) nil)])
 
 (defn- status-area []
   (let [mode (<sub [:mode])]

@@ -37,6 +37,8 @@
 
    (logging/patch)
    (re-frame/dispatch-sync [::events/initialize-db])
+   (re-frame/dispatch-sync [::events/initialize-cli
+                            js/process.argv])
 
    (mount-root)
 
