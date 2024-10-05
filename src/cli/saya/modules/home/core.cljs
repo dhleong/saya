@@ -2,6 +2,7 @@
   (:require
    ["ink" :as k]
    [archetype.util :refer [<sub]]
+   [saya.modules.buffers.view :refer [buffer-view]]
    [saya.modules.command.view :refer [command-line-mode-view]]
    [saya.modules.kodachi.subs :as kodachi]
    [saya.modules.logging.view :refer [logging-view]]))
@@ -17,7 +18,9 @@
    (case (<sub [::kodachi/state])
      :unavailable [:> k/Text "Could not locate or install kodachi"]
      :initializing [:> k/Text "..."]
-     (nil :ready) nil)])
+     (nil :ready) nil)
+
+   [buffer-view 0]])
 
 (defn- status-area []
   (let [mode (<sub [:mode])]

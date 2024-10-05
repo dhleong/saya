@@ -2,7 +2,9 @@
   (:require
    ["node:child_process" :as process]
    ["split2" :default split2]
+   [applied-science.js-interop :as j]
    [archetype.util :refer [>evt]]
+   [clojure.string :as str]
    [promesa.core :as p]
    [re-frame.core :refer [reg-fx]]
    [saya.modules.kodachi.events :as events]
@@ -26,8 +28,9 @@
     promise))
 
 (defn- parse-message [raw-message]
-  (log "< " raw-message)
-  (js/JSON.parse raw-message))
+  (-> raw-message
+      (js/JSON.parse)
+      (js->clj :keywordize-keys true)))
 
 (defn- spawn-kodachi [path]
   (-> (p/let [^js proc (spawn-proc path
@@ -46,6 +49,11 @@
              (.pipe (split2 parse-message)))
 
           (.on "data" (fn [msg]
+                        (when-let [id (:request_id msg)]
+                          (log "EMIT: " (str "response:" id))
+                          (.emit proc
+                                 (str "response:" id)
+                                 msg))
                         (>evt [::events/on-message msg])))
           (.on "error" (fn [err]
                          (log "Error from kodachi:" err)
@@ -76,13 +84,41 @@
       (clj->js)
       (js/JSON.stringify)))
 
-(defn- send! [message]
+(defn- dispatch! [message]
   (if-some [^js proc @instance]
     (doto (.-stdin proc)
       (.write (serialize-message message))
       (.write "\n"))
 
     (throw (ex-info "Attempting to send! when uninitialized" {}))))
+
+(defn- generate-next-request-id []
+  (let [^js proc @instance]
+    (when-not proc
+      (throw (ex-info "Generating ID for dead daemon" {})))
+
+    (let [id (j/get proc :next-request-id 0)]
+      (j/update! proc :next-request-id (fnil inc 0))
+      id)))
+
+(defn- await-response [id]
+  (let [^js proc @instance]
+    (when-not proc
+      (throw (ex-info "Awaiting response from dead daemon"
+                      {:request-id id})))
+
+    (p/create
+     (fn [resolve]
+       (.once proc
+              (str "response:" id)
+              (fn [m]
+                (log "GOT RESPONSE TO " id m)
+                (resolve m)))))))
+
+(defn- request! [message]
+  (let [next-id (generate-next-request-id)]
+    (dispatch! (assoc message :id next-id))
+    (await-response next-id)))
 
 (reg-fx
  ::init
@@ -100,5 +136,20 @@
                   (>evt [::events/unavailable e]))))))
 
 (reg-fx
- ::send!
- send!)
+ ::dispatch!
+ dispatch!)
+
+(reg-fx
+ ::connect!
+ (fn [{:keys [uri]}]
+   (p/let [{:keys [connection_id]} (request! {:type :Connect
+                                              :uri uri})]
+     (log "Opened connection" connection_id "to" uri)
+     (>evt [::events/connecting {:uri uri
+                                 :connection-id connection_id}]))))
+
+(reg-fx
+ ::disconnect!
+ (fn [{:keys [connection-id]}]
+   (request! {:type :Disconnect
+              :connection_id connection-id})))
