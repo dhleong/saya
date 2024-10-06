@@ -1,6 +1,7 @@
 (ns saya.modules.command.registry
   (:require
    [re-frame.registrar :refer [get-handler]]
+   [saya.modules.command.connection]
    [saya.modules.command.core]))
 
 (defn- extract-aliases [registered-handler]
