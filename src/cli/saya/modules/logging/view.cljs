@@ -10,5 +10,5 @@
                :flex-direction :column
                :overflow :hidden}
      (for [{:keys [timestamp text]} messages]
-       ^{:key timestamp}
+       ^{:key [timestamp text]}
        [:> k/Text text])]))
