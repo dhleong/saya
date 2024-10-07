@@ -10,6 +10,7 @@
    [saya.fx]
    [saya.subs]
    [saya.util.logging :as logging]
+   [saya.util.ink :as ink]
    [saya.views :as views]))
 
 (defonce ^:private ink-instance (atom nil))
@@ -25,7 +26,8 @@
       (.clear ink)
       (.unmount ink))
 
-    (reset! ink-instance (k/render app #js {:exitOnCtrlC false}))))
+    (reset! ink-instance (k/render app #js {:exitOnCtrlC false
+                                            :stdout (ink/stdout)}))))
 
 (defn ^:export init []
   (set! (.-title js/process) "saya")
