@@ -2,7 +2,8 @@
   (:require
    ["ansi-escapes" :as ansi]
    [applied-science.js-interop :as j]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [saya.modules.ui.cursor :refer [get-cursor-position]]))
 
 (defn update-screen [{:keys [out last-lines]
                       :as state}
@@ -26,8 +27,12 @@
             (.write out ansi/eraseLine)
             (.write out this)))))
 
-    ; TODO: Real cursor support?
-    (.write out ansi/cursorHide)
+    ; TODO: Cursor shape
+    (if-let [{:keys [x y]} (get-cursor-position)]
+      (do
+        (.write out (ansi/cursorTo x y))
+        (.write out ansi/cursorShow))
+      (.write out ansi/cursorHide))
 
     (-> state
         (update :history (fnil conj []) lines)
