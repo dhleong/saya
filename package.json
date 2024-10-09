@@ -32,6 +32,7 @@
     "ws": "^8.18.0"
   },
   "dependencies": {
+    "ansi-escapes": "^7.0.0",
     "env-paths": "^3.0.0",
     "figures": "^3.2.0",
     "highlight.js": "11.0.1",
