@@ -26,6 +26,9 @@
             (.write out ansi/eraseLine)
             (.write out this)))))
 
+    ; TODO: Real cursor support?
+    (.write out ansi/cursorHide)
+
     (-> state
         (update :history (fnil conj []) lines)
         (assoc
