@@ -67,16 +67,22 @@
  [unwrap]
  create-for-connection)
 
+(defn append-text [buffer {:keys [ansi parsed]}]
+  (update-in buffer [:lines (dec (count (:lines buffer)))]
+             (fnil conj [])
+             {:ansi ansi
+              :parsed parsed}))
+
 (reg-event-db
  ::append-text
  [unwrap buffer-path]
- (fn [buffer {:keys [ansi]}]
-   (update-in buffer [:lines (dec (count (:lines buffer)))]
-              (fnil conj [])
-              ansi)))
+ append-text)
+
+(defn new-line [buffer]
+  (update buffer :lines conj []))
 
 (reg-event-db
  ::new-line
  [buffer-path]
  (fn [buffer _]
-   (update buffer :lines conj [])))
+   (new-line buffer)))

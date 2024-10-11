@@ -1,5 +1,6 @@
 (ns saya.modules.kodachi.events
   (:require
+   ["anser" :default Anser]
    [clojure.core.match :as m]
    [clojure.string :as str]
    [re-frame.core :refer [reg-event-db reg-event-fx trim-v unwrap]]
@@ -51,8 +52,10 @@
         :data {:type "Text"
                :ansi ansi}}
        {:dispatch [::buffer-events/append-text
-                   {:id bufnr
-                    :ansi (str/trim-newline ansi)}]}
+                   (let [ansi (str/trim-newline ansi)]
+                     {:id bufnr
+                      :parsed ((.-ansiToJson Anser) ansi)
+                      :ansi ansi})]}
 
        {:type "ExternalUI"
         :data {:type "NewLine"}}

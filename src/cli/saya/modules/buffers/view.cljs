@@ -12,10 +12,10 @@
 
 (defn buffer-view [id]
   ; TODO
-  (when-let [buffer (<sub [::subs/by-id id])]
+  (when-let [lines (<sub [::subs/ansi-lines-by-id id])]
     [:> k/Box {:flex-direction :column
                :height :100%
                :width :100%}
-     (for [[i line] (map-indexed vector (:lines buffer))]
+     (for [[i line] (map-indexed vector lines)]
        ^{:key [id i]}
        [buffer-line line])]))
