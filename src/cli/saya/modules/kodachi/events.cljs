@@ -72,6 +72,12 @@
  (fn [_ {:keys [uri]}]
    {:saya.modules.kodachi.fx/connect! {:uri uri}}))
 
+(reg-event-fx
+ ::disconnect
+ [unwrap]
+ (fn [_ {:keys [connection-id]}]
+   {:saya.modules.kodachi.fx/disconnect! {:connection-id connection-id}}))
+
 (comment
   (re-frame.core/dispatch [::connect {:uri "legendsofthejedi.com:5656"}])
   (re-frame.core/dispatch [::connect {:uri "procrealms.ddns.net:3000"}]))

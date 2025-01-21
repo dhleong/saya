@@ -43,8 +43,9 @@
                      (assoc-effect context' :db)))))))
 
 (defn- create-for-connection [db {:keys [connection-id uri]}]
-  (let [current-win (:current-window db)
-        current-path [:buffers (:bufnr current-win)]
+  (let [current-winnr (:current-winnr db)
+        current-window (get-in db [:windows current-winnr])
+        current-path [:buffers (:bufnr current-window)]
         current-buffer (get-in db current-path)]
     (if (= (:uri current-buffer) uri)
       ; TODO: Reuse existing buffer
@@ -56,7 +57,7 @@
                                              :lines []})
             [db window] (allocate-window db {:bufnr (:id buffer)})]
         (-> db
-            (assoc :current-window (:id window))
+            (assoc :current-winnr (:id window))
             (update :connection->bufnr
                     assoc
                     connection-id

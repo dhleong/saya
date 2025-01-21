@@ -4,7 +4,6 @@
    ["split2" :default split2]
    [applied-science.js-interop :as j]
    [archetype.util :refer [>evt]]
-   [clojure.string :as str]
    [promesa.core :as p]
    [re-frame.core :refer [reg-fx]]
    [saya.modules.kodachi.events :as events]
