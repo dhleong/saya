@@ -4,12 +4,8 @@
    [re-frame.subs :refer [subscribe]]))
 
 (reg-sub
- ::id->obj
- :-> :buffers)
-
-(reg-sub
  ::by-id
- :<- [::id->obj]
+ :<- [:buffers]
  :=> get)
 
 (reg-sub
@@ -21,3 +17,11 @@
                 :lines
                 (map (fn [line]
                        (map :ansi line))))))
+
+(reg-sub
+ ::buffer-cursor
+ :<- [:buffers]
+ :<- [:current-bufnr]
+ (fn [[buffers current-bufnr] [_ buffer-id]]
+   (when (= current-bufnr buffer-id)
+     (:cursor (get buffers buffer-id)))))
