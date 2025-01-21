@@ -3,7 +3,7 @@
    ["ansi-escapes" :as ansi]
    [applied-science.js-interop :as j]
    [clojure.string :as str]
-   [saya.modules.ui.cursor :refer [get-cursor-position get-cursor-shape]]))
+   [saya.modules.ui.cursor :refer [extract-cursor-position get-cursor-shape]]))
 
 (defn- ansi-cursor [v]
   (str "\u001B[" v " q"))
@@ -30,7 +30,7 @@
             (.write out ansi/eraseLine)
             (.write out this)))))
 
-    (if-let [{:keys [x y]} (get-cursor-position)]
+    (if-let [{:keys [x y]} (extract-cursor-position lines)]
       (let [shape (get-cursor-shape)]
         (.write out (ansi/cursorTo x y))
         (.write out (case shape
