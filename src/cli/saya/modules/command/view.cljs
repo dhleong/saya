@@ -13,7 +13,7 @@
       [text-input {:on-change set-input!
                    :on-submit #(>evt [:submit-raw-command %])
                    :value input}]]
-     [cursor]]))
+     [cursor :pipe]]))
 
 (defn command-line-mode-view []
   [:f> f>command-line-mode-view])

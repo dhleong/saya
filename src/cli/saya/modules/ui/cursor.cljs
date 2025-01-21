@@ -5,6 +5,7 @@
    [applied-science.js-interop :as j]))
 
 (defonce ^:private element-ref (atom nil))
+(defonce ^:private shape-ref (atom :block))
 
 (defn- compute-absolute-pos [^js element]
   (loop [node (.-yogaNode element)
@@ -21,15 +22,20 @@
   (when-some [element @element-ref]
     (compute-absolute-pos element)))
 
-(defn- f>cursor []
+(defn get-cursor-shape []
+  (or @shape-ref :block))
+
+(defn- f>cursor [shape]
   (let [ref (React/useRef)]
     (React/useEffect
      (fn []
        (reset! element-ref (j/get ref :current))
+       (reset! shape-ref shape)
 
        (fn unmount []
          (reset! element-ref nil))))
     [:> k/Box {:ref ref}]))
 
-(defn cursor []
-  [:f> f>cursor])
+(defn cursor
+  ([] [cursor :block])
+  ([shape] [:f> f>cursor shape]))
