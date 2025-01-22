@@ -15,14 +15,20 @@
    (subscribe [::by-id winnr]))
  :-> :bufnr)
 
-(defn- format-lines-into-parts [lines]
+(defn- format-line-into-parts [line]
   (loop [parts []
-         chars (seq lines)]
+         chars (seq line)]
     (if-some [ch (first chars)]
       (let [w (string-width ch)]
-        (recur (if (> w 0)
-                 (conj parts w)
-                 (update parts (dec (count parts)) str ch))
+        (recur (cond
+                 (> w 0)
+                 (conj parts ch)
+
+                 (seq parts)
+                 (update parts (dec (count parts)) str ch)
+
+                 :else
+                 (conj parts ch))
                (next chars)))
 
       ; Done!
@@ -34,9 +40,11 @@
    [(subscribe [::by-id winnr])
     (subscribe [::buffer-subs/ansi-lines-by-id bufnr])])
  (fn [[_window lines]]
-   lines
    ; TODO: filter lines
-   #_(format-lines-into-parts lines)))
+   (->> lines
+        (map format-line-into-parts)
+        ; TODO: line index properly, accounting for filtering
+        (map-indexed vector))))
 
 (reg-sub
  ::focused?

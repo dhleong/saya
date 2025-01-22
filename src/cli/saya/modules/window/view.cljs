@@ -28,6 +28,6 @@
         [:> k/Box {:flex-direction :column
                    :height :100%
                    :width :100%}
-         (for [[i line] (map-indexed vector lines)]
+         (for [[i line] lines]
            ^{:key [id i]}
            [buffer-line line {:cursor-col (when (= row i) col)}])]))))
