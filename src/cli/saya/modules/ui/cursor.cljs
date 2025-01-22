@@ -6,7 +6,13 @@
 
 (defonce ^:private shape-ref (atom :block))
 
-(def ^:private cursor-text "\u200B")
+; We use a couple zero-width characters that are highly unlikely
+; to actually be used together:
+; - Zero-width space
+; - Zero-width non-joiner (should be between characters that normally
+;   are rendered together with ligatures)
+; - Another zero-width space
+(def ^:private cursor-text "\u200B\u200C\u200B")
 
 (defn extract-cursor-position [lines]
   (loop [y 0
