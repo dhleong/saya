@@ -2,6 +2,7 @@
   (:require
    ["ink" :as k]
    ["react" :as React]
+   ["strip-ansi" :default strip-ansi]
    [clojure.string :as str]))
 
 (defonce ^:private shape-ref (atom :block))
@@ -18,7 +19,7 @@
   (loop [y 0
          lines lines]
     (when-some [line (first lines)]
-      (if-let [x (str/index-of line cursor-text)]
+      (if-let [x (str/index-of (strip-ansi line) cursor-text)]
         {:x x :y y}
         (recur (inc y)
                (next lines))))))

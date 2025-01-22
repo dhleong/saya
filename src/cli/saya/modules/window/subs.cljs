@@ -1,7 +1,7 @@
 (ns saya.modules.window.subs
   (:require
-   ["string-width" :default string-width]
    [re-frame.core :refer [reg-sub subscribe]]
+   [saya.modules.ansi.split :as split]
    [saya.modules.buffers.subs :as buffer-subs]))
 
 (reg-sub
@@ -15,25 +15,6 @@
    (subscribe [::by-id winnr]))
  :-> :bufnr)
 
-(defn- format-line-into-parts [line]
-  (loop [parts []
-         chars (seq line)]
-    (if-some [ch (first chars)]
-      (let [w (string-width ch)]
-        (recur (cond
-                 (> w 0)
-                 (conj parts ch)
-
-                 (seq parts)
-                 (update parts (dec (count parts)) str ch)
-
-                 :else
-                 (conj parts ch))
-               (next chars)))
-
-      ; Done!
-      parts)))
-
 (reg-sub
  ::visible-lines
  (fn [[_ {:keys [winnr bufnr]}]]
@@ -42,7 +23,8 @@
  (fn [[_window lines]]
    ; TODO: filter lines
    (->> lines
-        (map format-line-into-parts)
+        (map (partial apply str))
+        (map split/chars-with-ansi)
         ; TODO: line index properly, accounting for filtering
         (map-indexed vector))))
 

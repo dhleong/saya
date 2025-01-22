@@ -16,7 +16,7 @@
                     winnr (get db :current-winnr)
                     bufnr (get-in db [:windows winnr :bufnr])
                     connr (get-in db [:buffers bufnr :connection-id])]
-                (cond-> db
+                (cond-> context
                   (some? winnr)
                   (assoc-coeffect :winnr winnr)
 
