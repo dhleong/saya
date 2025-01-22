@@ -55,7 +55,7 @@
       (let [[db buffer] (allocate-buffer db {:uri uri
                                              :connection-id connection-id
                                              :lines []
-                                             :cursor {:x 0 :y 0}})
+                                             :cursor {:row 0 :col 0}})
             [db window] (allocate-window db {:bufnr (:id buffer)})]
         (-> db
             (assoc :current-winnr (:id window))
@@ -80,8 +80,11 @@
  [unwrap buffer-path]
  append-text)
 
-(defn new-line [buffer]
-  (update buffer :lines conj []))
+(defn new-line [{{cursor-row :row} :cursor :as buffer}]
+  (cond-> (update buffer :lines conj [])
+    (= cursor-row
+       (dec (count (:lines buffer))))
+    (update-in [:cursor :row] inc)))
 
 (reg-event-db
  ::new-line
