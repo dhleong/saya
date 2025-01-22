@@ -21,7 +21,8 @@
      :initializing [:> k/Text "..."]
      (nil :ready) nil)
 
-   [window-view 0]])
+   (when-let [winnr (<sub [:current-winnr])]
+     [window-view winnr])])
 
 (defn- status-area []
   (let [mode (<sub [:mode])]
