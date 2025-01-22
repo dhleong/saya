@@ -2,10 +2,11 @@
   (:require
    ["ink" :as k]
    [archetype.util :refer [<sub]]
-   [saya.modules.buffers.view :refer [buffer-view]]
    [saya.modules.command.view :refer [command-line-mode-view]]
    [saya.modules.kodachi.subs :as kodachi]
-   [saya.modules.logging.view :refer [logging-view]]))
+   [saya.modules.logging.view :refer [logging-view]]
+   [saya.modules.ui.error-boundary :refer [error-boundary]]
+   [saya.modules.window.view :refer [window-view]]))
 
 (defn- home-content []
   [:> k/Box {:flex-direction :column
@@ -20,7 +21,7 @@
      :initializing [:> k/Text "..."]
      (nil :ready) nil)
 
-   [buffer-view 0]])
+   [window-view 0]])
 
 (defn- status-area []
   (let [mode (<sub [:mode])]
@@ -39,7 +40,8 @@
 
    [:> k/Box {:flex-grow 1
               :width :100%}
-    [home-content]]
+    [error-boundary
+     [home-content]]]
 
    [:> k/Box {:align-self :bottom
               :width :100%}

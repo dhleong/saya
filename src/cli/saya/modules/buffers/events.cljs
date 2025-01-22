@@ -54,7 +54,8 @@
       ; TODO: Also, tabpage
       (let [[db buffer] (allocate-buffer db {:uri uri
                                              :connection-id connection-id
-                                             :lines []})
+                                             :lines []
+                                             :cursor {:x 0 :y 0}})
             [db window] (allocate-window db {:bufnr (:id buffer)})]
         (-> db
             (assoc :current-winnr (:id window))
