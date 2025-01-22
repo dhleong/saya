@@ -24,12 +24,14 @@
 
       ; Diff each line
       (doseq [i (range (count lines))]
-        (let [last (nth last-lines i)
-              this (nth lines i)]
+        ; NOTE: We diff *without* the cursor, since we don't need
+        ; to re-render the whole line if just the cursor position changed!
+        (let [last (strip-cursor (nth last-lines i))
+              this (strip-cursor (nth lines i))]
           (when-not (= last this)
             (.write out (ansi/cursorTo 0 i))
             (.write out ansi/eraseLine)
-            (.write out (strip-cursor this))))))
+            (.write out this)))))
 
     (if-let [{:keys [x y]} (extract-cursor-position lines)]
       (let [shape (get-cursor-shape)]
