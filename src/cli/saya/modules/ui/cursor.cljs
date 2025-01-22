@@ -19,7 +19,6 @@
          lines lines]
     (when-some [line (first lines)]
       (if-let [x (str/index-of line cursor-text)]
-        ; TODO: if x >= screen width, it should be {:x 0, :y (inc y)}
         {:x x :y y}
         (recur (inc y)
                (next lines))))))
