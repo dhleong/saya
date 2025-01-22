@@ -67,8 +67,7 @@
 
 (defn stdout []
   (let [out js/process.stdout
-        state (atom {:out out})
-        get-columns #(.-columns out)]
+        state (atom {:out out})]
 
     (reset! last-state state)
 
@@ -81,7 +80,7 @@
             .-on (.bind (.-on out) out)
             .-off (.bind (.-off out) out))
      #js {:rows #js {:get #(.-rows out)}
-          :columns #js {:get get-columns}})))
+          :columns #js {:get #(.-columns out)}})))
 
 (comment
   (take-last 5 (map count (:history @@last-state)))
