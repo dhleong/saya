@@ -19,3 +19,6 @@
  (fn [_ _]
     ; TODO: Confirm, if there are active connections
    {:fx [[:quit]]}))
+
+(comment
+  (re-frame.core/dispatch [:command/quit]))

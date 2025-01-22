@@ -2,7 +2,12 @@
   (:require
    ["ansi-escapes" :as ansi]
    [applied-science.js-interop :as j]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [saya.modules.ui.cursor :refer [extract-cursor-position get-cursor-shape
+                                   strip-cursor]]))
+
+(defn- ansi-cursor [v]
+  (str "\u001B[" v " q"))
 
 (defn update-screen [{:keys [out last-lines]
                       :as state}
@@ -13,21 +18,33 @@
       ; Either this is the first render, of the lines count
       ; has changed (perhaps due to a resize). Just start
       ; from scratch:
-      (do
+      (let [to-render (strip-cursor output)]
         (.write out ansi/clearTerminal)
-        (.write out output))
+        (.write out to-render))
 
       ; Diff each line
       (doseq [i (range (count lines))]
-        (let [last (nth last-lines i)
-              this (nth lines i)]
+        ; NOTE: We diff *without* the cursor, since we don't need
+        ; to re-render the whole line if just the cursor position changed!
+        (let [last (strip-cursor (nth last-lines i))
+              this (strip-cursor (nth lines i))]
           (when-not (= last this)
             (.write out (ansi/cursorTo 0 i))
             (.write out ansi/eraseLine)
             (.write out this)))))
 
-    ; TODO: Real cursor support?
-    (.write out ansi/cursorHide)
+    (if-let [{:keys [x y]} (extract-cursor-position lines)]
+      (let [shape (get-cursor-shape)]
+        (.write out (ansi/cursorTo x y))
+        (.write out (case shape
+                      :block/blink (ansi-cursor 1)
+                      :block (ansi-cursor 2)
+                      :underscore/blink (ansi-cursor 3)
+                      :underscore (ansi-cursor 4)
+                      :pipe/blink (ansi-cursor 5)
+                      :pipe (ansi-cursor 6)))
+        (.write out ansi/cursorShow))
+      (.write out ansi/cursorHide))
 
     (-> state
         (update :history (fnil conj []) lines)
@@ -66,4 +83,8 @@
           :columns #js {:get #(.-columns out)}})))
 
 (comment
-  (map count (:history @@last-state)))
+  (take-last 5 (map count (:history @@last-state)))
+
+  (last (butlast (:history @@last-state)))
+  (last (:history @@last-state))
+  (extract-cursor-position (:last-lines @@last-state)))
