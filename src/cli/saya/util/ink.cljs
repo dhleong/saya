@@ -3,7 +3,8 @@
    ["ansi-escapes" :as ansi]
    [applied-science.js-interop :as j]
    [clojure.string :as str]
-   [saya.modules.ui.cursor :refer [extract-cursor-position get-cursor-shape]]))
+   [saya.modules.ui.cursor :refer [extract-cursor-position get-cursor-shape
+                                   strip-cursor]]))
 
 (defn- ansi-cursor [v]
   (str "\u001B[" v " q"))
@@ -17,9 +18,9 @@
       ; Either this is the first render, of the lines count
       ; has changed (perhaps due to a resize). Just start
       ; from scratch:
-      (do
+      (let [to-render (strip-cursor output)]
         (.write out ansi/clearTerminal)
-        (.write out output))
+        (.write out to-render))
 
       ; Diff each line
       (doseq [i (range (count lines))]
@@ -28,7 +29,7 @@
           (when-not (= last this)
             (.write out (ansi/cursorTo 0 i))
             (.write out ansi/eraseLine)
-            (.write out this)))))
+            (.write out (strip-cursor this))))))
 
     (if-let [{:keys [x y]} (extract-cursor-position lines)]
       (let [shape (get-cursor-shape)]
@@ -64,7 +65,8 @@
 
 (defn stdout []
   (let [out js/process.stdout
-        state (atom {:out out})]
+        state (atom {:out out})
+        get-columns #(.-columns out)]
 
     (reset! last-state state)
 
@@ -77,7 +79,11 @@
             .-on (.bind (.-on out) out)
             .-off (.bind (.-off out) out))
      #js {:rows #js {:get #(.-rows out)}
-          :columns #js {:get #(.-columns out)}})))
+          :columns #js {:get get-columns}})))
 
 (comment
-  (map count (:history @@last-state)))
+  (take-last 5 (map count (:history @@last-state)))
+
+  (last (butlast (:history @@last-state)))
+  (last (:history @@last-state))
+  (extract-cursor-position (:last-lines @@last-state)))

@@ -27,6 +27,13 @@
 (defn get-cursor-shape []
   (or @shape-ref :block))
 
+(defn strip-cursor
+  "Trying to actually render our cursor text can cause lines
+   to break in ways that the renderer can't diff correctly, so
+   we just strip it out before rendering."
+  [s]
+  (str/replace s cursor-text ""))
+
 (defn- f>cursor [shape]
   (React/useEffect
    (fn []
