@@ -42,6 +42,23 @@
  ::focused?
  :<- [:mode]
  :<- [:current-winnr]
- (fn [[mode current-winnr] [_ id]]
+ :<- [:current-buffer]
+ (fn [[mode current-winnr current-buffer] [_ id]]
    (and (not= :command mode)
-        (= current-winnr id))))
+        (= current-winnr id)
+
+        ; In insert mode for a connection buffer, we
+        ; render a separate input window
+        (not (and (= :insert mode)
+                  (:connection-id current-buffer))))))
+
+(reg-sub
+ ::input-focused?
+ :<- [:mode]
+ :<- [:current-winnr]
+ :<- [:current-buffer]
+ (fn [[mode current-winnr current-buffer] [_ id]]
+   (and (= :insert mode)
+        (= current-winnr id)
+        (:connection-id current-buffer))))
+

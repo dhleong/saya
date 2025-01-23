@@ -152,3 +152,10 @@
  (fn [{:keys [connection-id]}]
    (request! {:type :Disconnect
               :connection_id connection-id})))
+
+(reg-fx
+ ::send!
+ (fn [{:keys [connection-id text]}]
+   (request! {:type :Send
+              :connection_id connection-id
+              :text text})))

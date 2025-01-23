@@ -1,11 +1,11 @@
 (ns saya.events
   (:require
-   [re-frame.core :refer [path reg-event-db reg-event-fx trim-v]]
+   [re-frame.core :refer [path reg-event-db reg-event-fx trim-v unwrap]]
    [saya.cli.args :refer [parse-cli-args]]
    [saya.db :as db]
    [saya.modules.command.parse :refer [parse-command]]
-   [saya.modules.kodachi.fx :as kodachi-fx]
-   [saya.modules.command.registry]))
+   [saya.modules.command.registry]
+   [saya.modules.kodachi.fx :as kodachi-fx]))
 
 (reg-event-fx
  ::initialize-db
@@ -52,3 +52,10 @@
    (cond-> db
      (= :command (:mode db))
      (assoc :mode :normal))))
+
+(reg-event-fx
+ :connection/send
+ [unwrap]
+ (fn [_ {:keys [connr text]}]
+   {::kodachi-fx/send! {:connection-id connr
+                        :text text}}))

@@ -16,7 +16,16 @@
      [:normal "l" true] {:db (update-in db [:buffers bufnr :cursor :col] inc)}
      [:normal "h" true] {:db (update-in db [:buffers bufnr :cursor :col] dec)}
 
+     ; TODO: In a connection buffer, this should open into an
+     ; input window
+     [:normal "i" true] {:db (assoc db :mode :insert)}
+
      [:command :escape _] {:db (assoc db :mode :normal)}
+
+     ; TODO: If we're in an input window, that should be handled
+     ; special somehow (escaping to normal mode should not cause
+     ; us to leave that input window!)
+     [:insert :escape _] {:db (assoc db :mode :normal)}
 
      :else
      {:fx [[:log ["unhandled: " mode key]]]})))

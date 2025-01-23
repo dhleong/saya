@@ -19,6 +19,12 @@
                        (map :ansi line))))))
 
 (reg-sub
+ ::->connr
+ (fn [[_ id]]
+   (subscribe [::by-id id]))
+ :-> :connection-id)
+
+(reg-sub
  ::buffer-cursor
  :<- [:buffers]
  :<- [:current-bufnr]

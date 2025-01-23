@@ -23,3 +23,10 @@
  (fn [window]
    (:bufnr window)))
 
+(reg-sub
+ :current-buffer
+ :<- [:buffers]
+ :<- [:current-bufnr]
+ (fn [[buffers bufnr]]
+   (get buffers bufnr)))
+

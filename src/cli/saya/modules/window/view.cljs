@@ -4,6 +4,7 @@
    ["react" :as React]
    [applied-science.js-interop :as j]
    [archetype.util :refer [<sub >evt]]
+   [saya.cli.text-input :refer [text-input]]
    [saya.modules.buffers.subs :as buffer-subs]
    [saya.modules.ui.cursor :refer [cursor]]
    [saya.modules.window.events :as window-events]
@@ -25,6 +26,20 @@
            [cursor cursor-type])
          [:> k/Text part]])]]))
 
+(defn- input-window [connr]
+  ; TODO: This ought to be persisted in app-db
+  (let [[input set-input!] (React/useState "")]
+    [:> k/Box {:align-self :bottom
+               :width :100%}
+     [:> k/Text "> "]
+     [text-input {:value input
+                  :on-change set-input!
+                  :cursor :pipe
+                  :on-submit (fn [v]
+                               (set-input! "")
+                               (>evt [:connection/send {:connr connr
+                                                        :text v}]))}]]))
+
 (defn window-view [id]
   (let [ref (React/useRef)]
     (React/useLayoutEffect
@@ -42,10 +57,15 @@
         (let [focused? (<sub [::subs/focused? id])
               {:keys [row col]} (when focused?
                                   (<sub [::buffer-subs/buffer-cursor id]))]
-          [:> k/Box {:ref ref
-                     :flex-direction :column
+          [:> k/Box {:flex-direction :column
                      :height :100%
                      :width :100%}
-           (for [[i line] lines]
-             ^{:key [id i]}
-             [buffer-line line {:cursor-col (when (= row i) col)}])])))))
+           [:> k/Box {:ref ref
+                      :flex-direction :column
+                      :flex-grow 1
+                      :width :100%}
+            (for [[i line] lines]
+              ^{:key [id i]}
+              [buffer-line line {:cursor-col (when (= row i) col)}])]
+           (when (<sub [::subs/input-focused? id])
+             [input-window (<sub [::buffer-subs/->connr bufnr])])])))))

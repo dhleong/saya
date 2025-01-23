@@ -4,11 +4,12 @@
    ["ink-text-input" :default TextInput]
    [saya.modules.ui.cursor :refer [cursor]]))
 
-(defn text-input [{:keys [value on-change on-submit]}]
+(defn text-input [{:keys [value on-change on-submit]
+                   cursor-shape :cursor}]
   ; TODO: Eventually we may want our own input component. This one is a little janky
   [:> k/Text
    [:> TextInput {:value value
                   :on-change on-change
                   :show-cursor false
                   :on-submit on-submit}]
-   [cursor]])
+   [cursor (or cursor-shape :block)]])
