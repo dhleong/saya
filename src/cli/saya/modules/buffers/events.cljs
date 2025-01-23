@@ -48,8 +48,13 @@
         current-path [:buffers (:bufnr current-window)]
         current-buffer (get-in db current-path)]
     (if (= (:uri current-buffer) uri)
-      ; TODO: Reuse existing buffer
-      (update-in db current-path assoc :connection-id connection-id)
+      ; Reuse existing buffer
+      (-> db
+          (update-in current-path assoc :connection-id connection-id)
+          (update :connection->bufnr
+                  assoc
+                  connection-id
+                  (:id current-buffer)))
 
       ; TODO: Also, tabpage
       (let [[db buffer] (allocate-buffer db {:uri uri
