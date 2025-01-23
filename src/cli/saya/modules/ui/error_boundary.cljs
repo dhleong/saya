@@ -17,27 +17,37 @@
                               ; clear
                               #{}))))
 
+(defn- title [style text]
+  [:> k/Box {:min-height 1}
+   [:> k/Text style
+    text]])
+
+(defn- section-title [text]
+  [title {:color :red
+          :inverse true}
+   text])
+
 (defn- error-view [props _err-atom info-atom error]
   (let [{:keys [clean-error clean-component-stack]
          :or {clean-component-stack identity}} props]
-    [:> k/Box {:flex-direction :column}
-     [:> k/Text {:color :red
-                 :inverse true}
-      "Oops! Something went wrong"]
+    [:> k/Box {:flex-direction :column
+               :justify-content :center}
+     [section-title "Oops! Something went wrong"]
 
      (when-let [^js info @info-atom]
        [:<>
-        [:> k/Text "Component Stack:"]
-        [:> k/Box {:overflowY :hidden}
-         [:> k/Text (clean-component-stack
-                     (.-componentStack info))]]])
+        [title {:bold true} "Component Stack:"]
+        [:> k/Box {:overflow :hidden
+                   :flex-basis 50}
+         [:> k/Text
+          (clean-component-stack
+           (.-componentStack info))]]])
 
      [:> k/Newline]
 
-     [:> k/Text {:color :red
-                 :inverse true}
-      "Error:"]
-     [:> k/Box {:overflowY :hidden}
+     [section-title "Error:"]
+     [:> k/Box {:overflow :hidden
+                :flex-basis 50}
       [:> k/Text
        (cond
          clean-error (clean-error error)
@@ -51,17 +61,15 @@
      {:display-name "Error Boundary"
 
       :component-did-catch (fn [_this error info]
-                             (js/console.warn error info)
                              (reset! err error)
                              (reset! info-atom info))
 
-      :statics
-      #js {:getDerivedStateFromError (fn [error]
-                                       (when goog.DEBUG
-                                          ; enqueue the atom for auto-clearing
-                                         (swap! active-err-atoms conj err))
+      :get-derived-state-from-error (fn [error]
+                                      (when goog.DEBUG
+                                    ; enqueue the atom for auto-clearing
+                                        (swap! active-err-atoms conj err))
 
-                                       (reset! err error))}
+                                      (reset! err error))
 
       :reagent-render (fn [& children]
                         (let [props (when (map? (first children))
