@@ -1,5 +1,7 @@
 (ns saya.db)
 
+; TODO: Define structure of :buffer, :window, etc.
+
 (def default-db
   {:page [:home]
    :mode :normal

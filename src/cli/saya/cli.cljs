@@ -13,7 +13,11 @@
    [saya.util.ink :as ink]
    [saya.views :as views]))
 
+(defonce ^:private functional-compiler (r/create-compiler
+                                        {:function-components true}))
 (defonce ^:private ink-instance (atom nil))
+
+(r/set-default-compiler! functional-compiler)
 
 (defn ^:dev/after-load mount-root []
   (re-frame/clear-subscription-cache!)

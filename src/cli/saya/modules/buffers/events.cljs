@@ -56,7 +56,8 @@
                                              :connection-id connection-id
                                              :lines []
                                              :cursor {:row 0 :col 0}})
-            [db window] (allocate-window db {:bufnr (:id buffer)})]
+            [db window] (allocate-window db {:bufnr (:id buffer)
+                                             :anchor-row nil})]
         (-> db
             (assoc :current-winnr (:id window))
             (update :connection->bufnr

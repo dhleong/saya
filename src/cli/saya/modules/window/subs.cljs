@@ -20,13 +20,23 @@
  (fn [[_ {:keys [winnr bufnr]}]]
    [(subscribe [::by-id winnr])
     (subscribe [::buffer-subs/ansi-lines-by-id bufnr])])
- (fn [[_window lines]]
-   ; TODO: filter lines
-   (->> lines
-        (map (partial apply str))
-        (map split/chars-with-ansi)
-        ; TODO: line index properly, accounting for filtering
-        (map-indexed vector))))
+ (fn [[{:keys [height anchor-row]} lines]]
+   (let [last-row-index (dec (count lines))
+         anchor-row (or anchor-row
+                        last-row-index)
+         first-line-index (max 0 (- (inc anchor-row) height))]
+     (->> lines
+          ; Filter lines. We fill UP from the anchor-row
+          (drop-last (- last-row-index anchor-row))
+          (take-last height)
+
+          ; Transform the line for rendering:
+          (map (partial apply str))
+          (map split/chars-with-ansi)
+
+          ; Index properly, accounting for filtering
+          (map-indexed (fn [i line]
+                         [(+ i first-line-index) line]))))))
 
 (reg-sub
  ::focused?
