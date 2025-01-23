@@ -6,23 +6,24 @@
    [saya.modules.kodachi.subs :as kodachi]
    [saya.modules.logging.view :refer [logging-view]]
    [saya.modules.ui.error-boundary :refer [error-boundary]]
+   [saya.modules.ui.placeholders :as placeholders]
    [saya.modules.window.view :refer [window-view]]))
 
 (defn- home-content []
-  [:> k/Box {:flex-direction :column
-             :height :100%
-             :width :100%
-             :justify-content :center
-             :align-items :center}
-   [:> k/Text "Welcome to saya"]
+  (if-let [winnr (<sub [:current-winnr])]
+    [window-view winnr]
 
-   (case (<sub [::kodachi/state])
-     :unavailable [:> k/Text "Could not locate or install kodachi"]
-     :initializing [:> k/Text "..."]
-     (nil :ready) nil)
+    [:> k/Box {:flex-direction :column
+               :height :100%
+               :width :100%
+               :justify-content :center
+               :align-items :center}
+     [:> k/Text "Welcome to saya"]
 
-   (when-let [winnr (<sub [:current-winnr])]
-     [window-view winnr])])
+     (case (<sub [::kodachi/state])
+       :unavailable [:> k/Text "Could not locate or install kodachi"]
+       :initializing [:> k/Text "..."]
+       (nil :ready) nil)]))
 
 (defn- status-area []
   (let [mode (<sub [:mode])]
@@ -30,7 +31,7 @@
       :command [command-line-mode-view]
 
       ; Default:
-      [:> k/Text "Status"])))
+      [placeholders/line])))
 
 (defn home-view []
   [:> k/Box {:flex-direction :column

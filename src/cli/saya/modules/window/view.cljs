@@ -7,6 +7,7 @@
    [saya.cli.text-input :refer [text-input]]
    [saya.modules.buffers.subs :as buffer-subs]
    [saya.modules.ui.cursor :refer [cursor]]
+   [saya.modules.ui.placeholders :as placeholders]
    [saya.modules.window.events :as window-events]
    [saya.modules.window.subs :as subs]))
 
@@ -67,5 +68,6 @@
             (for [[i line] lines]
               ^{:key [id i]}
               [buffer-line line {:cursor-col (when (= row i) col)}])]
-           (when (<sub [::subs/input-focused? id])
-             [input-window (<sub [::buffer-subs/->connr bufnr])])])))))
+           (if (<sub [::subs/input-focused? id])
+             [input-window (<sub [::buffer-subs/->connr bufnr])]
+             [placeholders/line])])))))

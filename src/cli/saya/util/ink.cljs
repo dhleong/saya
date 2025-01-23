@@ -12,13 +12,16 @@
 (defn update-screen [{:keys [out last-lines]
                       :as state}
                      output]
-  (let [lines (str/split-lines output)]
+  (let [lines (str/split-lines output)
+        metrics (atom {})]
     (if-not (= (count lines)
                (count last-lines))
       ; Either this is the first render, of the lines count
       ; has changed (perhaps due to a resize). Just start
       ; from scratch:
       (let [to-render (strip-cursor output)]
+        (reset! metrics {:full-render? {:before (count last-lines)
+                                        :after (count lines)}})
         (.write out ansi/clearTerminal)
         (.write out to-render))
 
@@ -29,12 +32,14 @@
         (let [last (strip-cursor (nth last-lines i))
               this (strip-cursor (nth lines i))]
           (when-not (= last this)
+            (swap! metrics update :dirty-lines (fnil inc 0))
             (.write out (ansi/cursorTo 0 i))
             (.write out ansi/eraseLine)
             (.write out this)))))
 
     (if-let [{:keys [x y]} (extract-cursor-position lines)]
       (let [shape (get-cursor-shape)]
+        (swap! metrics assoc :moved-cursor [x y shape])
         (.write out (ansi/cursorTo x y))
         (.write out (case shape
                       :block/blink (ansi-cursor 1)
@@ -48,7 +53,9 @@
 
     (-> state
         (update :history (fnil conj []) lines)
+        (update :metrics-history (fnil conj []) @metrics)
         (assoc
+         :last-metrics @metrics
          :last-lines lines
          :last-output output))))
 
@@ -87,4 +94,8 @@
 
   (last (butlast (:history @@last-state)))
   (last (:history @@last-state))
-  (extract-cursor-position (:last-lines @@last-state)))
+  (extract-cursor-position (:last-lines @@last-state))
+
+  (count (:history @@last-state))
+  (:metrics-history @@last-state)
+  (:last-metrics @@last-state))
