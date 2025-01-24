@@ -16,7 +16,9 @@
        (some->> buffer
                 :lines
                 (map (fn [line]
-                       (map :ansi line))))))
+                       (map (fn [{:keys [system ansi]}]
+                              (or system ansi))
+                            line))))))
 
 (reg-sub
  ::->connr

@@ -11,6 +11,14 @@
    [saya.modules.window.events :as window-events]
    [saya.modules.window.subs :as subs]))
 
+(def system-messages
+  {:connecting (fn connecting [url]
+                 [:> k/Text {:italic true}
+                  "Connecting to " url])
+   :disconnected (fn disconnected []
+                   [:> k/Text {:italic true}
+                    "Disconnected."])})
+
 (defn- buffer-line [line {:keys [cursor-col]}]
   (let [cursor-type (case (<sub [:mode])
                       :insert :pipe
@@ -25,7 +33,9 @@
         [:<>
          (when (= cursor-col i)
            [cursor cursor-type])
-         [:> k/Text part]])]]))
+         (if (vector? part)
+           (into [(system-messages (first part))] (rest part))
+           [:> k/Text part])])]]))
 
 (defn- input-window [connr]
   ; TODO: This ought to be persisted in app-db

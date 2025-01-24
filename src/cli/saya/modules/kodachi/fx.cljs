@@ -53,6 +53,7 @@
                           (.emit proc
                                  (str "response:" id)
                                  msg))
+                        (log "enqueue on-message: " msg)
                         (>evt [::events/on-message msg])))
           (.on "error" (fn [err]
                          (log "Error from kodachi:" err)
@@ -135,17 +136,14 @@
                   (>evt [::events/unavailable e]))))))
 
 (reg-fx
- ::dispatch!
- dispatch!)
-
-(reg-fx
  ::connect!
  (fn [{:keys [uri]}]
    (p/let [{:keys [connection_id]} (request! {:type :Connect
                                               :uri uri})]
      (log "Opened connection" connection_id "to" uri)
      (>evt [::events/connecting {:uri uri
-                                 :connection-id connection_id}]))))
+                                 :connection-id connection_id}])
+     (log "Queued ::connecting"))))
 
 (reg-fx
  ::disconnect!

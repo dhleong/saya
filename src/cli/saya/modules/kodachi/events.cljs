@@ -36,17 +36,24 @@
 (reg-event-fx
  ::connecting
  [unwrap]
- (fn [_ params]
-    ; TODO: Stash connection state somewhere?
-   {:fx [[:dispatch
-          [::buffer-events/create-for-connection params]]]}))
+ (fn [{:keys [db]} {:keys [connection-id uri] :as params}]
+   ; TODO: Stash connection state somewhere?
+   (let [db (buffer-events/create-for-connection db params)
+         bufnr (get-in db [:connection->bufnr connection-id])]
+     {:db db
+      :dispatch [::buffer-events/new-line
+                 {:id bufnr
+                  :system [:connecting uri]}]})
+
+   #_{:fx [[:dispatch
+            [::buffer-events/create-for-connection params]]]}))
 
 (reg-event-fx
  ::on-message
  [unwrap]
- (fn [{:keys [db]} {:keys [connection_id] :as params}]
+ (fn [{:keys [db]} {connr :connection_id :as params}]
    (log "<< " params)
-   (when-let [bufnr (get-in db [:connection->bufnr connection_id])]
+   (when-let [bufnr (get-in db [:connection->bufnr connr])]
      (m/match params
        {:type "ExternalUI"
         :data {:type "Text"
@@ -61,6 +68,15 @@
         :data {:type "NewLine"}}
        {:dispatch [::buffer-events/new-line
                    {:id bufnr}]}
+
+       ; NOTE: "Connecting" is handled in its explicit event handler
+       ; due to timing issues between when that completes
+       ; and we receive it here.
+
+       {:type "Disconnected"}
+       {:dispatch [::buffer-events/new-line
+                   {:id bufnr
+                    :system [:disconnected]}]}
 
        ; TODO:
        :else

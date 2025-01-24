@@ -1,8 +1,8 @@
 (ns saya.modules.buffers.events
   (:require
-   [day8.re-frame-10x.inlined-deps.re-frame.v1v3v0.re-frame.core :refer [get-effect]]
    [re-frame.core :refer [->interceptor assoc-coeffect assoc-effect
-                          get-coeffect reg-event-db unwrap]]))
+                          get-effect get-coeffect
+                          reg-event-db unwrap]]))
 
 (defn- build-allocator [db-objs-key db-next-id-key]
   (fn allocate [db extras]
@@ -42,7 +42,7 @@
                 (->> (assoc-in original-db path db)
                      (assoc-effect context' :db)))))))
 
-(defn- create-for-connection [db {:keys [connection-id uri]}]
+(defn create-for-connection [db {:keys [connection-id uri]}]
   (let [current-winnr (:current-winnr db)
         current-window (get-in db [:windows current-winnr])
         current-path [:buffers (:bufnr current-window)]
@@ -70,16 +70,20 @@
                     connection-id
                     (:id buffer)))))))
 
-(reg-event-db
- ::create-for-connection
- [unwrap]
- create-for-connection)
+; NOTE: Adapters like kodachi.events can use the event handler directly, assuming they use [unwrap]
+; The handler expects the db as its first param; be aware if your event handler is -fx!
+; (reg-event-db
+;  ::create-for-connection
+;  [unwrap]
+;  create-for-connection)
 
-(defn append-text [buffer {:keys [ansi parsed]}]
+(defn append-text [buffer {:keys [ansi parsed system]}]
   (update-in buffer [:lines (dec (count (:lines buffer)))]
              (fnil conj [])
-             {:ansi ansi
-              :parsed parsed}))
+             (if system
+               {:system system}
+               {:ansi ansi
+                :parsed parsed})))
 
 (reg-event-db
  ::append-text
@@ -94,6 +98,11 @@
 
 (reg-event-db
  ::new-line
- [buffer-path]
- (fn [buffer _]
-   (new-line buffer)))
+ [unwrap buffer-path]
+ (fn [buffer {:keys [system]}]
+   (cond-> (new-line buffer)
+     system (append-text {:system system}))))
+
+(comment
+  (re-frame.core/dispatch
+   [::new-line {:id 0 :system [:disconnected]}]))
