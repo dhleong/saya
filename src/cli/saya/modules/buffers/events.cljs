@@ -1,8 +1,7 @@
 (ns saya.modules.buffers.events
   (:require
    [re-frame.core :refer [->interceptor assoc-coeffect assoc-effect
-                          get-effect get-coeffect
-                          reg-event-db unwrap]]))
+                          get-coeffect get-effect reg-event-db unwrap]]))
 
 (defn- build-allocator [db-objs-key db-next-id-key]
   (fn allocate [db extras]
@@ -77,13 +76,13 @@
 ;  [unwrap]
 ;  create-for-connection)
 
-(defn append-text [buffer {:keys [ansi parsed system]}]
+(defn append-text [buffer {:keys [ansi parsed full-line? system]}]
   (update-in buffer [:lines (dec (count (:lines buffer)))]
              (fnil conj [])
              (if system
                {:system system}
-               {:ansi ansi
-                :parsed parsed})))
+               (cond-> {:ansi ansi :parsed parsed}
+                 full-line? (assoc :full-line? true)))))
 
 (reg-event-db
  ::append-text
@@ -103,6 +102,27 @@
    (cond-> (new-line buffer)
      system (append-text {:system system}))))
 
+(defn- clear-line [buffer]
+  (-> buffer
+      (update :lines pop)
+      (new-line)))
+
+(defn clear-partial-line [buffer]
+  (let [last-line (last (:lines buffer))
+        {:keys [full-line?]} (last last-line)]
+    (cond-> buffer
+      (not full-line?)
+      (clear-line))))
+
+(reg-event-db
+ ::clear-partial-line
+ [buffer-path]
+ (fn [buffer _]
+   (clear-partial-line buffer)))
+
 (comment
+  (re-frame.core/dispatch [::clear-partial-line {:id 0}])
+  (re-frame.core/dispatch [::append-text {:id 0 :ansi "Hi there"}])
+
   (re-frame.core/dispatch
    [::new-line {:id 0 :system [:disconnected]}]))

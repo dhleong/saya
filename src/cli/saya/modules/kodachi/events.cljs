@@ -56,14 +56,20 @@
         :data {:type "Text"
                :ansi ansi}}
        {:dispatch [::buffer-events/append-text
-                   (let [ansi (str/trim-newline ansi)]
+                   (let [ansi' (str/trim-newline ansi)]
                      {:id bufnr
-                      :parsed ((.-ansiToJson Anser) ansi)
-                      :ansi ansi})]}
+                      :parsed ((.-ansiToJson Anser) ansi')
+                      :full-line? (not= ansi' ansi)
+                      :ansi ansi'})]}
 
        {:type "ExternalUI"
         :data {:type "NewLine"}}
        {:dispatch [::buffer-events/new-line
+                   {:id bufnr}]}
+
+       {:type "ExternalUI"
+        :data {:type "ClearPartialLine"}}
+       {:dispatch [::buffer-events/clear-partial-line
                    {:id bufnr}]}
 
        ; NOTE: "Connecting" is handled in its explicit event handler
