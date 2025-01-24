@@ -21,7 +21,7 @@
                   (assoc-coeffect :winnr winnr)
 
                   (some? bufnr)
-                  (assoc-coeffect :bufnr winnr)
+                  (assoc-coeffect :bufnr bufnr)
 
                   (some? connr)
                   (assoc-coeffect :connr connr))))}))
