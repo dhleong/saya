@@ -43,10 +43,7 @@
      {:db db
       :dispatch [::buffer-events/new-line
                  {:id bufnr
-                  :system [:connecting uri]}]})
-
-   #_{:fx [[:dispatch
-            [::buffer-events/create-for-connection params]]]}))
+                  :system [:connecting uri]}]})))
 
 (reg-event-fx
  ::on-message

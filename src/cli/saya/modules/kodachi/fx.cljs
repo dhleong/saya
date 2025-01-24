@@ -53,7 +53,6 @@
                           (.emit proc
                                  (str "response:" id)
                                  msg))
-                        (log "enqueue on-message: " msg)
                         (>evt [::events/on-message msg])))
           (.on "error" (fn [err]
                          (log "Error from kodachi:" err)
