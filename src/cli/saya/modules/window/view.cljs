@@ -22,13 +22,18 @@
 (defn- buffer-line [line {:keys [cursor-col]}]
   (let [cursor-type (case (<sub [:mode])
                       :insert :pipe
-                      :block)]
+                      :block)
+        ; We should at least render a blank column, in case
+        ; we have a cursor to render there
+        line (or (seq line)
+                 [""])]
     [:> k/Box {:min-height 0
                :min-width 0
                :width :100%
                :flex-basis 1}
      [:> k/Text {:wrap :truncate-end}
-      (for [[i part] (map-indexed vector line)]
+      (for [[i part] (map-indexed vector (or (seq line)
+                                             [""]))]
         ^{:key i}
         [:<>
          (when (= cursor-col i)
