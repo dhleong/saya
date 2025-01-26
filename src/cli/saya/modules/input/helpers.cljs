@@ -9,19 +9,19 @@
        (apply str)
        (split/chars-with-ansi)))
 
-(defn- last-buffer-row [buffer]
+(defn last-buffer-row [buffer]
   (max 0
        (dec (count (:lines buffer)))))
 
 (defn adjust-scroll [{:keys [window buffer] :as ctx}]
   (let [{:keys [height anchor-row]} window
         {:keys [row]} (:cursor buffer)]
-    (cond-> ctx
+    (cond
       (= row (last-buffer-row buffer))
-      (update :window dissoc :anchor-row)
+      (update ctx :window dissoc :anchor-row)
 
       (< (- anchor-row height) 0)
-      (assoc-in [:window :anchor-row] (dec height)))))
+      (assoc-in ctx [:window :anchor-row] (dec height)))))
 
 (defn clamp-cursor [{:keys [window buffer] :as ctx}]
   (let [{:keys [height anchor-row]} window

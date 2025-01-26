@@ -1,6 +1,7 @@
 (ns saya.modules.input.normal
   (:require
-   [saya.modules.input.helpers :refer [adjust-scroll clamp-cursor]]))
+   [saya.modules.input.helpers :refer [adjust-scroll clamp-cursor
+                                       last-buffer-row]]))
 
 (defn- update-cursor [col-or-row f]
   (comp
@@ -15,15 +16,15 @@
 
    ["g" "g"] (comp
               adjust-scroll
-              (fn to-first-line [{:keys [buffer]}]
-                {:buffer (assoc-in buffer [:cursor] {:col 0
-                                                     :row 0})}))
+              (fn to-first-line [ctx]
+                (assoc-in ctx [:buffer :cursor] {:col 0
+                                                 :row 0})))
 
    ["G"] (comp
           adjust-scroll
           (fn to-last-line [{:keys [buffer] :as ctx}]
             (assoc-in ctx [:buffer :cursor :row]
-                      (dec (count (:lines buffer))))))
+                      (last-buffer-row buffer))))
 
    ; Single char movement
    ["k"] (update-cursor :row dec)
