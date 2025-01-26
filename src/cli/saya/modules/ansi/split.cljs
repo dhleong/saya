@@ -3,6 +3,7 @@
    ["ansi-regex" :default ansi-regex]))
 
 (defn chars-with-ansi [s]
+  {:pre [(string? s)]}
   (let [regex (ansi-regex)]
     (loop [start 0
            pending-ansi nil

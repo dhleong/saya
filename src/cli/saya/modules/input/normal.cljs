@@ -1,26 +1,46 @@
-(ns saya.modules.input.normal)
+(ns saya.modules.input.normal
+  (:require
+   [saya.modules.input.helpers :refer [adjust-scroll clamp-cursor]]))
+
+(defn- update-cursor [col-or-row f]
+  (comp
+   adjust-scroll
+   clamp-cursor
+   (fn cursor-updator [ctx]
+     (update-in ctx [:buffer :cursor col-or-row] f))))
 
 (def movement-keymaps
   {["0"] (fn to-start-of-line [{:keys [buffer]}]
            {:buffer (assoc-in buffer [:cursor :col] 0)})
 
-   ["g" "g"] (fn to-first-line [{:keys [buffer]}]
-               ; TODO: Move [:window :anchor-row]
-               {:buffer (assoc-in buffer [:cursor] {:col 0
-                                                    :row 0})})
+   ["g" "g"] (comp
+              adjust-scroll
+              (fn to-first-line [{:keys [buffer]}]
+                {:buffer (assoc-in buffer [:cursor] {:col 0
+                                                     :row 0})}))
 
-   ["G"] (fn to-last-line [{:keys [buffer]}]
-           {:buffer (assoc-in buffer [:cursor :row]
-                              (dec (count (:lines buffer))))})
+   ["G"] (comp
+          adjust-scroll
+          (fn to-last-line [{:keys [buffer] :as ctx}]
+            (assoc-in ctx [:buffer :cursor :row]
+                      (dec (count (:lines buffer))))))
 
    ; Single char movement
-   ["k"] (fn [{:keys [buffer]}]
-           {:buffer (update-in buffer [:cursor :row]
-                               (comp (partial max 0) dec))})
-   ["h"] (fn [{:keys [buffer]}]
-           {:buffer (update-in buffer [:cursor :col]
-                               (comp (partial max 0) dec))})})
+   ["k"] (update-cursor :row dec)
+   ["j"] (update-cursor :row inc)
+   ["h"] (update-cursor :col dec)
+   ["l"] (update-cursor :col inc)})
+
+(def scroll-keymaps
+  {[:ctrl/b] (comp
+              clamp-cursor
+              adjust-scroll
+              (fn scroll-back-page [{:keys [buffer window] :as ctx}]
+                (update-in ctx [:window :anchor-row]
+                           (fnil - (dec (count (:lines buffer))))
+                           (max 0 (dec (:height window))))))})
 
 (def keymaps
   (merge
-   movement-keymaps))
+   movement-keymaps
+   scroll-keymaps))

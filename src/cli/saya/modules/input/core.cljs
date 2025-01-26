@@ -19,9 +19,7 @@
      ; TODO: In a connection buffer, this should open into an
      ; input window
      [:normal "i" true] {:db (assoc db :mode :insert)}
-     [:normal "l" true] {:db (update-in db [:buffers bufnr :cursor :col] inc)}
 
-     ; TODO: Probably reorganize, definitely clamp
      [:normal key true]
      (let [new-buffer ((fnil conj []) keymap-buffer key)
            keymap (get normal/keymaps new-buffer)]
