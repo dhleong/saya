@@ -99,7 +99,14 @@
  ::new-line
  [unwrap buffer-path]
  (fn [buffer {:keys [system]}]
-   (cond-> (new-line buffer)
+   (cond-> buffer
+     ; If it's not for a system message, of course always add a
+     ; new line. If it *is*, *only* add a new line if the current
+     ; one isn't already blank
+     (or (not system)
+         (seq (last (:lines buffer))))
+     (new-line)
+
      system (-> (append-text {:system system})
                 (new-line)))))
 

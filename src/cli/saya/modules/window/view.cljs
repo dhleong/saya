@@ -12,12 +12,17 @@
    [saya.modules.window.subs :as subs]))
 
 (def system-messages
-  {:connecting (fn connecting [url]
+  {:connecting (fn connecting [uri]
                  [:> k/Text {:italic true}
-                  "Connecting to " url])
-   :disconnected (fn disconnected []
+                  "Connecting to " uri "..."])
+
+   :connected (fn connected [_uri]
+                [:> k/Text {:italic true}
+                 "Connected!"])
+
+   :disconnected (fn disconnected [uri]
                    [:> k/Text {:italic true}
-                    "Disconnected."])})
+                    "Disconnected from " uri "."])})
 
 (defn- buffer-line [line {:keys [cursor-col]}]
   (let [cursor-type (case (<sub [:mode])

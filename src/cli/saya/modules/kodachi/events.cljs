@@ -76,10 +76,15 @@
        ; due to timing issues between when that completes
        ; and we receive it here.
 
+       {:type "Connected"}
+       {:dispatch [::buffer-events/new-line
+                   {:id bufnr
+                    :system [:connected (get-in db [:buffers bufnr :uri])]}]}
+
        {:type "Disconnected"}
        {:dispatch [::buffer-events/new-line
                    {:id bufnr
-                    :system [:disconnected]}]}
+                    :system [:disconnected (get-in db [:buffers bufnr :uri])]}]}
 
        ; TODO:
        :else
