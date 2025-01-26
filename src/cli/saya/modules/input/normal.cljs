@@ -57,7 +57,10 @@
   (dec (:height window)))
 
 (def scroll-keymaps
-  {[:ctrl/b] (update-scroll - window-rows)
+  {[:ctrl/y] (update-scroll - (constantly 1))
+   [:ctrl/e] (update-scroll + (constantly 1))
+
+   [:ctrl/b] (update-scroll - window-rows)
    [:ctrl/f] (update-scroll + window-rows)})
 
 (def keymaps

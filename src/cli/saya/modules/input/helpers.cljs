@@ -52,9 +52,9 @@
   (let [{:keys [height anchor-row]} window
         anchor-row (or anchor-row
                        (last-buffer-row buffer))
-        min-cursor-row (max 0 (- anchor-row height))
+        min-cursor-row (max 0 (inc (- anchor-row height)))
         max-cursor-row (min (last-buffer-row buffer)
-                            (+ min-cursor-row height 1))]
+                            (+ min-cursor-row height))]
     (update-in ctx [:buffer :cursor :row]
                #(min max-cursor-row
                      (max min-cursor-row %)))))
