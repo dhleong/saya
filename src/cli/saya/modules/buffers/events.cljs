@@ -104,11 +104,13 @@
      ; new line. If it *is*, *only* add a new line if the current
      ; one isn't already blank
      (or (not system)
+         (empty? (:lines buffer))
          (seq (last (:lines buffer))))
      (new-line)
 
-     system (-> (append-text {:system system})
-                (new-line)))))
+     (some? system)
+     (-> (append-text {:system system})
+         (new-line)))))
 
 (defn- clear-line [buffer]
   (-> buffer
