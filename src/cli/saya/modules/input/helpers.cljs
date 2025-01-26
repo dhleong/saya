@@ -2,7 +2,7 @@
   (:require
    [saya.modules.ansi.split :as split]))
 
-(defn- current-buffer-line [{:keys [lines cursor]}]
+(defn current-buffer-line [{:keys [lines cursor]}]
   ; TODO: We should probably just store the :plain line...
   (->> (nth lines (:row cursor))
        (map :ansi)
@@ -12,6 +12,10 @@
 (defn last-buffer-row [buffer]
   (max 0
        (dec (count (:lines buffer)))))
+
+(defn current-buffer-line-last-col [buffer]
+  (max 0
+       (dec (count (current-buffer-line buffer)))))
 
 (defn clamp-scroll [{:keys [window buffer] :as ctx}]
   (let [{:keys [height anchor-row]} window]
@@ -59,7 +63,7 @@
         ; NOTE: We delay reading the current buffer line until
         ; after clamping the row above, since it may have changed!
         (as-> ctx
-          (let [max-cursor-col (count (current-buffer-line (:buffer ctx)))]
+          (let [max-cursor-col (current-buffer-line-last-col (:buffer ctx))]
             (update-in ctx [:buffer :cursor :col]
                        #(min max-cursor-col
                              (max 0 %))))))))

@@ -1,7 +1,9 @@
 (ns saya.modules.input.normal
   (:require
    [saya.modules.input.helpers :refer [adjust-scroll-to-cursor clamp-cursor
-                                       clamp-scroll last-buffer-row]]))
+                                       clamp-scroll
+                                       current-buffer-line-last-col
+                                       last-buffer-row]]))
 
 (defn- update-cursor [col-or-row f]
   (comp
@@ -14,6 +16,9 @@
 (def movement-keymaps
   {["0"] (fn to-start-of-line [{:keys [buffer]}]
            {:buffer (assoc-in buffer [:cursor :col] 0)})
+   ["$"] (fn to-end-of-line [{:keys [buffer]}]
+           {:buffer (assoc-in buffer [:cursor :col]
+                              (current-buffer-line-last-col buffer))})
 
    ["g" "g"] (comp
               clamp-scroll
@@ -25,6 +30,7 @@
    ["G"] (comp
           clamp-scroll
           adjust-scroll-to-cursor
+          clamp-cursor
           (fn to-last-line [{:keys [buffer] :as ctx}]
             (assoc-in ctx [:buffer :cursor :row]
                       (last-buffer-row buffer))))
