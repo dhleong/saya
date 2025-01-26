@@ -1,6 +1,7 @@
 (ns saya.modules.input.normal
   (:require
-   [saya.modules.input.helpers :refer [adjust-scroll-to-cursor clamp-cursor
+   [saya.modules.input.helpers :refer [adjust-cursor-to-scroll
+                                       adjust-scroll-to-cursor clamp-cursor
                                        clamp-scroll
                                        current-buffer-line-last-col
                                        last-buffer-row]]))
@@ -44,6 +45,7 @@
 (defn- update-scroll [f compute-amount]
   (comp
    adjust-scroll-to-cursor
+   adjust-cursor-to-scroll
    clamp-cursor
    clamp-scroll
    (fn scroll-updater [{:keys [buffer] :as ctx}]

@@ -48,13 +48,23 @@
       ; Nothing to fix:
       :else ctx)))
 
-(defn clamp-cursor [{:keys [window buffer] :as ctx}]
+(defn adjust-cursor-to-scroll [{:keys [window buffer] :as ctx}]
   (let [{:keys [height anchor-row]} window
         anchor-row (or anchor-row
                        (last-buffer-row buffer))
         min-cursor-row (max 0 (- anchor-row height))
         max-cursor-row (min (last-buffer-row buffer)
                             (+ min-cursor-row height 1))]
+    (update-in ctx [:buffer :cursor :row]
+               #(min max-cursor-row
+                     (max min-cursor-row %)))))
+
+(defn clamp-cursor [{:keys [window buffer] :as ctx}]
+  (let [{:keys [height anchor-row]} window
+        anchor-row (or anchor-row
+                       (last-buffer-row buffer))
+        min-cursor-row (max 0 (- anchor-row height))
+        max-cursor-row (last-buffer-row buffer)]
     (-> ctx
         (update-in [:buffer :cursor :row]
                    #(min max-cursor-row
