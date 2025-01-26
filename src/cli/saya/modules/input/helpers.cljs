@@ -13,15 +13,36 @@
   (max 0
        (dec (count (:lines buffer)))))
 
-(defn adjust-scroll [{:keys [window buffer] :as ctx}]
-  (let [{:keys [height anchor-row]} window
-        {:keys [row]} (:cursor buffer)]
+(defn clamp-scroll [{:keys [window buffer] :as ctx}]
+  (let [{:keys [height anchor-row]} window]
     (cond
-      (= row (last-buffer-row buffer))
+      (>= anchor-row (last-buffer-row buffer))
       (update ctx :window dissoc :anchor-row)
 
-      (< (- anchor-row height) 0)
-      (assoc-in ctx [:window :anchor-row] (dec height)))))
+      (and anchor-row
+           (< (- anchor-row height) 0))
+      (assoc-in ctx [:window :anchor-row] (dec height))
+
+      ; Nothing to fix:
+      :else ctx)))
+
+(defn adjust-scroll-to-cursor [{:keys [buffer window] :as ctx}]
+  (let [{:keys [height anchor-row]} window
+        {:keys [row]} (:cursor buffer)
+        anchor-row (or anchor-row
+                       (last-buffer-row buffer))]
+    (cond
+      (>= row (last-buffer-row buffer))
+      (update ctx :window dissoc :anchor-row)
+
+      (<= row (- anchor-row height))
+      (assoc-in ctx [:window :anchor-row] (+ row (dec height)))
+
+      (> row anchor-row)
+      (assoc-in ctx [:window :anchor-row] row)
+
+      ; Nothing to fix:
+      :else ctx)))
 
 (defn clamp-cursor [{:keys [window buffer] :as ctx}]
   (let [{:keys [height anchor-row]} window
@@ -29,7 +50,7 @@
                        (last-buffer-row buffer))
         min-cursor-row (max 0 (- anchor-row height))
         max-cursor-row (min (last-buffer-row buffer)
-                            (+ min-cursor-row height))]
+                            (+ min-cursor-row height 1))]
     (-> ctx
         (update-in [:buffer :cursor :row]
                    #(min max-cursor-row

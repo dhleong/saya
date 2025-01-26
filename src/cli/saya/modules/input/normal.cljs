@@ -1,11 +1,12 @@
 (ns saya.modules.input.normal
   (:require
-   [saya.modules.input.helpers :refer [adjust-scroll clamp-cursor
-                                       last-buffer-row]]))
+   [saya.modules.input.helpers :refer [adjust-scroll-to-cursor clamp-cursor
+                                       clamp-scroll last-buffer-row]]))
 
 (defn- update-cursor [col-or-row f]
   (comp
-   adjust-scroll
+   clamp-scroll
+   adjust-scroll-to-cursor
    clamp-cursor
    (fn cursor-updator [ctx]
      (update-in ctx [:buffer :cursor col-or-row] f))))
@@ -15,13 +16,15 @@
            {:buffer (assoc-in buffer [:cursor :col] 0)})
 
    ["g" "g"] (comp
-              adjust-scroll
+              clamp-scroll
+              adjust-scroll-to-cursor
               (fn to-first-line [ctx]
                 (assoc-in ctx [:buffer :cursor] {:col 0
                                                  :row 0})))
 
    ["G"] (comp
-          adjust-scroll
+          clamp-scroll
+          adjust-scroll-to-cursor
           (fn to-last-line [{:keys [buffer] :as ctx}]
             (assoc-in ctx [:buffer :cursor :row]
                       (last-buffer-row buffer))))
@@ -32,14 +35,22 @@
    ["h"] (update-cursor :col dec)
    ["l"] (update-cursor :col inc)})
 
+(defn- update-scroll [f compute-amount]
+  (comp
+   adjust-scroll-to-cursor
+   clamp-cursor
+   clamp-scroll
+   (fn scroll-updater [{:keys [buffer] :as ctx}]
+     (update-in ctx [:window :anchor-row]
+                (fnil f (last-buffer-row buffer))
+                (max 0 (compute-amount ctx))))))
+
+(defn- window-rows [{:keys [window]}]
+  (dec (:height window)))
+
 (def scroll-keymaps
-  {[:ctrl/b] (comp
-              clamp-cursor
-              adjust-scroll
-              (fn scroll-back-page [{:keys [buffer window] :as ctx}]
-                (update-in ctx [:window :anchor-row]
-                           (fnil - (dec (count (:lines buffer))))
-                           (max 0 (dec (:height window))))))})
+  {[:ctrl/b] (update-scroll - window-rows)
+   [:ctrl/f] (update-scroll + window-rows)})
 
 (def keymaps
   (merge
