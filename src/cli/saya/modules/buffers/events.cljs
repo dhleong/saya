@@ -100,7 +100,8 @@
  [unwrap buffer-path]
  (fn [buffer {:keys [system]}]
    (cond-> (new-line buffer)
-     system (append-text {:system system}))))
+     system (-> (append-text {:system system})
+                (new-line)))))
 
 (defn- clear-line [buffer]
   (-> buffer
