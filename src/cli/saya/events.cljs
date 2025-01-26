@@ -5,6 +5,8 @@
    [saya.db :as db]
    [saya.modules.command.parse :refer [parse-command]]
    [saya.modules.command.registry]
+   [saya.modules.input.keymaps :as keymaps]
+   [saya.modules.input.normal :refer [scroll-to-bottom]]
    [saya.modules.kodachi.fx :as kodachi-fx]))
 
 (reg-event-fx
@@ -56,6 +58,14 @@
 (reg-event-fx
  :connection/send
  [unwrap]
- (fn [_ {:keys [connr text]}]
+ (fn [{:keys [db] :as cofx} {:keys [connr text]}]
    {::kodachi-fx/send! {:connection-id connr
-                        :text text}}))
+                        :text text}
+
+    ; Scroll to the bottom in the current window (only) IF it is
+    ; associated with this connection
+    :db (let [bufnr (get-in db [:connection->bufnr connr])
+              winnr (:current-winnr db)]
+          (cond-> cofx
+            (= (get-in db [:windows winnr :bufnr]) bufnr)
+            (keymaps/perform scroll-to-bottom)))}))

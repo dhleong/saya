@@ -14,6 +14,15 @@
    (fn cursor-updator [ctx]
      (update-in ctx [:buffer :cursor col-or-row] f))))
 
+(def scroll-to-bottom
+  (comp
+   clamp-scroll
+   adjust-scroll-to-cursor
+   clamp-cursor
+   (fn to-last-line [{:keys [buffer] :as ctx}]
+     (assoc-in ctx [:buffer :cursor :row]
+               (last-buffer-row buffer)))))
+
 (def movement-keymaps
   {["0"] (fn to-start-of-line [{:keys [buffer]}]
            {:buffer (assoc-in buffer [:cursor :col] 0)})
@@ -28,13 +37,7 @@
                 (assoc-in ctx [:buffer :cursor] {:col 0
                                                  :row 0})))
 
-   ["G"] (comp
-          clamp-scroll
-          adjust-scroll-to-cursor
-          clamp-cursor
-          (fn to-last-line [{:keys [buffer] :as ctx}]
-            (assoc-in ctx [:buffer :cursor :row]
-                      (last-buffer-row buffer))))
+   ["G"] scroll-to-bottom
 
    ; Single char movement
    ["k"] (update-cursor :row dec)
