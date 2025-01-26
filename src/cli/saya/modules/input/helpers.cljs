@@ -25,6 +25,8 @@
 
 (defn clamp-cursor [{:keys [window buffer] :as ctx}]
   (let [{:keys [height anchor-row]} window
+        anchor-row (or anchor-row
+                       (last-buffer-row buffer))
         min-cursor-row (max 0 (- anchor-row height))
         max-cursor-row (min (last-buffer-row buffer)
                             (+ min-cursor-row height))]
