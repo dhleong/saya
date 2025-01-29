@@ -19,11 +19,14 @@
      :normal (keys normal/keymaps)
      #{})))
 
+(defn build-context [{:keys [bufnr winnr] :as cofx}]
+  (let [buffer (get-in cofx [:db :buffers bufnr])
+        window (get-in cofx [:db :windows winnr])]
+    {:buffer buffer :window window}))
+
 (defn perform [{:keys [bufnr winnr] :as cofx} f]
   (try
-    (let [buffer (get-in cofx [:db :buffers bufnr])
-          window (get-in cofx [:db :windows winnr])
-          context {:buffer buffer :window window}
+    (let [context (build-context cofx)
           ; This merge allows us to omit unchanged fields
           context' (merge context (f context))]
       (when-not (= context context')

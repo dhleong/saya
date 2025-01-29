@@ -70,3 +70,24 @@
   (merge
    movement-keymaps
    scroll-keymaps))
+
+#_{:clj-kondo/ignore [:unresolved-namespace]}
+(comment
+  (get-in @re-frame.db/app-db [:buffers 0 :cursor])
+  (get-in @re-frame.db/app-db [:windows 0])
+
+  (let [context (saya.modules.input.keymaps/build-context
+                 {:bufnr 0 :winnr 0
+                  :db @re-frame.db/app-db})]
+    (-> context
+
+        ((comp
+           ; clamp-scroll
+          adjust-scroll-to-cursor
+          (fn to-first-line [ctx]
+            (assoc-in ctx [:buffer :cursor] {:col 0
+                                             :row 0}))))
+
+        ((juxt
+          #(assoc {} :cursor (get-in % [:buffer :cursor]))
+          #(select-keys % [:window]))))))
