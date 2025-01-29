@@ -24,7 +24,19 @@
                    [:> k/Text {:italic true}
                     "Disconnected from " uri "."])})
 
-(defn- buffer-line [line {:keys [cursor-col]}]
+(defn- input-window [connr]
+  ; TODO: This ought to be persisted in app-db
+  (let [[input set-input!] (React/useState "")]
+    [:> k/Box
+     [text-input {:value input
+                  :on-change set-input!
+                  :cursor :pipe
+                  :on-submit (fn [v]
+                               (set-input! "")
+                               (>evt [:connection/send {:connr connr
+                                                        :text v}]))}]]))
+
+(defn- buffer-line [line {:keys [cursor-col input-connr]}]
   (let [cursor-type (case (<sub [:mode])
                       :insert :pipe
                       :block)
@@ -35,31 +47,21 @@
     [:> k/Box {:min-height 0
                :min-width 0
                :width :100%
-               :flex-basis 1}
-     [:> k/Text {:wrap :truncate-end}
-      (for [[i part] (map-indexed vector (or (seq line)
-                                             [""]))]
-        ^{:key i}
-        [:<>
-         (when (= cursor-col i)
-           [cursor cursor-type])
-         (if (vector? part)
-           (into [(system-messages (first part))] (rest part))
-           [:> k/Text part])])]]))
-
-(defn- input-window [connr]
-  ; TODO: This ought to be persisted in app-db
-  (let [[input set-input!] (React/useState "")]
-    [:> k/Box {:align-self :bottom
-               :width :100%}
-     [:> k/Text "> "]
-     [text-input {:value input
-                  :on-change set-input!
-                  :cursor :pipe
-                  :on-submit (fn [v]
-                               (set-input! "")
-                               (>evt [:connection/send {:connr connr
-                                                        :text v}]))}]]))
+               :flex-wrap (when input-connr :wrap)
+               :align-items :left}
+     [:> k/Box {:height 1}
+      [:> k/Text {:wrap :truncate-end}
+       (for [[i part] (map-indexed vector (or (seq line)
+                                              [""]))]
+         ^{:key i}
+         [:<>
+          (when (= cursor-col i)
+            [cursor cursor-type])
+          (if (vector? part)
+            (into [(system-messages (first part))] (rest part))
+            [:> k/Text part])])]]
+     (when input-connr
+       [input-window input-connr])]))
 
 (defn window-view [id]
   (let [ref (React/useRef)]
@@ -77,7 +79,11 @@
                                                     :winnr id}])]
         (let [focused? (<sub [::subs/focused? id])
               {:keys [row col]} (when focused?
-                                  (<sub [::buffer-subs/buffer-cursor id]))]
+                                  (<sub [::buffer-subs/buffer-cursor id]))
+              input-connr (when (<sub [::subs/input-focused? id])
+                            (<sub [::buffer-subs/->connr bufnr]))
+              last-row (first (last lines))
+              scrolled? (<sub [::subs/scrolled? id])]
           [:> k/Box {:flex-direction :column
                      :height :100%
                      :width :100%}
@@ -87,7 +93,13 @@
                       :width :100%}
             (for [[i line] lines]
               ^{:key [id i]}
-              [buffer-line line {:cursor-col (when (= row i) col)}])]
-           (if (<sub [::subs/input-focused? id])
-             [input-window (<sub [::buffer-subs/->connr bufnr])]
-             [placeholders/line])])))))
+              [buffer-line
+               line
+               {:cursor-col (when (= row i) col)
+                :input-connr (when (and (= last-row i)
+                                        (not scrolled?))
+                               input-connr)}])]
+           (when scrolled?
+             (if input-connr
+               [input-window (<sub [::buffer-subs/->connr bufnr])]
+               [placeholders/line]))])))))

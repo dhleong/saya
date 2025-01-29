@@ -73,3 +73,9 @@
         (= current-winnr id)
         (:connection-id current-buffer))))
 
+(reg-sub
+ ::scrolled?
+ (fn [[_ winnr]]
+   (subscribe [::by-id winnr]))
+ (fn [window]
+   (some? (:anchor-row window))))
