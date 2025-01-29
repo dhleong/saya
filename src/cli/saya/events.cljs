@@ -59,13 +59,14 @@
  :connection/send
  [unwrap]
  (fn [{:keys [db] :as cofx} {:keys [connr text]}]
-   {::kodachi-fx/send! {:connection-id connr
-                        :text text}
+   (merge
+    (let [bufnr (get-in db [:connection->bufnr connr])
+          winnr (:current-winnr db)]
+      ; Scroll to the bottom in the current window (only) IF it is
+      ; associated with this connection
+      (cond-> cofx
+        (= (get-in db [:windows winnr :bufnr]) bufnr)
+        (keymaps/perform scroll-to-bottom)))
 
-    ; Scroll to the bottom in the current window (only) IF it is
-    ; associated with this connection
-    :db (let [bufnr (get-in db [:connection->bufnr connr])
-              winnr (:current-winnr db)]
-          (cond-> cofx
-            (= (get-in db [:windows winnr :bufnr]) bufnr)
-            (keymaps/perform scroll-to-bottom)))}))
+    {::kodachi-fx/send! {:connection-id connr
+                         :text text}})))

@@ -27,3 +27,6 @@
 
      ; TODO: echo
      {:dispatch [:log "No active connection in current buffer"]})))
+
+(comment
+  (re-frame.core/dispatch [:command/connect {:params ["starmourn.com:3000"]}]))
