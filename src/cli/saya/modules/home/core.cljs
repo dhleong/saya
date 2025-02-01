@@ -48,6 +48,7 @@
 
    [:> k/Box {:align-self :bottom
               :flex-direction :column
+              :flex-shrink 0
               :width :100%}
     [<cmdline-window]
     [status-area]]])

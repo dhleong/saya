@@ -53,7 +53,8 @@
                :width :100%
                :flex-wrap (when input-connr :wrap)
                :align-items :left}
-     [:> k/Box {:height 1}
+     [:> k/Box {:height 1
+                :flex-shrink 0}
       [:> k/Text {:wrap :truncate-end}
        (for [[i part] (map-indexed vector (or (seq line)
                                               [""]))]

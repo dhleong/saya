@@ -36,19 +36,27 @@
   (let [before [:> k/Text {:dim-color true} before]]
     [:> k/Box {:flex-direction :column-reverse
                :height 5
-               :overflow-y :hidden}
-     [:> k/Box {:min-height 0}
+               :overflow-y :hidden
+               :width :100%}
+     [:> k/Box {:min-height 1
+                :flex-shrink 0
+                :width :100%}
       [:> k/Text
        before
        [:> k/Text input]]]
 
      (for [i (range 0 4)]
        ^{:key i}
-       [:> k/Text
-        before
-        [:> k/Text {:dim-color true
-                    :color :blue}
-         "~"]])]))
+       [:> k/Box {:min-height 1
+                  :flex-shrink 0
+                  :width :100%}
+        [:> k/Text
+         before
+
+         ; TODO: Render history, if available
+         [:> k/Text {:dim-color true
+                     :color :blue}
+          "~"]]])]))
 
 (defn input-window [{:keys [initial-value on-persist-value
                             on-submit
