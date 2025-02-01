@@ -10,7 +10,7 @@
  ::on-key
  [with-buffer-context trim-v]
  (fn [{{:keys [mode keymap-buffer] :as db} :db
-       :keys [bufnr]
+       :keys [bufnr connr]
        :as cofx}
       [key]]
    (match [mode key (some? bufnr)]
@@ -39,6 +39,9 @@
      ; special somehow (escaping to normal mode should not cause
      ; us to leave that input window!)
      [:insert :escape _] {:db (assoc db :mode :normal)}
+     [:insert :ctrl/c _] {:db (-> db
+                                  (assoc :mode :normal)
+                                  (update :buffers dissoc [:conn/input connr]))}
 
-     :else
-     {:fx [[:log ["unhandled: " mode key]]]})))
+     :else nil
+     #_{:fx [[:log ["unhandled: " mode key]]]})))

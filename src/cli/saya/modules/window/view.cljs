@@ -4,8 +4,8 @@
    ["react" :as React]
    [applied-science.js-interop :as j]
    [archetype.util :refer [<sub >evt]]
-   [saya.cli.text-input :refer [text-input]]
    [saya.modules.buffers.subs :as buffer-subs]
+   [saya.modules.input.window :as input-window]
    [saya.modules.ui.cursor :refer [cursor]]
    [saya.modules.ui.placeholders :as placeholders]
    [saya.modules.window.events :as window-events]
@@ -22,19 +22,23 @@
 
    :disconnected (fn disconnected [uri]
                    [:> k/Text {:italic true}
-                    "Disconnected from " uri "."])})
+                    "Disconnected from " uri "."])
+
+   :local-send (fn local-send [text]
+                 ; NOTE: If we combine :reset and :italic then
+                 ; we only get :reset. By wrapping like this, we
+                 ; get both correctly!
+                 [:> k/Text {:color :reset}
+                  [:> k/Text {:italic true}
+                   text]])})
 
 (defn- input-window [connr]
-  ; TODO: This ought to be persisted in app-db
-  (let [[input set-input!] (React/useState "")]
-    [:> k/Box
-     [text-input {:value input
-                  :on-change set-input!
-                  :cursor :pipe
-                  :on-submit (fn [v]
-                               (set-input! "")
-                               (>evt [:connection/send {:connr connr
-                                                        :text v}]))}]]))
+  [input-window/input-window
+   {:initial-value (<sub [::subs/input-text connr])
+    :on-persist-value #(>evt [::window-events/set-input-text {:connr connr
+                                                              :text %}])
+    :on-submit #(>evt [:connection/send {:connr connr
+                                         :text %}])}])
 
 (defn- buffer-line [line {:keys [cursor-col input-connr]}]
   (let [cursor-type (case (<sub [:mode])

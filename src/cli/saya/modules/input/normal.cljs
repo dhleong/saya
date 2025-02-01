@@ -54,7 +54,7 @@
    (fn scroll-updater [{:keys [buffer] :as ctx}]
      (update-in ctx [:window :anchor-row]
                 (fnil f (last-buffer-row buffer))
-                (max 0 (compute-amount ctx))))))
+                (compute-amount ctx)))))
 
 (defn- window-rows [{:keys [window]}]
   (dec (:height window)))

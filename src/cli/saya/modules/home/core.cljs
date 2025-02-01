@@ -3,6 +3,7 @@
    ["ink" :as k]
    [archetype.util :refer [<sub]]
    [saya.modules.command.view :refer [command-line-mode-view]]
+   [saya.modules.input.cmdline :refer [<cmdline-window]]
    [saya.modules.kodachi.subs :as kodachi]
    [saya.modules.logging.view :refer [logging-view]]
    [saya.modules.ui.error-boundary :refer [error-boundary]]
@@ -46,5 +47,7 @@
      [home-content]]]
 
    [:> k/Box {:align-self :bottom
+              :flex-direction :column
               :width :100%}
+    [<cmdline-window]
     [status-area]]])

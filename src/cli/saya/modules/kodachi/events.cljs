@@ -63,6 +63,18 @@
                       :ansi ansi'})]}
 
        {:type "ExternalUI"
+        :data {:type "LocalSend"
+               :text text}}
+       {:fx [[:dispatch
+              [::buffer-events/append-text
+               {:id bufnr
+                :system [:local-send text]
+                :full-line? true}]]
+             [:dispatch
+              [::buffer-events/new-line
+               {:id bufnr}]]]}
+
+       {:type "ExternalUI"
         :data {:type "NewLine"}}
        {:dispatch [::buffer-events/new-line
                    {:id bufnr}]}

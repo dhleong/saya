@@ -1,5 +1,6 @@
 (ns saya.modules.window.subs
   (:require
+   [clojure.string :as str]
    [re-frame.core :refer [reg-sub subscribe]]
    [saya.modules.ansi.split :as split]
    [saya.modules.buffers.subs :as buffer-subs]))
@@ -34,18 +35,22 @@
           (into
            []
            (comp
-             ; Transform the line for rendering:
+            ; Transform the line for rendering:
             (map (fn [line]
-                   (if (string? (first line))
-                     (split/chars-with-ansi
-                      (apply str line))
+                   (->> line
+                        (partition-by string?)
+                        (reduce
+                         (fn [formatted group]
+                           (concat
+                            formatted
+                            (if (string? (first group))
+                              (split/chars-with-ansi
+                               (apply str group))
 
-                     line
-                     #_(do
-                         (def last-thing line)
-                         (first line)))))
+                              group)))
+                         []))))
 
-             ; Index properly, accounting for filtering
+            ; Index properly, accounting for filtering
             (map-indexed (fn [i line]
                            [(+ i first-line-index) line]))))))))
 
@@ -79,3 +84,12 @@
    (subscribe [::by-id winnr]))
  (fn [window]
    (some? (:anchor-row window))))
+
+(reg-sub
+ ::input-text
+ (fn [[_ connr]]
+   (subscribe [::buffer-subs/by-id [:conn/input connr]]))
+ (fn [buffer]
+   (->> (:lines buffer)
+        (map (partial apply str))
+        (str/join "\n"))))
