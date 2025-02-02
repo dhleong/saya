@@ -8,7 +8,11 @@
 
 (defn command-line-mode-view []
   [:> k/Box {:flex-direction :row}
-   [input-window {:initial-value (<sub [::subs/input-text])
+   ; NOTE: We want to pull the :cmd buffer state for the initial value in case
+   ; we're returning from cmdline window via ctrl/c, BUT if we're *entering*
+   ; command mode *from* cmdline, we need a blank buffer
+   [input-window {:initial-value (when-not (= :cmd (<sub [:current-bufnr]))
+                                   (<sub [::subs/input-text]))
                   :bufnr :cmd
                   :on-prepare-buffer #(>evt [::events/prepare-buffer %])
                   :on-submit #(>evt [:submit-raw-command %])

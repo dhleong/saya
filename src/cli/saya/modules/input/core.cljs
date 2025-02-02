@@ -61,10 +61,10 @@
          :else
          {:db (dissoc db :keymap-buffer)}))
 
-     [:command :escape _] {:db (-> db
-                                   ; Always clear:
-                                   (assoc :mode :normal)
-                                   (update :buffers dissoc :cmd))}
+     [:command :escape _] {:db (cond-> db
+                                 :always (assoc :mode :normal)
+                                   ; Only clear if we're not in the cmdline window
+                                 (not= :cmd bufnr) (update :buffers dissoc :cmd))}
      [:command :ctrl/c _] {:db (-> db
                                    ; Always clear:
                                    (assoc :mode :normal)
