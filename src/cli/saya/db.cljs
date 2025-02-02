@@ -12,7 +12,7 @@
 
    :connection->bufnr {}
 
-   :current-window nil
+   :current-winnr nil
    :next-bufnr 0
    :next-winnr 0})
 

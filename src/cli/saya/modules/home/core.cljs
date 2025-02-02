@@ -3,7 +3,7 @@
    ["ink" :as k]
    [archetype.util :refer [<sub]]
    [saya.modules.command.view :refer [command-line-mode-view]]
-   [saya.modules.input.cmdline :refer [<cmdline-window]]
+   [saya.modules.input.cmdline :refer [cmdline-window]]
    [saya.modules.kodachi.subs :as kodachi]
    [saya.modules.logging.view :refer [logging-view]]
    [saya.modules.ui.error-boundary :refer [error-boundary]]
@@ -11,8 +11,11 @@
    [saya.modules.window.view :refer [window-view]]))
 
 (defn- home-content []
-  (if-let [winnr (<sub [:current-winnr])]
-    [window-view winnr]
+  (if-let [current-winnr (<sub [:current-winnr])]
+    ; HACKS:
+    [window-view (or (when (number? current-winnr)
+                       current-winnr)
+                     (<sub [:last-winnr]))]
 
     [:> k/Box {:flex-direction :column
                :height :100%
@@ -48,7 +51,6 @@
 
    [:> k/Box {:align-self :bottom
               :flex-direction :column
-              :flex-shrink 0
               :width :100%}
-    [<cmdline-window]
+    [cmdline-window]
     [status-area]]])

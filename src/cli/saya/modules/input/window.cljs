@@ -7,12 +7,19 @@
    [reagent.core :as r]
    [saya.cli.input :refer [use-keys]]
    [saya.cli.text-input :refer [text-input]]
-   [saya.modules.input.cmdline :refer [>cmdline-window]]
-   [saya.modules.input.core :as input]))
+   [saya.modules.input.core :as input]
+   [saya.modules.input.events :as events]))
 
-(defn- on-key [{:keys [input-ref state-ref on-change]} key]
+(defn- on-key [{:keys [bufnr input-ref state-ref
+                       on-change on-prepare-buffer on-submit]}
+               key]
   (match [@state-ref key]
-    [:basic :ctrl/f] (reset! state-ref :cmdline)
+    [:basic :ctrl/f] (do
+                       (when on-prepare-buffer
+                         (on-prepare-buffer @input-ref))
+                       (>evt [::events/set-cmdline-bufnr {:bufnr bufnr
+                                                          :on-submit on-submit}])
+                       (reset! state-ref :cmdline))
     [:basic :ctrl/c] (let [input @input-ref]
                        ; NOTE: ctrl-c once to clear, again to exit
                        (on-change "")
@@ -32,35 +39,9 @@
                               (on-change v)
                               (on-submit v))}]]])
 
-(defn- cmdline-input-window [{:keys [before input on-change on-submit]}]
-  (let [before [:> k/Text {:dim-color true} before]]
-    [:> k/Box {:flex-direction :column-reverse
-               :height 5
-               :overflow-y :hidden
-               :width :100%}
-     [:> k/Box {:min-height 1
-                :flex-shrink 0
-                :width :100%}
-      [:> k/Text
-       before
-       [:> k/Text input]]]
-
-     (for [i (range 0 4)]
-       ^{:key i}
-       [:> k/Box {:min-height 1
-                  :flex-shrink 0
-                  :width :100%}
-        [:> k/Text
-         before
-
-         ; TODO: Render history, if available
-         [:> k/Text {:dim-color true
-                     :color :blue}
-          "~"]]])]))
-
-(defn input-window [{:keys [initial-value on-persist-value
-                            on-submit
-                            before]}]
+(defn input-window [{:keys [initial-value on-persist-value on-submit
+                            on-prepare-buffer before bufnr]}]
+  {:pre [(not (and on-persist-value on-prepare-buffer))]}
   (r/with-let [input-ref (atom initial-value)
                state-ref (r/atom :basic)]
     (let [[input set-input!] (React/useState initial-value)
@@ -69,12 +50,13 @@
                        (set-input! v)
                        (reset! input-ref v))
                      #js [])
+          on-submit (fn [v]
+                      (on-change "")
+                      (on-submit v))
           params {:before before
                   :input input
                   :on-change on-change
-                  :on-submit (fn [v]
-                               (on-change "")
-                               (on-submit v))}]
+                  :on-submit on-submit}]
       (React/useEffect
        (fn []
          (fn on-dismount []
@@ -84,14 +66,13 @@
                  (on-persist-value v))))))
        #js [])
 
-      (use-keys (partial on-key {:input-ref input-ref
+      (use-keys (partial on-key {:bufnr bufnr
+                                 :input-ref input-ref
+                                 :on-prepare-buffer on-prepare-buffer
                                  :on-change on-change
+                                 :on-submit on-submit
                                  :state-ref state-ref}))
 
       (case @state-ref
-        :cmdline
-        [>cmdline-window
-         [cmdline-input-window params]]
-
         :basic
         [basic-input-window params]))))

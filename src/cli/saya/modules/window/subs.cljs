@@ -91,5 +91,6 @@
    (subscribe [::buffer-subs/by-id [:conn/input connr]]))
  (fn [buffer]
    (->> (:lines buffer)
-        (map (partial apply str))
+        (map (partial mapcat :ansi))
+        (map (comp (partial apply str)))
         (str/join "\n"))))

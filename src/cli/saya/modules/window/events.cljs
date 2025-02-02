@@ -16,4 +16,7 @@
  (fn [db {:keys [connr text]}]
    ; NOTE: formatting string text like it's a buffer with :lines here:
    (assoc-in db [:buffers [:conn/input connr] :lines]
-             (map vector (str/split-lines text)))))
+             (->> text
+                  (str/split-lines)
+                  (map (fn [line]
+                         [{:ansi line}]))))))

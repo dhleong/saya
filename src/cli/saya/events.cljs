@@ -34,18 +34,20 @@
 (reg-event-fx
  :submit-raw-command
  [trim-v]
- (fn [_ [command-string]]
+ (fn [{:keys [db]} [command-string]]
    (try
      (let [parsed (parse-command command-string)]
        (if (:event parsed)
-         {:fx [[:dispatch [(:event parsed) parsed]]
+         {:db (update db :buffers dissoc :cmd)
+          :fx [[:dispatch [(:event parsed) parsed]]
                [:dispatch [:exit-command-mode]]]}
 
          (throw (ex-info (str "No such command: " (:command parsed))
                          {:parsed parsed}))))
      (catch :default e
         ; TODO: echo
-       {:fx [[:log (str e)]
+       {:db (update db :buffers dissoc :cmd)
+        :fx [[:log (str e)]
              [:dispatch [:exit-command-mode]]]}))))
 
 (reg-event-db

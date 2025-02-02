@@ -9,6 +9,7 @@
 (reg-sub :windows :-> :windows)
 (reg-sub :buffers :-> :buffers)
 (reg-sub :current-winnr :-> :current-winnr)
+(reg-sub :last-winnr :-> :last-winnr)
 
 (reg-sub
  :current-window

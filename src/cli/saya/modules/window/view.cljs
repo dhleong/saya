@@ -34,7 +34,8 @@
 
 (defn- input-window [connr]
   [input-window/input-window
-   {:initial-value (<sub [::subs/input-text connr])
+   {:bufnr [:conn/input connr]
+    :initial-value (<sub [::subs/input-text connr])
     :on-persist-value #(>evt [::window-events/set-input-text {:connr connr
                                                               :text %}])
     :on-submit #(>evt [:connection/send {:connr connr
@@ -74,7 +75,7 @@
      (fn []
        (when-some [el ref.current]
          (j/let [^:js {:keys [width height]} (k/measureElement el)]
-           (>evt [::window-events/on-measured {:id 0
+           (>evt [::window-events/on-measured {:id id
                                                :width width
                                                :height height}])))
        js/undefined))
@@ -84,7 +85,7 @@
                                                     :winnr id}])]
         (let [focused? (<sub [::subs/focused? id])
               {:keys [row col]} (when focused?
-                                  (<sub [::buffer-subs/buffer-cursor id]))
+                                  (<sub [::buffer-subs/buffer-cursor bufnr]))
               input-connr (when (<sub [::subs/input-focused? id])
                             (<sub [::buffer-subs/->connr bufnr]))
               last-row (first (last lines))

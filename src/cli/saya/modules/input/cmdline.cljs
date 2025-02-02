@@ -1,18 +1,12 @@
 (ns saya.modules.input.cmdline
   (:require
-   ["react" :as React]
-   [reagent.core :as r]))
+   ["ink" :as k]
+   [archetype.util :refer [<sub]]
+   [saya.modules.window.view :refer [window-view]]))
 
-(defonce ^:private cmdline-node (r/atom nil))
-(def set-node! (partial reset! cmdline-node))
-
-(defn <cmdline-window []
-  @cmdline-node)
-
-(defn >cmdline-window [& content]
-  (React/useEffect
-   (fn []
-     (set-node! (into [:<>] content))
-     (fn unmount-cmdline-window []
-       (set-node! nil))))
-  nil)
+(defn cmdline-window []
+  (when (= :cmdline (:id (<sub [:current-window])))
+    [:> k/Box {:height 5
+               :flex-direction :column
+               :width :100%}
+     [window-view :cmdline]]))
