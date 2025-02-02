@@ -5,7 +5,6 @@
    [archetype.util :refer [>evt]]
    [clojure.core.match :refer [match]]
    [reagent.core :as r]
-   [saya.cli.input :refer [use-keys]]
    [saya.cli.text-input :refer [text-input]]
    [saya.modules.input.core :as input]
    [saya.modules.input.events :as events]))
@@ -29,11 +28,12 @@
     [:cmdline :escape] (reset! state-ref :basic)
     :else nil))
 
-(defn- basic-input-window [{:keys [before input on-change on-submit]}]
+(defn- basic-input-window [{:keys [before input on-change on-key on-submit]}]
   [:> k/Box
    [:> k/Text before
     [text-input {:value input
                  :on-change on-change
+                 :on-key on-key
                  :cursor :pipe
                  :on-submit (fn [v]
                               (on-change v)
@@ -53,8 +53,15 @@
           on-submit (fn [v]
                       (on-change "")
                       (on-submit v))
+          on-key (partial on-key {:bufnr bufnr
+                                  :input-ref input-ref
+                                  :on-prepare-buffer on-prepare-buffer
+                                  :on-change on-change
+                                  :on-submit on-submit
+                                  :state-ref state-ref})
           params {:before before
                   :input input
+                  :on-key on-key
                   :on-change on-change
                   :on-submit on-submit}]
       (React/useEffect
@@ -65,13 +72,6 @@
                (when-not (= v initial-value)
                  (on-persist-value v))))))
        #js [])
-
-      (use-keys (partial on-key {:bufnr bufnr
-                                 :input-ref input-ref
-                                 :on-prepare-buffer on-prepare-buffer
-                                 :on-change on-change
-                                 :on-submit on-submit
-                                 :state-ref state-ref}))
 
       (case @state-ref
         :basic
