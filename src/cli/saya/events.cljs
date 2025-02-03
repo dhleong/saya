@@ -31,6 +31,12 @@
  (fn [_ [width height]]
    {:width width :height height}))
 
+(reg-event-db
+ ::set-global-cursor
+ [trim-v (path :cursor)]
+ (fn [_ [position]]
+   position))
+
 (reg-event-fx
  :submit-raw-command
  [trim-v]

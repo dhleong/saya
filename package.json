@@ -38,7 +38,7 @@
     "env-paths": "^3.0.0",
     "figures": "^3.2.0",
     "highlight.js": "11.0.1",
-    "ink": "^5.0.1",
+    "ink": "^5.1.0",
     "ink-spinner": "^5.0.0",
     "ink-use-stdout-dimensions": "^1.0.5",
     "react": "^18.3.1",
@@ -46,5 +46,10 @@
     "split2": "^4.2.0",
     "string-width": "^7.2.0",
     "strip-ansi": "^7.1.0"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "ink": "patches/ink.patch"
+    }
   }
 }

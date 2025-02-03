@@ -4,11 +4,16 @@
    [archetype.util :refer [<sub]]
    [saya.cli.fullscreen :refer [dimens-tracker fullscreen-box]]
    [saya.cli.input :as input]
+   [saya.modules.completion.view :refer [completion-menu]]
    [saya.modules.home.core :refer [home-view]]
    [saya.modules.ui.error-boundary :refer [error-boundary]]))
 
 (def ^:private pages
   {:home #'home-view})
+
+(defn- popup-menus []
+  [:<>
+   [completion-menu]])
 
 (defn main []
   (let [[page args] (<sub [:page])
@@ -29,4 +34,8 @@
            (str [page args])]]
 
          :else
-         page-form)]]]))
+         page-form)]]
+
+     ; Popup menus need to live here for absolute positioning to work correctly:
+     [error-boundary
+      [popup-menus]]]))

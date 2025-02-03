@@ -31,3 +31,6 @@
  (fn [[buffers bufnr]]
    (get buffers bufnr)))
 
+(reg-sub
+ :global-cursor
+ :-> :cursor)
