@@ -24,7 +24,7 @@
     [:delete] (let [[_ new-state] (swap-vals! state-ref update :cursor dec-to-zero)
                     [before after] (split-text-by-state new-state value)
                     new-value (str before (subs after 1))]
-                (on-change new-value))
+                (on-change new-value (:cursor new-state)))
 
     [:ctrl/a] (swap! state-ref assoc :cursor 0)
     [:ctrl/e] (swap! state-ref assoc :cursor (count value))
@@ -37,14 +37,15 @@
                          last-word-start (or (str/last-index-of value " " cursor) 0)]
                      (swap! state-ref assoc :cursor last-word-start)
                      (on-change (str (subs value 0 last-word-start)
-                                     (subs value cursor))))
+                                     (subs value cursor))
+                                last-word-start))
 
-    [(key :guard string?)] (let [[old-state _] (swap-vals! state-ref
-                                                           update
-                                                           :cursor + (count key))
+    [(key :guard string?)] (let [[old-state {:keys [cursor]}] (swap-vals! state-ref
+                                                                          update
+                                                                          :cursor + (count key))
                                  [before after] (split-text-by-state old-state value)
                                  new-value (str before key after)]
-                             (on-change new-value))
+                             (on-change new-value cursor))
 
     :else (on-key key)))
 
