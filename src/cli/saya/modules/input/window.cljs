@@ -8,6 +8,7 @@
    [saya.cli.text-input :refer [text-input]]
    [saya.modules.completion.events :as completion-events]
    [saya.modules.completion.helpers :refer [refresh-completion]]
+   [saya.modules.completion.subs :as completion-subs]
    [saya.modules.input.core :as input]
    [saya.modules.input.events :as events]
    [saya.modules.logging.core :refer [log]]))
@@ -30,6 +31,7 @@
                 (on-change "")
                 (when-not (seq input)
                   (>evt [::input/on-key key])))
+
     ; See input.core
     [:escape] (>evt [::input/on-key key])
     :else nil))
@@ -75,6 +77,9 @@
                      :on-change on-change
                      :on-key on-key
                      :cursor :pipe
+                     :completion-word (<sub [::completion-subs/word-to-complete])
+                     :completion-candidates (<sub [::completion-subs/candidates])
+                     :ghost (<sub [::completion-subs/ghost])
                      :on-submit (fn [v]
                                   (on-change v)
                                   (on-submit v))}]]])))

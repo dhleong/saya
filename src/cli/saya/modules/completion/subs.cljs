@@ -19,9 +19,14 @@
  :-> :completion)
 
 (reg-sub
- ::left-offset
+ ::word-to-complete
  :<- [::state]
- :-> (fn [{:keys [word-to-complete]}]
+ :-> :word-to-complete)
+
+(reg-sub
+ ::left-offset
+ :<- [::word-to-complete]
+ :-> (fn [word-to-complete]
        (when (seq word-to-complete)
          (- (count word-to-complete)))))
 
@@ -29,3 +34,13 @@
  ::candidates
  :<- [::state]
  :-> :candidates)
+
+(reg-sub
+ ::ghost
+ :<- [::left-offset]
+ :<- [::candidates]
+ :-> (fn [[left-offset candidates]]
+       (let [ghost-offset (- left-offset)
+             candidate (first candidates)]
+         (when (> (count candidate) ghost-offset)
+           (subs candidate ghost-offset)))))
