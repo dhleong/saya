@@ -27,7 +27,8 @@
       new-state)))
 
 (defn- clamp-to-candidates [candidates idx]
-  (when-not (>= idx (count candidates))
+  (when-not (or (>= idx (count candidates))
+                (< idx 0))
     idx))
 
 (defn next-candidate [state index-pred value completion]
@@ -57,8 +58,20 @@
 
       state')))
 
-(defn- on-key [{:keys [completion-candidates completion-word
-                       on-change on-key on-submit]}
+(defn- cycle-completion-candidates [{:keys [on-change completion-candidates completion-word]}
+                                    state-ref index-pred value]
+  (let [new-completion {:word completion-word :candidates completion-candidates}
+        [_ new-state] (swap-vals! state-ref next-candidate index-pred value new-completion)]
+    ; Storing this result in the state like this is pretty gross:
+    (when-let [value' (:result (:completion new-state))]
+      (on-change value' (:cursor new-state)
+                 {:applied-candidate (when-some [idx (:index (:completion new-state))]
+                                       (nth (:candidates (:completion new-state))
+                                            idx))}))))
+
+(defn- on-key [{:keys [completion-candidates _completion-word
+                       on-change on-key on-submit]
+                :as params}
                state-ref value key]
   (match [key]
     [:return] (on-submit value)
@@ -81,14 +94,11 @@
                                      (subs value cursor))
                                 last-word-start))
 
-    [:tab] (let [new-completion {:word completion-word :candidates completion-candidates}
-                 [_ new-state] (swap-vals! state-ref next-candidate (fnil inc -1) value new-completion)]
-             ; This is pretty gross:
-             (when-let [value' (:result (:completion new-state))]
-               (on-change value' (:cursor new-state)
-                          {:applied-candidate (when-some [idx (:index (:completion new-state))]
-                                                (nth (:candidates (:completion new-state))
-                                                     idx))})))
+    [:tab] (cycle-completion-candidates params state-ref (fnil inc -1) value)
+    [:shift/tab] (cycle-completion-candidates
+                  params state-ref
+                  (fnil dec (count completion-candidates))
+                  value)
 
     [(key :guard string?)] (let [[old-state {:keys [cursor]}] (swap-vals! state-ref
                                                                           update
