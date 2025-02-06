@@ -85,7 +85,10 @@
                  [_ new-state] (swap-vals! state-ref next-candidate (fnil inc -1) value new-completion)]
              ; This is pretty gross:
              (when-let [value' (:result (:completion new-state))]
-               (on-change value')))
+               (on-change value' (:cursor new-state)
+                          {:applied-candidate (when-some [idx (:index (:completion new-state))]
+                                                (nth (:candidates (:completion new-state))
+                                                     idx))})))
 
     [(key :guard string?)] (let [[old-state {:keys [cursor]}] (swap-vals! state-ref
                                                                           update

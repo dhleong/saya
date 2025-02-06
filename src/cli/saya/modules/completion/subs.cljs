@@ -24,11 +24,20 @@
  :-> :word-to-complete)
 
 (reg-sub
+ ::applied-candidate
+ :<- [::state]
+ :-> :applied-candidate)
+
+(reg-sub
  ::left-offset
+ :<- [::applied-candidate]
  :<- [::word-to-complete]
- :-> (fn [word-to-complete]
-       (when (seq word-to-complete)
-         (- (count word-to-complete)))))
+ :-> (fn [[applied-candidate word-to-complete]]
+       (or (when (seq applied-candidate)
+             (- (count applied-candidate)))
+
+           (when (seq word-to-complete)
+             (- (count word-to-complete))))))
 
 (reg-sub
  ::candidates

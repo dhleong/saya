@@ -9,6 +9,12 @@
    (assoc-in db [:buffers bufnr :completion :word-to-complete] word-to-complete)))
 
 (reg-event-db
+ ::on-applied-candidate
+ [unwrap]
+ (fn [db {:keys [bufnr candidate]}]
+   (assoc-in db [:buffers bufnr :completion :applied-candidate] candidate)))
+
+(reg-event-db
  ::on-candidates
  [unwrap]
  (fn [db {:keys [bufnr candidates]}]

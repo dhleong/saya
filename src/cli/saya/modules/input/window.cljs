@@ -43,9 +43,9 @@
   (r/with-let [input-ref (atom (or initial-value ""))]
     (let [[input set-input!] (React/useState @input-ref)
           on-change (React/useCallback
-                     (fn [v cursor]
+                     (fn [v cursor completion-opts]
                        (when completion
-                         (refresh-completion completion bufnr v cursor))
+                         (refresh-completion completion bufnr v cursor completion-opts))
                        (set-input! v)
                        (reset! input-ref v))
                      #js [])
