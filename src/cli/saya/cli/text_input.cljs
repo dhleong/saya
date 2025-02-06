@@ -21,8 +21,8 @@
 
 (defn- try-update-completion [state {:keys [word] :as new-state}]
   (when word
-    (if (str/starts-with? word (:word state))
-      ; Further typing; don't change
+    (if (some? (:index state))
+      ; If there's a non-nil index, we're cycling through candidates
       state
       new-state)))
 

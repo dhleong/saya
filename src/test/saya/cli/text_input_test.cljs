@@ -32,4 +32,22 @@
                          (fnil inc -1)
                          "connect"
                          {:word "connect"
+                          :candidates ["connect"]}))))
+
+  (testing "Ensure cycling works when restarting a continued completion"
+    ; EG: co<tab><s-tab>n<tab><s-tab> -> `con`
+    (is (=
+         {:cursor 7
+          :completion {:word "con"
+                       :candidates ["connect"]
+                       :result "connect"
+                       :index 0}}
+         (next-candidate {:cursor 7
+                          :completion {:word "co"
+                                       :candidates ["connect"]
+                                       :result "connect"
+                                       :index nil}}
+                         (fnil inc -1)
+                         "con"
+                         {:word "con"
                           :candidates ["connect"]})))))
