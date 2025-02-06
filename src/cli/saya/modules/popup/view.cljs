@@ -32,11 +32,12 @@
         [box-dimens set-box-dimens!] (React/useState)
 
         {:keys [x y]} (<sub [:global-cursor])
-        {:keys [height]} (<sub [:dimens])
+        {:keys [height width]} (<sub [:dimens])
         below? (<= y 5)
         positioning (if below?
                       {:top y}
-                      {:bottom (- height y)})]
+                      {:bottom (- height y)})
+        box-width (:width box-dimens)]
 
     (React/useLayoutEffect
      (fn []
@@ -60,5 +61,7 @@
                         positioning
                         {:ref box-ref
                          :position :absolute
-                         :left (+ x (:left options 0))})]
+                         :left (-> (+ x (:left options 0))
+                                   (max 0)
+                                   (min (- width box-width)))})]
              children)])))

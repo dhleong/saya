@@ -16,7 +16,9 @@
         candidates (<sub [::subs/candidates])]
     (when left-offset
       [popup-menu {:flex-direction :column
-                   :left left-offset}
+                   :left (dec left-offset)} ; the dec accounts for the padding
        (for [c candidates]
          ^{:key c}
-         [completion-line {:selected? (= c applied-candidate)} c])])))
+         [completion-line {:selected? (= c applied-candidate)}
+          ; NOTE: "Fake" padding so we have a nice bg
+          " " c " "])])))
