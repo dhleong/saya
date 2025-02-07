@@ -8,4 +8,4 @@
  ::recent-logs
  :<- [::all-logs]
  :-> (fn [log]
-       (take-last 2 log)))
+       (distinct (take-last 2 log))))
