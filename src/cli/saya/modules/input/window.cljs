@@ -6,6 +6,9 @@
    [clojure.core.match :refer [match]]
    [reagent.core :as r]
    [saya.cli.text-input :refer [text-input]]
+   [saya.modules.completion.events :as completion-events]
+   [saya.modules.completion.helpers :refer [refresh-completion]]
+   [saya.modules.completion.subs :as completion-subs]
    [saya.modules.input.core :as input]
    [saya.modules.input.events :as events]
    [saya.modules.logging.core :refer [log]]))
@@ -28,23 +31,28 @@
                 (on-change "")
                 (when-not (seq input)
                   (>evt [::input/on-key key])))
+
     ; See input.core
     [:escape] (>evt [::input/on-key key])
     :else nil))
 
 (defn input-window [{:keys [initial-value on-persist-value on-submit
-                            on-prepare-buffer before bufnr]}]
+                            on-prepare-buffer before bufnr
+                            completion]}]
   {:pre [(not (and on-persist-value on-prepare-buffer))]}
   (r/with-let [input-ref (atom (or initial-value ""))]
     (let [[input set-input!] (React/useState @input-ref)
           on-change (React/useCallback
-                     (fn [v]
+                     (fn [v cursor completion-opts]
+                       (when completion
+                         (refresh-completion completion bufnr v cursor completion-opts))
                        (set-input! v)
                        (reset! input-ref v))
                      #js [])
           on-submit (fn [v]
                       (on-change "")
                       (on-submit v))
+
           on-key (partial on-key {:bufnr bufnr
                                   :winnr (<sub [:current-winnr])
                                   :input-ref input-ref
@@ -53,7 +61,10 @@
                                   :on-submit on-submit})]
       (React/useEffect
        (fn []
+         (>evt [::completion-events/set-bufnr bufnr])
+
          (fn on-dismount []
+           (>evt [::completion-events/unset-bufnr bufnr])
            (when on-persist-value
              (let [v @input-ref]
                (when-not (= v initial-value)
@@ -66,6 +77,9 @@
                      :on-change on-change
                      :on-key on-key
                      :cursor :pipe
+                     :completion-word (<sub [::completion-subs/word-to-complete])
+                     :completion-candidates (<sub [::completion-subs/candidates])
+                     :ghost (<sub [::completion-subs/ghost])
                      :on-submit (fn [v]
                                   (on-change v)
                                   (on-submit v))}]]])))

@@ -1,0 +1,23 @@
+diff --git a/build/styles.js b/build/styles.js
+index 91c54445639cdf31dbb75c5ecdc2042991c837eb..ec2e4214156810f48297ea461f2949d321777ff7 100644
+--- a/build/styles.js
++++ b/build/styles.js
+@@ -5,6 +5,18 @@ const applyPositionStyles = (node, style) => {
+             ? Yoga.POSITION_TYPE_ABSOLUTE
+             : Yoga.POSITION_TYPE_RELATIVE);
+     }
++    if ('top' in style) {
++        node.setPosition(Yoga.EDGE_TOP, style.top || 0);
++    }
++    if ('bottom' in style) {
++        node.setPosition(Yoga.EDGE_BOTTOM, style.bottom || 0);
++    }
++    if ('left' in style) {
++        node.setPosition(Yoga.EDGE_LEFT, style.left || 0);
++    }
++    if ('right' in style) {
++        node.setPosition(Yoga.EDGE_RIGHT, style.right || 0);
++    }
+ };
+ const applyMarginStyles = (node, style) => {
+     if ('margin' in style) {

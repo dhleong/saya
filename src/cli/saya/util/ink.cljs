@@ -2,6 +2,7 @@
   (:require
    ["ansi-escapes" :as ansi]
    [applied-science.js-interop :as j]
+   [archetype.util :refer [>evt]]
    [clojure.string :as str]
    [saya.modules.ui.cursor :refer [extract-cursor-position get-cursor-shape
                                    strip-cursor]]))
@@ -37,8 +38,9 @@
             (.write out ansi/eraseLine)
             (.write out this)))))
 
-    (if-let [{:keys [x y]} (extract-cursor-position lines)]
+    (if-let [{:keys [x y] :as position} (extract-cursor-position lines)]
       (let [shape (get-cursor-shape)]
+        (>evt [:saya.events/set-global-cursor position])
         (swap! metrics assoc :moved-cursor [x y shape])
         (.write out (ansi/cursorTo x y))
         (.write out (case shape
@@ -49,7 +51,10 @@
                       :pipe/blink (ansi-cursor 5)
                       :pipe (ansi-cursor 6)))
         (.write out ansi/cursorShow))
-      (.write out ansi/cursorHide))
+
+      (do
+        (>evt [:saya.events/set-global-cursor nil])
+        (.write out ansi/cursorHide)))
 
     (-> state
         (update :history (fnil conj []) lines)
