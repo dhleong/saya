@@ -44,5 +44,8 @@
                              :keep-native-requires true
                              :keep-as-require #{"ansi-escapes"}}}
 
-          :ci-node {:target :node-test
-                    :output-to "target/ci-node.cjs"}}}
+          :ci-node {:target :esm-files
+                    :ns-regexp "((^saya.ci)|-test)$"
+                    :output-dir "target/ci"
+                    :js-options {:js-provider :import}
+                    :output-to "target/ci-node.js"}}}

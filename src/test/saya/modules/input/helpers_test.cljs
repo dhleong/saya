@@ -1,7 +1,8 @@
 (ns saya.modules.input.helpers-test
   (:require
-   [clojure.test :refer [deftest testing is]]
-   ; [saya.modules.input.helpers :refer [adjust-scroll-to-cursor]]
+   [clojure.test :refer [deftest is testing]]
+   [saya.modules.input.helpers :refer [adjust-scroll-to-cursor
+                                       current-buffer-line]]
    [saya.modules.input.test-helpers :refer [make-context]]))
 
 (deftest adjust-scroll-to-cursor-test
@@ -11,8 +12,9 @@
                         honor of
                         |Greyskull"
                :window {:height 2 :anchor-row 1})
-          ; FIXME:
-          ctx' nil #_(adjust-scroll-to-cursor ctx)]
+          ctx' (adjust-scroll-to-cursor ctx)]
       (is (nil? (:anchor-row (:window ctx'))))
       (is (= {:row 2 :col 0}
-             (:cursor (:buffer ctx')))))))
+             (:cursor (:buffer ctx'))))
+      ; TODO: Remove this; just here to validate the import
+      (is (= nil (current-buffer-line (:buffer ctx')))))))
