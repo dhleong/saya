@@ -45,4 +45,4 @@
                              :keep-as-require #{"ansi-escapes"}}}
 
           :ci-node {:target :node-test
-                    :output-to "target/ci-node.js"}}}
+                    :output-to "target/ci-node.cjs"}}}
