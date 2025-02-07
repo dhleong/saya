@@ -15,7 +15,7 @@
                    keys
                    (filter (fn [s]
                              (some? (re-find re (str s))))))
-         registry-path "src/target/saya/ci.cljs"]
+         registry-path "target/ci-src/saya/ci.cljs"]
      (make-parents registry-path)
      (spit
       registry-path
@@ -33,4 +33,6 @@
   (js/process.exit (min (+ fail error) 1)))
 
 (test/run-all-tests #\".*-test$\")")))
+
+   ; TODO: Add it to build-state
    build-state))

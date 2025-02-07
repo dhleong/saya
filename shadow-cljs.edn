@@ -6,8 +6,8 @@
                 "src/cli"
 
                 ; build hooks + output:
-                "src/build"
-                "src/target"
+                "src/hooks"
+                "target/ci-src"
 
                 "src/test"]
 
