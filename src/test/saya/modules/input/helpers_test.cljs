@@ -1,8 +1,7 @@
 (ns saya.modules.input.helpers-test
   (:require
    [clojure.test :refer [deftest is testing]]
-   [saya.modules.input.helpers :refer [adjust-scroll-to-cursor
-                                       current-buffer-line]]
+   [saya.modules.input.helpers :refer [adjust-scroll-to-cursor]]
    [saya.modules.input.test-helpers :refer [make-context]]))
 
 (deftest adjust-scroll-to-cursor-test
@@ -15,6 +14,4 @@
           ctx' (adjust-scroll-to-cursor ctx)]
       (is (nil? (:anchor-row (:window ctx'))))
       (is (= {:row 2 :col 0}
-             (:cursor (:buffer ctx'))))
-      ; TODO: Remove this; just here to validate the import
-      (is (= nil (current-buffer-line (:buffer ctx')))))))
+             (:cursor (:buffer ctx')))))))
