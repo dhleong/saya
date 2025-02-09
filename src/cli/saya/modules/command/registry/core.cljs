@@ -1,4 +1,4 @@
-(ns saya.modules.command.core
+(ns saya.modules.command.registry.core
   (:require
    [re-frame.core :refer [reg-event-fx]]
    [saya.modules.command.interceptors :refer [aliases]]))

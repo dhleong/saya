@@ -1,4 +1,4 @@
-(ns saya.modules.command.connection
+(ns saya.modules.command.registry.connection
   (:require
    [re-frame.core :refer [reg-event-fx unwrap]]
    [saya.config :as config]
