@@ -19,7 +19,7 @@
     "old": "pnpm old:clojure; pnpm outdated",
     "clean": "rm -rf resources/public/js/* && rm -rf target",
     "test:node:old": "shadow-cljs compile ci-node && node target/ci-node.js",
-    "test:node": "shadow-cljs compile ci-node && node target/ci/.js",
+    "test:node": "shadow-cljs compile ci-node && node target/ci/saya.ci.js",
     "test": "pnpm test:node"
   },
   "keywords": [

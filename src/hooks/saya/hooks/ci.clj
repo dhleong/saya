@@ -1,7 +1,6 @@
 (ns saya.hooks.ci
   (:require
    [clojure.java.io :refer [file make-parents]]
-   [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [shadow.build.classpath :as cp]
    [shadow.build.data :as data]))
@@ -21,7 +20,7 @@
 
          registry-name "saya/ci.cljs"
          registry-path "target/ci-src/saya/ci.cljs"
-         resource-id [:shadow.build.classpath/resource registry-name]
+
          src (str "
 (ns saya.ci
  (:require
@@ -48,27 +47,16 @@
                         (assoc
                          :type :cljs
                          :output-name "saya.ci.js"
-                         :provides #{}
+                         :ns "saya.ci"
+                         :provides '#{saya.ci}
                          :requires (into #{} syms)
                          :deps (into [] syms))))]
-
-     (println syms)
-     (println (s/explain-str
-               :shadow.build.resource/resource
-               resource))
-
-     ; (println (take 4 (map (fn [[k v]]
-     ;                         [k (type v)])
-     ;                       (:classpath build-state))))
-     ; (println (cp/make-fs-resource (file registry-path) registry-name))
-
-     (println resource)
 
      (cp/file-add (:classpath build-state)
                   (.getParentFile (.getParentFile (file registry-path)))
                   (file registry-path))
 
-     ; TODO: Add it to build-state
+     ; Add it to build-state
      (-> build-state
          (data/add-source resource)
-         (update :build-sources conj resource-id)))))
+         (update :build-sources conj (:resource-id resource))))))
