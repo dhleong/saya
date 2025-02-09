@@ -15,7 +15,7 @@
             cursor-col (str/index-of line "|")]
         (recur (next raw-lines)
                indent
-               (conj lines (str/replace line #"|" ""))
+               (conj lines (str/replace line #"\|" ""))
                (cond
                  cursor-col
                  (assoc cursor :col cursor-col)
@@ -31,10 +31,10 @@
 
 (defn str->buffer [s]
   (let [[lines cursor] (extract-lines-and-cursor s)]
-    {:lines (map (fn [line-str]
-                   {:ansi line-str
-                    :plain line-str})
-                 lines)
+    {:lines (mapv (fn [line-str]
+                    [{:ansi line-str
+                      :plain line-str}])
+                  lines)
      :cursor cursor}))
 
 (defn make-context [& {:keys [buffer window]}]

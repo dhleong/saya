@@ -67,7 +67,11 @@
             [cursor cursor-type])
           (if (vector? part)
             (into [(system-messages (first part))] (rest part))
-            [:> k/Text part])])]]
+            [:> k/Text part])])
+
+       ; cursor at eol
+       (when (= cursor-col (count line))
+         [cursor cursor-type])]]
      (when input-connr
        [input-window input-connr])]))
 

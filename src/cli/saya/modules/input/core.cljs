@@ -4,6 +4,7 @@
    [re-frame.core :refer [reg-event-fx trim-v]]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
    [saya.modules.input.fx :as fx]
+   [saya.modules.input.insert :as insert]
    [saya.modules.input.keymaps :as keymaps]
    [saya.modules.input.normal :as normal]))
 
@@ -38,6 +39,10 @@
        :as cofx}
       [key]]
    (match [mode key {:bufnr? (some? bufnr)
+                     :readonly? (or (some? connr)
+                                    (some? (some #{:readonly}
+                                                 (get-in db [:buffers bufnr :flags])))
+                                    false)
                      :submit? (some? (get-in db [:windows winnr :on-submit]))}]
      [:normal ":" _] {:db (assoc db :mode :command)}
 
@@ -49,34 +54,43 @@
      [:normal "i" {:bufnr? true}] {:db (assoc db :mode :insert)}
 
      [:normal key {:bufnr? true}]
-     (let [new-buffer ((fnil conj []) keymap-buffer key)
-           keymap (get normal/keymaps new-buffer)]
-       (cond
-         keymap
-         (keymaps/perform cofx keymap)
-
-         (keymaps/possible? db :normal new-buffer)
-         {:db (assoc db :keymap-buffer new-buffer)}
-
-         :else
-         {:db (dissoc db :keymap-buffer)}))
+     (keymaps/maybe-perform-with-keymap-buffer
+      :keymaps normal/keymaps
+      :keymap-buffer keymap-buffer
+      :cofx cofx
+      :key key)
 
      [:command :escape _] {:db (cond-> db
                                  :always (assoc :mode :normal)
-                                   ; Only clear if we're not in the cmdline window
+                                 ; Only clear if we're not in the cmdline window
                                  (not= :cmd bufnr) (update :buffers dissoc :cmd))}
      [:command :ctrl/c _] {:db (-> db
                                    ; Always clear:
                                    (assoc :mode :normal)
                                    (update :buffers dissoc :cmd))}
 
-; TODO: If we're in an input window, that should be handled
+     ; TODO: If we're in an input window, that should be handled
      ; special somehow (escaping to normal mode should not cause
      ; us to leave that input window!)
      [:insert :escape _] {:db (assoc db :mode :normal)}
      [:insert :ctrl/c _] {:db (-> db
                                   (assoc :mode :normal)
                                   (update :buffers dissoc [:conn/input connr]))}
+     [:insert key {:bufnr? true
+                   :readonly? false}]
+     (keymaps/maybe-perform-with-keymap-buffer
+      :keymaps insert/keymaps
+      :keymap-buffer keymap-buffer
+      :key key
+      :cofx cofx
+      :with-unhandled (fn [cofx]
+                        (if (string? key)
+                          (try
+                            (insert/insert-at-buffer cofx key)
+                            (catch :default e
+                              (assoc cofx :fx [[:log ["error: " e]]])))
+
+                          cofx)))
 
      :else nil
      #_{:fx [[:log ["unhandled: " mode key]]]})))
