@@ -1,6 +1,7 @@
 (ns saya.modules.command.registry
   (:require
    [re-frame.registrar :refer [get-handler]]
+   [saya.modules.command.registry.buffer]
    [saya.modules.command.registry.connection]
    [saya.modules.command.registry.core]))
 

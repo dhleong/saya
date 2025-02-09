@@ -41,6 +41,22 @@
                 (->> (assoc-in original-db path db)
                      (assoc-effect context' :db)))))))
 
+(defn create-blank
+  ([db] (create-blank db {}))
+  ([db {:keys [buffer]}]
+   (let [[db buffer] (allocate-buffer db (merge
+                                          buffer
+                                          {:lines []
+                                           :cursor {:row 0 :col 0}}))
+         ; TODO: Possibly reuse the current window?
+         [db window] (allocate-window db {:bufnr (:id buffer)
+                                          :anchor-row nil})]
+     [(-> db
+          (assoc :current-winnr (:id window)))
+
+      {:buffer buffer
+       :window window}])))
+
 (defn create-for-connection [db {:keys [connection-id uri]}]
   (let [current-winnr (:current-winnr db)
         current-window (get-in db [:windows current-winnr])
@@ -56,14 +72,12 @@
                   (:id current-buffer)))
 
       ; TODO: Also, tabpage
-      (let [[db buffer] (allocate-buffer db {:uri uri
-                                             :connection-id connection-id
-                                             :lines []
-                                             :cursor {:row 0 :col 0}})
-            [db window] (allocate-window db {:bufnr (:id buffer)
-                                             :anchor-row nil})]
+      (let [[db {buffer :buffer}] (create-blank
+                                   db
+                                   {:buffer
+                                    {:uri uri
+                                     :connection-id connection-id}})]
         (-> db
-            (assoc :current-winnr (:id window))
             (update :connection->bufnr
                     assoc
                     connection-id
