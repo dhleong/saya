@@ -5,6 +5,10 @@
                 ; cli app:
                 "src/cli"
 
+                ; build hooks + output:
+                "src/hooks"
+                "target/ci-src"
+
                 "src/test"]
 
  :dependencies [; core:
@@ -44,5 +48,8 @@
                              :keep-native-requires true
                              :keep-as-require #{"ansi-escapes"}}}
 
-          :ci-node {:target :node-test
-                    :output-to "target/ci-node.js"}}}
+          :ci-node {:target :esm-files
+                    :ns-regexp "((^saya.ci)|(-test$))"
+                    :output-dir "target/ci"
+                    :js-options {:js-provider :import}
+                    :build-hooks [(saya.hooks.ci/generate-tests-registry)]}}}

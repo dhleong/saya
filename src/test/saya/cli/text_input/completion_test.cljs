@@ -1,7 +1,7 @@
-(ns saya.cli.text-input-test
+(ns saya.cli.text-input.completion-test
   (:require
    [clojure.test :refer [deftest testing is]]
-   [saya.cli.text-input :refer [next-candidate]]))
+   [saya.cli.text-input.completion :refer [next-candidate]]))
 
 (deftest completion-test
   (testing "Complete single candidate with no state"
