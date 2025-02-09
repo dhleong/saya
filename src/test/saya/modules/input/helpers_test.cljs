@@ -1,6 +1,6 @@
 (ns saya.modules.input.helpers-test
   (:require
-   [clojure.test :refer [deftest is testing]]
+   [clojure.test :refer [deftest testing is]]
    [saya.modules.input.helpers :refer [adjust-scroll-to-cursor]]
    [saya.modules.input.test-helpers :refer [make-context]]))
 
