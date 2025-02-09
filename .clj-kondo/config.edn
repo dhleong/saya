@@ -1,6 +1,7 @@
 {:linters {:unresolved-symbol {:exclude [goog.DEBUG
 
-                                         (com.rpl.specter/recursive-path)]}}
+                                         (com.rpl.specter/recursive-path)]}
+           :redundant-ignore {:exclude [:clojure-lsp/unused-public-var]}}
  :lint-as {applied-science.js-interop/defn clojure.core/defn
            applied-science.js-interop/let clojure.core/let
            applied-science.js-interop/fn clojure.core/fn
