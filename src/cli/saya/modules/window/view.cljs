@@ -5,6 +5,7 @@
    [applied-science.js-interop :as j]
    [archetype.util :refer [<sub >evt]]
    [saya.modules.buffers.subs :as buffer-subs]
+   [saya.modules.connection.completion :refer [->ConnectionCompletionSource]]
    [saya.modules.input.window :as input-window]
    [saya.modules.ui.cursor :refer [cursor]]
    [saya.modules.ui.placeholders :as placeholders]
@@ -36,6 +37,7 @@
   [input-window/input-window
    {:bufnr [:conn/input connr]
     :initial-value (<sub [::subs/input-text connr])
+    :completion (->ConnectionCompletionSource connr)
     :on-persist-value #(>evt [::window-events/set-input-text {:connr connr
                                                               :text %}])
     :on-submit #(>evt [:connection/send {:connr connr
