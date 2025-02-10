@@ -1,7 +1,6 @@
 (ns saya.modules.ui.cursor
   (:require
    ["ink" :as k]
-   ["react" :as React]
    ["strip-ansi" :default strip-ansi]
    [clojure.string :as str]))
 
@@ -35,11 +34,10 @@
   (str/replace s cursor-text ""))
 
 (defn- f>cursor [shape]
-  (React/useEffect
-   (fn []
-     (reset! shape-ref shape)
+  ; HACKS: This should *really* be a useLayoutEffect, but
+  ; that doesn't seem to consistently happen in time...?
+  (reset! shape-ref shape)
 
-     js/undefined))
   [:> k/Text cursor-text])
 
 (defn cursor
