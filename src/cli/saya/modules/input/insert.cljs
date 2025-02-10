@@ -2,12 +2,16 @@
   (:require
    [clojure.string :as str]
    [saya.modules.ansi.split :as split]
-   [saya.modules.input.normal :refer [to-end-of-line to-start-of-line]]))
+   [saya.modules.input.helpers :refer [current-buffer-eol-col]]
+   [saya.modules.input.normal :refer [to-start-of-line]]))
+
+(defn to-after-end-of-line [{:keys [buffer]}]
+  {:buffer (assoc-in buffer [:cursor :col]
+                     (current-buffer-eol-col buffer))})
 
 (def movement-keymaps
   {[:ctrl/a] to-start-of-line
-   ; FIXME: actually go *after* eol
-   [:ctrl/e] to-end-of-line})
+   [:ctrl/e] to-after-end-of-line})
 
 ; TODO: basic delete keymaps like :delete
 

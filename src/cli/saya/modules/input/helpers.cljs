@@ -13,9 +13,12 @@
   (max 0
        (dec (count (:lines buffer)))))
 
+(defn current-buffer-eol-col [buffer]
+  (count (current-buffer-line buffer)))
+
 (defn current-buffer-line-last-col [buffer]
   (max 0
-       (dec (count (current-buffer-line buffer)))))
+       (dec (current-buffer-eol-col buffer))))
 
 (defn clamp-scroll [{:keys [window buffer] :as ctx}]
   (let [{:keys [height anchor-row]} window]
