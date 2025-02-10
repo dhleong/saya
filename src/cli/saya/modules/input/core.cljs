@@ -47,9 +47,9 @@
       [key]]
    (match [mode key {:bufnr? (some? bufnr)
                      :readonly? (or (some? connr)
-                                    (some? (some #{:readonly}
-                                                 (get-in db [:buffers bufnr :flags])))
-                                    false)
+                                    (some? (some
+                                            #{:readonly}
+                                            (get-in db [:buffers bufnr :flags]))))
                      :submit? (some? (get-in db [:windows winnr :on-submit]))}]
      [:normal ":" _] {:db (assoc db :mode :command)}
 
