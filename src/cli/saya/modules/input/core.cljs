@@ -32,6 +32,12 @@
           (assoc db :mode :command))
     :dispatch [:command/quit]}))
 
+(defn- exit-insert-mode [{:keys [db] :as cofx}]
+  (-> (keymaps/perform cofx (update-cursor :col dec))
+      :db
+      (or db)
+      (assoc :mode :normal)))
+
 (reg-event-fx
  ::on-key
  [with-buffer-context trim-v]
@@ -74,14 +80,9 @@
      ; TODO: If we're in an input window, that should be handled
      ; special somehow (escaping to normal mode should not cause
      ; us to leave that input window!)
-     [:insert :escape _] {:db (-> (keymaps/perform cofx (update-cursor :col dec))
-                                  :db
-                                  (or db)
-                                  (assoc :mode :normal))}
-     [:insert :ctrl/c _] {:db (-> (keymaps/perform cofx (update-cursor :col dec))
-                                  :db
-                                  (or db)
-                                  (assoc :mode :normal)
+     [:insert :escape _] {:db (exit-insert-mode cofx)}
+     [:insert :ctrl/c _] {:db (-> cofx
+                                  (exit-insert-mode)
                                   (update :buffers dissoc [:conn/input connr]))}
      [:insert key {:bufnr? true
                    :readonly? false}]
