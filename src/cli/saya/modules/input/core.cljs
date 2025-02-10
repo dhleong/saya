@@ -86,7 +86,9 @@
       :with-unhandled (fn [cofx]
                         (if (string? key)
                           (try
-                            (insert/insert-at-buffer cofx key)
+                            (keymaps/perform
+                             cofx
+                             #(insert/insert-at-cursor % key))
                             (catch :default e
                               (assoc cofx :fx [[:log ["error: " e]]])))
 

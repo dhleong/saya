@@ -1,37 +1,32 @@
 (ns saya.modules.input.insert-test
   (:require
-   [cljs.test :refer-macros [deftest is testing]]
-   [saya.db :refer [default-db]]
-   [saya.modules.buffers.events :as buffer-events]
-   [saya.modules.input.insert :refer [insert-at-buffer]]
-   [saya.modules.input.test-helpers :refer [str->buffer]]))
-
-(defn create-cofx
-  ([] (create-cofx {}))
-  ([& {:keys [buffer]}]
-   (let [[db {created-buffer :buffer}] (-> default-db
-                                           (buffer-events/create-blank))
-         bufnr (:id created-buffer)]
-     {:db (cond-> db
-            buffer (update-in [:buffers bufnr] merge (str->buffer buffer)))
-      :bufnr bufnr})))
-
-(defn- get-buffer
-  ([cofx] (get-buffer cofx 0))
-  ([cofx id]
-   (-> (get-in cofx [:db :buffers id])
-       (dissoc :id))))
+   [cljs.test :refer-macros [deftest testing]]
+   [saya.modules.input.insert :refer [backspace insert-at-cursor]]
+   [saya.modules.input.test-helpers :refer [with-keymap-compare-buffer]]))
 
 (deftest insert-key-at-buffer-test
   (testing "Insert key into empty buffer"
-    (let [cofx (create-cofx)
-          cofx' (insert-at-buffer cofx "f")]
-      (is (= (str->buffer "f|")
-             (get-buffer cofx')))))
+    (with-keymap-compare-buffer #(insert-at-cursor % "f")
+      :empty
+      "f|"))
 
   (testing "Insert key at end of first line"
-    (let [cofx (create-cofx :buffer "f|")
-          cofx' (insert-at-buffer cofx "o")]
-      (is (= (str->buffer "fo|")
-             (get-buffer cofx'))))))
+    (with-keymap-compare-buffer #(insert-at-cursor % "o")
+      "f|"
+      "fo|")))
 
+(deftest backspace-test
+  (testing "Backspace no-op in empty buffer"
+    (with-keymap-compare-buffer backspace
+      :empty
+      "|"))
+
+  (testing "Backspace at end of line"
+    (with-keymap-compare-buffer backspace
+      "for the honor|"
+      "for the hono|"))
+
+  (testing "Backspace in the middle of line"
+    (with-keymap-compare-buffer backspace
+      "for the| honor"
+      "for th| honor")))

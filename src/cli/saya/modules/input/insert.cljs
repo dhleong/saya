@@ -1,9 +1,22 @@
 (ns saya.modules.input.insert
   (:require
-   [clojure.string :as str]
-   [saya.modules.ansi.split :as split]
+   [saya.cli.text-input.helpers :refer [dec-to-zero split-text-by-state]]
    [saya.modules.input.helpers :refer [current-buffer-eol-col]]
    [saya.modules.input.normal :refer [to-start-of-line]]))
+
+(defn- line->string [line]
+  (->> line
+       (mapcat :ansi)
+       (apply str)))
+
+(defn- update-cursor-line-string [{:keys [buffer] :as context} f]
+  (let [{linenr :row} (:cursor buffer)]
+    (-> context
+        (update-in [:buffer :lines linenr]
+                   (comp
+                    (fn [line'] [{:ansi line' :plain line'}])
+                    f
+                    (fnil line->string []))))))
 
 (defn to-after-end-of-line [{:keys [buffer]}]
   {:buffer (assoc-in buffer [:cursor :col]
@@ -13,23 +26,29 @@
   {[:ctrl/a] to-start-of-line
    [:ctrl/e] to-after-end-of-line})
 
-; TODO: basic delete keymaps like :delete
+(defn backspace [{:keys [buffer] :as context}]
+  (-> context
+      (update-cursor-line-string
+       (fn [line]
+         (let [[before after] (split-text-by-state buffer line)]
+           (str
+            (when (seq before)
+              (subs before 0 (dec (count before))))
+            after))))
+      (update-in [:buffer :cursor :col] dec-to-zero)))
+
+(def basic-editing-keymaps
+  {[:delete] backspace})
 
 (def keymaps
   (merge
+   basic-editing-keymaps
    movement-keymaps))
 
-(defn- insert-at-cursor [{:keys [lines cursor] :as buffer} key]
-  (let [linenr (:row cursor)
-        text (mapcat (comp split/chars-with-ansi :ansi)
-                     (nth lines linenr []))
-        line' (-> (take (:col cursor) text)
-                  (concat [key])
-                  (concat (drop (:col cursor) text))
-                  (str/join))]
-    (-> buffer
-        (assoc-in [:lines linenr] [{:ansi line' :plain line'}])
-        (update-in [:cursor :col] + (count key)))))
-
-(defn insert-at-buffer [{:keys [bufnr] :as cofx} key]
-  (update-in cofx [:db :buffers bufnr] insert-at-cursor key))
+(defn insert-at-cursor [{:keys [buffer] :as context} key]
+  (-> context
+      (update-cursor-line-string
+       (fn [line]
+         (let [[before after] (split-text-by-state buffer line)]
+           (str before key after))))
+      (update-in [:buffer :cursor :col] + (count key))))

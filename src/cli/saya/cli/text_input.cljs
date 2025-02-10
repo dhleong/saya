@@ -6,15 +6,9 @@
    [reagent.core :as r]
    [saya.cli.input :refer [use-keys]]
    [saya.cli.text-input.completion :refer [cycle-completion-candidates]]
-   [saya.cli.text-input.helpers :refer [split-text-by-state]]
+   [saya.cli.text-input.helpers :refer [dec-to-zero inc-to-max
+                                        split-text-by-state]]
    [saya.modules.ui.cursor :refer [cursor]]))
-
-(defn- dec-to-zero [v]
-  (cond-> v
-    (> v 0) (dec)))
-
-(defn- inc-to-max [v max-value]
-  (min (inc v) max-value))
 
 (defn- on-key [{:keys [completion-candidates _completion-word
                        on-change on-key on-submit]
