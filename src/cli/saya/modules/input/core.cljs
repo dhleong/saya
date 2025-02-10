@@ -4,7 +4,6 @@
    [re-frame.core :refer [reg-event-fx trim-v]]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
    [saya.modules.input.fx :as fx]
-   [saya.modules.input.helpers :refer [clamp-cursor]]
    [saya.modules.input.insert :as insert]
    [saya.modules.input.keymaps :as keymaps]
    [saya.modules.input.normal :as normal :refer [update-cursor]]))
