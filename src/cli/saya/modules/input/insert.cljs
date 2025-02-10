@@ -1,8 +1,8 @@
 (ns saya.modules.input.insert
   (:require
    [saya.cli.text-input.helpers :refer [dec-to-zero split-text-by-state]]
-   [saya.modules.input.helpers :refer [current-buffer-eol-col]]
-   [saya.modules.input.normal :refer [to-start-of-line]]))
+   [saya.modules.input.normal :refer [to-end-of-line to-start-of-line
+                                      update-cursor]]))
 
 (defn- line->string [line]
   (->> line
@@ -18,13 +18,12 @@
                     f
                     (fnil line->string []))))))
 
-(defn to-after-end-of-line [{:keys [buffer]}]
-  {:buffer (assoc-in buffer [:cursor :col]
-                     (current-buffer-eol-col buffer))})
-
 (def movement-keymaps
   {[:ctrl/a] to-start-of-line
-   [:ctrl/e] to-after-end-of-line})
+   [:ctrl/e] to-end-of-line
+
+   [:left] (update-cursor :col dec)
+   [:right] (update-cursor :col inc)})
 
 (defn backspace [{:keys [buffer] :as context}]
   (-> context

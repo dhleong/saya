@@ -4,9 +4,10 @@
    [re-frame.core :refer [reg-event-fx trim-v]]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
    [saya.modules.input.fx :as fx]
+   [saya.modules.input.helpers :refer [clamp-cursor]]
    [saya.modules.input.insert :as insert]
    [saya.modules.input.keymaps :as keymaps]
-   [saya.modules.input.normal :as normal]))
+   [saya.modules.input.normal :as normal :refer [update-cursor]]))
 
 (defn- get-current-cmdline [db bufnr]
   (let [{:keys [lines cursor]} (get-in db [:buffers bufnr])
@@ -55,6 +56,7 @@
 
      [:normal key {:bufnr? true}]
      (keymaps/maybe-perform-with-keymap-buffer
+      :mode :normal
       :keymaps normal/keymaps
       :keymap-buffer keymap-buffer
       :cofx cofx
@@ -72,13 +74,19 @@
      ; TODO: If we're in an input window, that should be handled
      ; special somehow (escaping to normal mode should not cause
      ; us to leave that input window!)
-     [:insert :escape _] {:db (assoc db :mode :normal)}
-     [:insert :ctrl/c _] {:db (-> db
+     [:insert :escape _] {:db (-> (keymaps/perform cofx (update-cursor :col dec))
+                                  :db
+                                  (or db)
+                                  (assoc :mode :normal))}
+     [:insert :ctrl/c _] {:db (-> (keymaps/perform cofx (update-cursor :col dec))
+                                  :db
+                                  (or db)
                                   (assoc :mode :normal)
                                   (update :buffers dissoc [:conn/input connr]))}
      [:insert key {:bufnr? true
                    :readonly? false}]
      (keymaps/maybe-perform-with-keymap-buffer
+      :mode :insert
       :keymaps insert/keymaps
       :keymap-buffer keymap-buffer
       :key key

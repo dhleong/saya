@@ -6,7 +6,7 @@
                                        current-buffer-line-last-col
                                        last-buffer-row]]))
 
-(defn- update-cursor [col-or-row f]
+(defn update-cursor [col-or-row f]
   (comp
    clamp-scroll
    adjust-scroll-to-cursor
