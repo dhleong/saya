@@ -4,7 +4,11 @@
                                        adjust-scroll-to-cursor clamp-cursor
                                        clamp-scroll
                                        current-buffer-line-last-col
-                                       last-buffer-row]]))
+                                       last-buffer-row]]
+   [saya.modules.logging.core :refer [log]]
+   [saya.modules.buffers.util :as buffers]))
+
+; ======= Movement keymaps =================================
 
 (defn update-cursor [col-or-row f]
   (comp
@@ -49,6 +53,25 @@
    ["h"] (update-cursor :col dec)
    ["l"] (update-cursor :col inc)})
 
+; ======= Operator keymaps =================================
+
+(defn delete-operator [context motion-range]
+  (log "DELETE"))
+
+(defn- enqueue-operator [operator]
+  (fn operator-keymap [{:keys [buffer] :as context}]
+    (if (buffers/readonly? buffer)
+      {:error "Read-only buffer"}
+
+      (assoc context
+             :mode :operator-pending
+             :pending-operator operator))))
+
+(def operator-keymaps
+  {["d"] (enqueue-operator delete-operator)})
+
+; ======= Scroll keymaps ===================================
+
 (defn- update-scroll [f compute-amount]
   (comp
    adjust-scroll-to-cursor
@@ -73,6 +96,7 @@
 (def keymaps
   (merge
    movement-keymaps
+   operator-keymaps
    scroll-keymaps))
 
 #_{:clj-kondo/ignore [:unresolved-namespace]}

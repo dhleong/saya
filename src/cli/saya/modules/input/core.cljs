@@ -2,11 +2,13 @@
   (:require
    [clojure.core.match :refer [match]]
    [re-frame.core :refer [reg-event-fx trim-v]]
+   [saya.modules.buffers.util :as buffers]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
    [saya.modules.input.fx :as fx]
    [saya.modules.input.insert :as insert]
    [saya.modules.input.keymaps :as keymaps]
-   [saya.modules.input.normal :as normal :refer [update-cursor]]))
+   [saya.modules.input.normal :as normal :refer [update-cursor]]
+   [saya.modules.input.op :as op]))
 
 (defn- get-current-cmdline [db bufnr]
   (let [{:keys [lines cursor]} (get-in db [:buffers bufnr])
@@ -46,9 +48,8 @@
       [key]]
    (match [mode key {:bufnr? (some? bufnr)
                      :readonly? (or (some? connr)
-                                    (some? (some
-                                            #{:readonly}
-                                            (get-in db [:buffers bufnr :flags]))))
+                                    (buffers/readonly?
+                                     (get-in db [:buffers bufnr])))
                      :submit? (some? (get-in db [:windows winnr :on-submit]))}]
      [:normal ":" _] {:db (assoc db :mode :command)}
 
@@ -101,6 +102,16 @@
                               (assoc cofx :fx [[:log ["error: " e]]])))
 
                           cofx)))
+
+     [:operator-pending key {:bufnr? true
+                             :readonly? false}]
+     (keymaps/maybe-perform-with-keymap-buffer
+      :mode :operator-pending
+      :keymaps op/keymaps
+      :key key
+      :cofx cofx
+      :with-unhandled (fn [{:keys [db]}]
+                        {:db (assoc db :mode :normal)}))
 
      :else nil
      #_{:fx [[:log ["unhandled: " mode key]]]})))
