@@ -56,6 +56,7 @@
 ; ======= Operator keymaps =================================
 
 (defn delete-operator [context motion-range]
+  ; TODO:
   (log "DELETE"))
 
 (defn- enqueue-operator [operator]
