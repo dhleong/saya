@@ -16,43 +16,53 @@
    (subscribe [::by-id winnr]))
  :-> :bufnr)
 
+(defn- visible-lines [{:keys [height anchor-row] :or {height 10}}
+                      ansi-lines]
+  ; NOTE: height might be unavailable on the first render
+  (let [last-row-index (dec (count ansi-lines))
+        anchor-row (or anchor-row
+                       last-row-index)
+        first-line-index (max 0 (- (inc anchor-row) height))]
+    (->> ansi-lines
+         ; Filter lines. We fill UP from the anchor-row
+         (drop-last (- last-row-index anchor-row))
+         (take-last height)
+
+         (into
+          []
+          (comp
+             ; Transform the line for rendering:
+           (map (fn [line]
+                  (->> line
+                       (partition-by string?)
+                       (reduce
+                        (fn [formatted group]
+                          (concat
+                           formatted
+                           (if (string? (first group))
+                             (split/chars-with-ansi
+                              (apply str group))
+
+                             group)))
+                        []))))
+
+             ; Index properly, accounting for filtering
+           (map-indexed (fn [i line]
+                          [(+ i first-line-index) line])))))))
+
 (reg-sub
  ::visible-lines
  (fn [[_ {:keys [winnr bufnr]}]]
    [(subscribe [::by-id winnr])
+    (subscribe [::buffer-subs/by-id bufnr])
     (subscribe [::buffer-subs/ansi-lines-by-id bufnr])])
- (fn [[{:keys [height anchor-row] :or {height 10}} lines]]
-   ; NOTE: height might be unavailable on the first render
-   (let [last-row-index (dec (count lines))
-         anchor-row (or anchor-row
-                        last-row-index)
-         first-line-index (max 0 (- (inc anchor-row) height))]
-     (->> lines
-          ; Filter lines. We fill UP from the anchor-row
-          (drop-last (- last-row-index anchor-row))
-          (take-last height)
+ (fn [[window buffer ansi-lines]]
+   (or (seq (visible-lines window ansi-lines))
 
-          (into
-           []
-           (comp
-            ; Transform the line for rendering:
-            (map (fn [line]
-                   (->> line
-                        (partition-by string?)
-                        (reduce
-                         (fn [formatted group]
-                           (concat
-                            formatted
-                            (if (string? (first group))
-                              (split/chars-with-ansi
-                               (apply str group))
-
-                              group)))
-                         []))))
-
-            ; Index properly, accounting for filtering
-            (map-indexed (fn [i line]
-                           [(+ i first-line-index) line]))))))))
+       ; NOTE: Non-connection buffers need some blank "starter" line
+       ; for editing purposes
+       (when-not (:connection-id buffer)
+         [[0 [{:ansi ""}]]]))))
 
 (reg-sub
  ::focused?

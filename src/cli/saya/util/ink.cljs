@@ -14,7 +14,8 @@
                       :as state}
                      output]
   (let [lines (str/split-lines output)
-        metrics (atom {})]
+        metrics (atom {})
+        cursor-shape (get-cursor-shape)]
     (if-not (= (count lines)
                (count last-lines))
       ; Either this is the first render, of the lines count
@@ -39,11 +40,11 @@
             (.write out this)))))
 
     (if-let [{:keys [x y] :as position} (extract-cursor-position lines)]
-      (let [shape (get-cursor-shape)]
+      (do
         (>evt [:saya.events/set-global-cursor position])
-        (swap! metrics assoc :moved-cursor [x y shape])
+        (swap! metrics assoc :moved-cursor [x y cursor-shape])
         (.write out (ansi/cursorTo x y))
-        (.write out (case shape
+        (.write out (case cursor-shape
                       :block/blink (ansi-cursor 1)
                       :block (ansi-cursor 2)
                       :underscore/blink (ansi-cursor 3)
@@ -60,6 +61,7 @@
         (update :history (fnil conj []) lines)
         (update :metrics-history (fnil conj []) @metrics)
         (assoc
+         :last-cursor cursor-shape
          :last-metrics @metrics
          :last-lines lines
          :last-output output))))
@@ -103,4 +105,5 @@
 
   (count (:history @@last-state))
   (:metrics-history @@last-state)
+  (:last-cursor @@last-state)
   (:last-metrics @@last-state))

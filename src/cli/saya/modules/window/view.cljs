@@ -52,12 +52,13 @@
         line (or (seq line)
                  [""])]
     [:> k/Box {:min-height 0
-               :min-width 0
                :width :100%
                :flex-wrap (when input-connr :wrap)
                :align-items :left}
      [:> k/Box {:height 1
-                :flex-shrink 0}
+                :flex-shrink 0
+                :flex-direction :column
+                :width :100%}
       [:> k/Text {:wrap :truncate-end}
        (for [[i part] (map-indexed vector (or (seq line)
                                               [""]))]
@@ -67,7 +68,11 @@
             [cursor cursor-type])
           (if (vector? part)
             (into [(system-messages (first part))] (rest part))
-            [:> k/Text part])])]]
+            [:> k/Text part])])
+
+       ; cursor at eol
+       (when (= cursor-col (count line))
+         [cursor cursor-type])]]
      (when input-connr
        [input-window input-connr])]))
 

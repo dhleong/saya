@@ -1,6 +1,9 @@
 (ns saya.modules.input.test-helpers
   (:require
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [is]]
+   [saya.db :refer [default-db]]
+   [saya.modules.buffers.events :as buffer-events]))
 
 (defn- extract-lines-and-cursor [s]
   (loop [raw-lines (str/split-lines s)
@@ -15,7 +18,7 @@
             cursor-col (str/index-of line "|")]
         (recur (next raw-lines)
                indent
-               (conj lines (str/replace line #"|" ""))
+               (conj lines (str/replace line #"\|" ""))
                (cond
                  cursor-col
                  (assoc cursor :col cursor-col)
@@ -31,12 +34,26 @@
 
 (defn str->buffer [s]
   (let [[lines cursor] (extract-lines-and-cursor s)]
-    {:lines (map (fn [line-str]
-                   {:ansi line-str
-                    :plain line-str})
-                 lines)
+    {:lines (mapv (fn [line-str]
+                    [{:ansi line-str
+                      :plain line-str}])
+                  lines)
      :cursor cursor}))
 
 (defn make-context [& {:keys [buffer window]}]
-  {:buffer (str->buffer buffer)
+  {:buffer (or (when (and buffer (not= :empty buffer))
+                 (str->buffer buffer))
+               (-> (buffer-events/create-blank default-db)
+                   (second)
+                   :buffer))
    :window (merge {:height 2} window)})
+
+(defn get-buffer [ctx]
+  (-> (get-in ctx [:buffer])
+      (dissoc :id)))
+
+(defn with-keymap-compare-buffer [f buffer-before buffer-after]
+  (let [ctx (make-context :buffer buffer-before)
+        ctx' (f ctx)]
+    (is (= (str->buffer buffer-after)
+           (get-buffer ctx')))))

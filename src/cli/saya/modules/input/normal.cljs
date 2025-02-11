@@ -6,7 +6,7 @@
                                        current-buffer-line-last-col
                                        last-buffer-row]]))
 
-(defn- update-cursor [col-or-row f]
+(defn update-cursor [col-or-row f]
   (comp
    clamp-scroll
    adjust-scroll-to-cursor
@@ -23,12 +23,16 @@
      (assoc-in ctx [:buffer :cursor :row]
                (last-buffer-row buffer)))))
 
+(defn to-start-of-line [{:keys [buffer]}]
+  {:buffer (assoc-in buffer [:cursor :col] 0)})
+
+(defn to-end-of-line [{:keys [buffer]}]
+  {:buffer (assoc-in buffer [:cursor :col]
+                     (current-buffer-line-last-col buffer))})
+
 (def movement-keymaps
-  {["0"] (fn to-start-of-line [{:keys [buffer]}]
-           {:buffer (assoc-in buffer [:cursor :col] 0)})
-   ["$"] (fn to-end-of-line [{:keys [buffer]}]
-           {:buffer (assoc-in buffer [:cursor :col]
-                              (current-buffer-line-last-col buffer))})
+  {["0"] to-start-of-line
+   ["$"] to-end-of-line
 
    ["g" "g"] (comp
               clamp-scroll

@@ -1,5 +1,6 @@
 (ns saya.modules.input.keymaps
   (:require
+   [saya.modules.input.helpers :refer [*mode*]]
    [saya.modules.input.normal :as normal]
    [saya.modules.logging.core :refer [log-fx]]))
 
@@ -39,6 +40,26 @@
       #_{:clj-kondo/ignore [:inline-def]}
       (def last-exception e)
       {:fx [(log-fx "ERROR performing" f ":" e)]})))
+
+(defn maybe-perform-with-keymap-buffer [& {:keys [keymaps keymap-buffer cofx
+                                                  mode with-unhandled key]
+                                           :or {with-unhandled identity}}]
+  (binding [*mode* mode]
+    (let [new-buffer ((fnil conj []) keymap-buffer key)
+          keymap (get keymaps new-buffer)
+          {:keys [db]} cofx]
+      (cond
+        keymap
+        (perform cofx keymap)
+
+        (possible? db :insert new-buffer)
+        {:db (assoc db :keymap-buffer new-buffer)}
+
+        :else
+        (-> cofx
+            (update :db dissoc :keymap-buffer)
+            (with-unhandled)
+            (select-keys [:db]))))))
 
 (comment
   (println (.-stack last-exception)))

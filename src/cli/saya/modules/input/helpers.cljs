@@ -2,6 +2,8 @@
   (:require
    [saya.modules.ansi.split :as split]))
 
+(def ^:dynamic *mode* :normal)
+
 (defn current-buffer-line [{:keys [lines cursor]}]
   ; TODO: We should probably just store the :plain line...
   (->> (nth lines (:row cursor))
@@ -14,8 +16,13 @@
        (dec (count (:lines buffer)))))
 
 (defn current-buffer-line-last-col [buffer]
-  (max 0
-       (dec (count (current-buffer-line buffer)))))
+  (let [after-last-col (count (current-buffer-line buffer))]
+    (max 0
+         (case *mode*
+           :insert after-last-col
+
+           ; Usually, we don't want to be *after* the last col, we want to be *on* it
+           (dec after-last-col)))))
 
 (defn clamp-scroll [{:keys [window buffer] :as ctx}]
   (let [{:keys [height anchor-row]} window]
