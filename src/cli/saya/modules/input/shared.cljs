@@ -1,8 +1,6 @@
 (ns saya.modules.input.shared
   (:require
-   [saya.modules.input.helpers :refer [current-buffer-line-last-col
-                                       adjust-scroll-to-cursor clamp-cursor
-                                       clamp-scroll]]))
+   [saya.modules.input.helpers :refer [current-buffer-line-last-col]]))
 
 (defn to-start-of-line [{:keys [buffer]}]
   {:buffer (assoc-in buffer [:cursor :col] 0)})
