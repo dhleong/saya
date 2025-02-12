@@ -46,6 +46,7 @@
 (defn- buffer-line [line {:keys [cursor-col input-connr]}]
   (let [cursor-type (case (<sub [:mode])
                       :insert :pipe
+                      :operator-pending :underscore
                       :block)
         ; We should at least render a blank column, in case
         ; we have a cursor to render there

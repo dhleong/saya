@@ -21,20 +21,26 @@
      #{})))
 
 (defn build-context [{:keys [bufnr winnr] :as cofx}]
-  (let [buffer (get-in cofx [:db :buffers bufnr])
-        window (get-in cofx [:db :windows winnr])]
-    {:buffer buffer :window window}))
+  {:buffer (get-in cofx [:db :buffers bufnr])
+   :window (get-in cofx [:db :windows winnr])
+   :pending-operator (get-in cofx [:db :pending-operator])})
 
 (defn perform [{:keys [bufnr winnr] :as cofx} f]
   (try
     (let [context (build-context cofx)
           ; This merge allows us to omit unchanged fields
-          context' (merge context (f context))]
+          context' (merge context (f context))
+          _yanked (:yanked context')
+          context' (dissoc context' :yanked)]
       (when-not (= context context')
         {:db (-> (:db cofx)
                  (assoc-in [:buffers bufnr] (:buffer context'))
                  (assoc-in [:windows winnr] (:window context'))
-                 (dissoc :keymap-buffer))}))
+                 (dissoc :keymap-buffer :pending-operator)
+                 ; TODO: Store yanked in a register, if set
+                 (merge (select-keys context' [:mode :pending-operator])))
+         :fx [(when-let [e (:error context')]
+                (log-fx "ERROR: " e))]}))
     (catch :default e
       ; TODO: echo?
       #_{:clj-kondo/ignore [:inline-def]}
@@ -57,7 +63,7 @@
 
         :else
         (-> cofx
-            (update :db dissoc :keymap-buffer)
+            (update :db dissoc :keymap-buffer :pending-operator)
             (with-unhandled)
             (select-keys [:db]))))))
 

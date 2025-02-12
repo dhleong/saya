@@ -50,10 +50,14 @@
 
 (defn get-buffer [ctx]
   (-> (get-in ctx [:buffer])
-      (dissoc :id)))
+      (select-keys [:lines :cursor])))
 
 (defn with-keymap-compare-buffer [f buffer-before buffer-after]
   (let [ctx (make-context :buffer buffer-before)
-        ctx' (f ctx)]
-    (is (= (str->buffer buffer-after)
+        ctx' (try (f ctx)
+                  (catch :default e
+                    (println "ERROR performing " f ": " e)
+                    (println (.-stack e))
+                    (throw e)))]
+    (is (= (get-buffer (make-context :buffer buffer-after))
            (get-buffer ctx')))))

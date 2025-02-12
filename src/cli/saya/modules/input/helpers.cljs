@@ -84,3 +84,12 @@
             (update-in ctx [:buffer :cursor :col]
                        #(min max-cursor-col
                              (max 0 %))))))))
+
+(defn update-cursor [col-or-row f]
+  (comp
+   clamp-scroll
+   adjust-scroll-to-cursor
+   clamp-cursor
+   (fn cursor-updator [ctx]
+     (update-in ctx [:buffer :cursor col-or-row] f))))
+
