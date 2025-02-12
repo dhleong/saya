@@ -14,7 +14,7 @@
     "stop": "shadow-cljs stop",
     "build:release": "shadow-cljs release :cli",
     "check": "pnpm lint && pnpm test",
-    "lint": "clojure -Sdeps '{:deps {clj-kondo {:mvn/version \"RELEASE\"}}}' -m clj-kondo.main --lint src --config .clj-kondo/config.edn",
+    "lint": "clojure -Sdeps '{:deps {clj-kondo/clj-kondo {:mvn/version \"2025.01.17-SNAPSHOT\"}}}' -M -m clj-kondo.main --lint src --config .clj-kondo/config.edn",
     "old:clojure": "clojure -Sdeps '{:deps {antq/antq {:mvn/version \"RELEASE\"}}}' -m antq.core",
     "old": "pnpm old:clojure; pnpm outdated",
     "clean": "rm -rf resources/public/js/* && rm -rf target",

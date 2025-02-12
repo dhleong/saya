@@ -40,8 +40,7 @@
                 (symbol ns-sym sym))))))
 
 (defn- eval-script [ctx {:keys [first-load?]} script-string]
-  (let [{:keys [ns]} #_{:clj-kondo/ignore [:unresolved-var]}
-        (sci/eval-string+ ctx script-string)
+  (let [{:keys [ns]} (sci/eval-string+ ctx script-string)
 
         ; Check if a -main was declared
         main-result (when first-load?
