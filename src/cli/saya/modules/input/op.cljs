@@ -9,7 +9,11 @@
     (let [context' (f context)
           start (get-in context [:buffer :cursor])
           end (get-in context' [:buffer :cursor])
-          motion-range {:start start :end end}]
+          motion-range {:start start
+                        :end end
+                        ; TODO: There's eg o_v for turning a normally line-wise
+                        ; motion into a character-wise one
+                        :linewise? (not= (:row start) (:row end))}]
       (if-not (= start end)
         (-> context
             (pending-operator motion-range)

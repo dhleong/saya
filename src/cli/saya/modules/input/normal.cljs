@@ -1,22 +1,14 @@
 (ns saya.modules.input.normal
   (:require
+   [saya.modules.buffers.util :as buffers]
    [saya.modules.input.helpers :refer [adjust-cursor-to-scroll
                                        adjust-scroll-to-cursor clamp-cursor
-                                       clamp-scroll
-                                       current-buffer-line-last-col
-                                       last-buffer-row]]
-   [saya.modules.logging.core :refer [log]]
-   [saya.modules.buffers.util :as buffers]))
+                                       clamp-scroll last-buffer-row
+                                       update-cursor]]
+   [saya.modules.input.insert :refer [line->string update-buffer-line-string]]
+   [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
 
 ; ======= Movement keymaps =================================
-
-(defn update-cursor [col-or-row f]
-  (comp
-   clamp-scroll
-   adjust-scroll-to-cursor
-   clamp-cursor
-   (fn cursor-updator [ctx]
-     (update-in ctx [:buffer :cursor col-or-row] f))))
 
 (def scroll-to-bottom
   (comp
@@ -26,13 +18,6 @@
    (fn to-last-line [{:keys [buffer] :as ctx}]
      (assoc-in ctx [:buffer :cursor :row]
                (last-buffer-row buffer)))))
-
-(defn to-start-of-line [{:keys [buffer]}]
-  {:buffer (assoc-in buffer [:cursor :col] 0)})
-
-(defn to-end-of-line [{:keys [buffer]}]
-  {:buffer (assoc-in buffer [:cursor :col]
-                     (current-buffer-line-last-col buffer))})
 
 (def movement-keymaps
   {["0"] to-start-of-line
@@ -55,9 +40,44 @@
 
 ; ======= Operator keymaps =================================
 
-(defn delete-operator [context motion-range]
-  ; TODO:
-  (log "DELETE"))
+(defn- align-start-end [start end]
+  [(min start end)
+   (max start end)])
+
+(defn- delete-lines [{:keys [lines] :as buffer} start end]
+  (let [[start end] (align-start-end start end)
+        yanked (subvec lines start (inc end))]
+    (-> buffer
+        (assoc :lines (into (subvec lines 0 start)
+                            (subvec lines (inc end))))
+        (assoc-in [:cursor :row] start)
+        (assoc :yanked {:lines yanked}))))
+
+(defn- delete-chars [buffer linenr start end]
+  (let [[start end] (align-start-end start end)]
+    ; TODO: It'd be nice not to have to convert the line to a string multiple times...
+    (-> buffer
+        (update-buffer-line-string
+         linenr
+         (fn [line]
+           (str (subs line 0 start)
+                (subs line end))))
+        (assoc-in [:cursor :col] start)
+        (assoc :yanked {:chars (subs (line->string (nth (:lines buffer) linenr))
+                                     start end)}))))
+
+(defn delete-operator [context {:keys [start end linewise?]}]
+  (cond
+    ; Line-wise delete
+    linewise?
+    (update context :buffer delete-lines (:row start) (:row end))
+
+    ; Char-wise delete within a line
+    (= (:row start) (:row end))
+    (update context :buffer delete-chars (:row start) (:col start) (:col end))
+
+    :else
+    {:error "TODO: support char-wise cross-line deletes"}))
 
 (defn- enqueue-operator [operator]
   (fn operator-keymap [{:keys [buffer] :as context}]

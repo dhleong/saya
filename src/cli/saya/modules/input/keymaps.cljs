@@ -29,12 +29,15 @@
   (try
     (let [context (build-context cofx)
           ; This merge allows us to omit unchanged fields
-          context' (merge context (f context))]
+          context' (merge context (f context))
+          _yanked (:yanked context')
+          context' (dissoc context' :yanked)]
       (when-not (= context context')
         {:db (-> (:db cofx)
                  (assoc-in [:buffers bufnr] (:buffer context'))
                  (assoc-in [:windows winnr] (:window context'))
                  (dissoc :keymap-buffer :pending-operator)
+                 ; TODO: Store yanked in a register, if set
                  (merge (select-keys context' [:mode :pending-operator])))
          :fx [(when-let [e (:error context')]
                 (log-fx "ERROR: " e))]}))

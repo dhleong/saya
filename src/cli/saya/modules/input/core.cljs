@@ -5,9 +5,10 @@
    [saya.modules.buffers.util :as buffers]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
    [saya.modules.input.fx :as fx]
+   [saya.modules.input.helpers :refer [update-cursor]]
    [saya.modules.input.insert :as insert]
    [saya.modules.input.keymaps :as keymaps]
-   [saya.modules.input.normal :as normal :refer [update-cursor]]
+   [saya.modules.input.normal :as normal]
    [saya.modules.input.op :as op]))
 
 (defn- get-current-cmdline [db bufnr]

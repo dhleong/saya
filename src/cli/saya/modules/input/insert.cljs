@@ -1,22 +1,28 @@
 (ns saya.modules.input.insert
   (:require
    [saya.cli.text-input.helpers :refer [dec-to-zero split-text-by-state]]
-   [saya.modules.input.normal :refer [to-end-of-line to-start-of-line
-                                      update-cursor]]))
+   [saya.modules.input.helpers :refer [update-cursor]]
+   [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
 
-(defn- line->string [line]
+(defn line->string [line]
   (->> line
        (mapcat :ansi)
        (apply str)))
 
+(defn- string->line [s]
+  [{:ansi s :plain s}])
+
+(defn update-buffer-line-string [buffer linenr f]
+  (-> buffer
+      (update-in [:lines linenr]
+                 (comp
+                  string->line
+                  f
+                  (fnil line->string [])))))
+
 (defn- update-cursor-line-string [{:keys [buffer] :as context} f]
   (let [{linenr :row} (:cursor buffer)]
-    (-> context
-        (update-in [:buffer :lines linenr]
-                   (comp
-                    (fn [line'] [{:ansi line' :plain line'}])
-                    f
-                    (fnil line->string []))))))
+    (update context :buffer update-buffer-line-string linenr f)))
 
 (def movement-keymaps
   {[:ctrl/a] to-start-of-line
