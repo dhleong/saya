@@ -1,12 +1,12 @@
 (ns saya.modules.input.normal
   (:require
-   [clojure.core.match :refer [match]]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.input.helpers :refer [adjust-cursor-to-scroll
                                        adjust-scroll-to-cursor clamp-cursor
                                        clamp-scroll last-buffer-row
                                        update-cursor]]
    [saya.modules.input.insert :refer [line->string update-buffer-line-string]]
+   [saya.modules.input.motions.word :refer [small-word-boundary? word-movement]]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
 
 ; ======= Movement keymaps =================================
@@ -19,31 +19,6 @@
    (fn to-last-line [{:keys [buffer] :as ctx}]
      (assoc-in ctx [:buffer :cursor :row]
                (last-buffer-row buffer)))))
-
-(defn word-movement [increment ch-pred]
-  (comp
-   clamp-scroll
-   adjust-scroll-to-cursor
-   clamp-cursor
-   (fn word-mover [{:keys [buffer] :as ctx}]
-     (loop [cursor (:cursor buffer)
-            found-whitespace? false]
-       ; NOTE: This is not quite right, esp for backwards motion
-       (match [(buffers/char-at buffer cursor) found-whitespace?]
-         ; Can't move further; stop
-         [nil _] (assoc-in ctx [:buffer :cursor] cursor)
-
-         [" " _] (recur (buffers/update-cursor buffer cursor increment)
-                        true)
-
-         ; Found the target after the whitespace break
-         [(_ :guard ch-pred) true] (assoc-in ctx [:buffer :cursor] cursor)
-
-         :else (recur (buffers/update-cursor buffer cursor increment)
-                      found-whitespace?))))))
-
-(defn small-word-boundary? [ch]
-  (re-matches #"[a-zA-Z0-9]" ch))
 
 (def movement-keymaps
   {["0"] to-start-of-line

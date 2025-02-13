@@ -7,32 +7,46 @@
    (:readonly
     (:flags buffer))))
 
-(defn char-at [{:keys [lines]} {:keys [row col]}]
-  {:pre [(>= row 0)
-         (>= col 0)]}
-  (when (<= 0 row (dec (count lines)))
-    (let [line (line->string (nth lines row))]
-      (when (<= 0 col (dec (count line)))
-        (.charAt line col)))))
+(defn line-length [{:keys [lines]} row]
+  (->> (nth lines row)
+       (transduce
+        (comp
+         (map (comp count :ansi)))
+        +
+        0)))
 
-(defn update-cursor [{:keys [lines] :as buffer} cursor pred]
-  (let [cursor' (update cursor :col pred)]
-    (if-not (nil? (char-at buffer cursor))
-      cursor'
+(defn char-at
+  ([{:keys [cursor] :as buffer}] (char-at buffer cursor))
+  ([{:keys [lines]} {:keys [row col]}]
+   (when (<= 0 row (dec (count lines)))
+     (let [line (line->string (nth lines row))]
+       (when (<= 0 col (dec (count line)))
+         (.charAt line col))))))
 
-      (let [cursor' (update cursor :row pred)]
-        (cond
-          (> (:row cursor')
-             (:row cursor))
-          (assoc cursor' :col 0)
+(defn update-cursor
+  ([{:keys [cursor] :as buffer} pred]
+   (assoc buffer :cursor (update-cursor buffer cursor pred)))
+  ([{:keys [lines] :as buffer} cursor pred]
+   (let [cursor' (update cursor :col pred)]
+     (if-not (nil? (char-at buffer cursor'))
+       cursor'
 
-          (< (:row cursor) 0)
-          {:row 0 :col 0}
+       (let [cursor' (update cursor :row pred)]
+         (cond
+           ; Past the end of the buffer; don't move!
+           (>= (:row cursor') (count lines))
+           cursor
 
-          ; Past the end of the buffer; don't move!
-          (>= (:row cursor) (count lines))
-          cursor
+           ; Past the start of the buffer; stay at the start!
+           (< (:row cursor') 0)
+           {:row 0 :col 0}
 
-          :else
-          (assoc cursor' :col
-                 (dec (count (nth lines (:row cursor))))))))))
+           ; Next line
+           (> (:row cursor')
+              (:row cursor))
+           (assoc cursor' :col 0)
+
+           ; Previous line
+           :else
+           (assoc cursor' :col
+                  (dec (line-length buffer (:row cursor'))))))))))
