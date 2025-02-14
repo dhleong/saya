@@ -30,7 +30,7 @@
           context' (merge context (f context))
           _yanked (:yanked context')
           context' (dissoc context' :yanked)]
-      (when-not (= context context')
+      (if-not (= context context')
         {:db (-> (:db cofx)
                  (assoc-in [:buffers bufnr] (:buffer context'))
                  (assoc-in [:windows winnr] (:window context'))
@@ -38,7 +38,12 @@
                  ; TODO: Store yanked in a register, if set
                  (merge (select-keys context' [:mode :pending-operator])))
          :fx [(when-let [e (:error context')]
-                (log-fx "ERROR: " e))]}))
+                (log-fx "ERROR: " e))]}
+
+        {:db (-> (:db cofx)
+                 ; Still clear this even if nothing happened:
+                 (dissoc :keymap-buffer :pending-operator))}))
+
     (catch :default e
       ; TODO: echo?
       #_{:clj-kondo/ignore [:inline-def]}
