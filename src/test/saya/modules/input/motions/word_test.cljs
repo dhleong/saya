@@ -1,7 +1,8 @@
 (ns saya.modules.input.motions.word-test
   (:require
    [cljs.test :refer-macros [deftest testing]]
-   [saya.modules.input.motions.word :refer [small-word-boundary? word-movement]]
+   [saya.modules.input.motions.word :refer [end-of-word-movement
+                                            small-word-boundary? word-movement]]
    [saya.modules.input.test-helpers :refer [with-keymap-compare-buffer]]))
 
 (deftest word-motion-test
@@ -58,3 +59,31 @@
        |of Grayskull!"
       "For the |honor
        of Grayskull!")))
+
+(deftest end-of-word-test
+  (testing "Small end-of-word movement forward"
+    (with-keymap-compare-buffer (end-of-word-movement inc small-word-boundary?)
+      "|For the honor of Grayskull!"
+      "Fo|r the honor of Grayskull!")
+
+    (with-keymap-compare-buffer (end-of-word-movement inc small-word-boundary?)
+      "Fo|r the honor of Grayskull!"
+      "For th|e honor of Grayskull!")
+
+    (with-keymap-compare-buffer (end-of-word-movement inc small-word-boundary?)
+      "|For-the honor of Grayskull!"
+      "Fo|r-the honor of Grayskull!")
+
+    (with-keymap-compare-buffer (end-of-word-movement inc small-word-boundary?)
+      "Fo|r-the honor of Grayskull!"
+      "For|-the honor of Grayskull!")
+
+    (with-keymap-compare-buffer (end-of-word-movement inc small-word-boundary?)
+      "For the honor of |Grayskull"
+      "For the honor of Grayskul|l")
+
+    (with-keymap-compare-buffer (end-of-word-movement inc small-word-boundary?)
+      "For the hono|r
+       of Grayskull!"
+      "For the honor
+       o|f Grayskull!")))

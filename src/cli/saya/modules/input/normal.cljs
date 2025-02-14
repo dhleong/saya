@@ -7,6 +7,7 @@
                                        update-cursor]]
    [saya.modules.input.insert :refer [line->string update-buffer-line-string]]
    [saya.modules.input.motions.word :refer [big-word-boundary?
+                                            end-of-word-movement
                                             small-word-boundary? word-movement]]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
 
@@ -44,7 +45,13 @@
    ["w"] (word-movement inc small-word-boundary?)
    ["W"] (word-movement inc big-word-boundary?)
    ["b"] (word-movement dec small-word-boundary?)
-   ["B"] (word-movement dec big-word-boundary?)})
+   ["B"] (word-movement dec big-word-boundary?)
+
+   ; End-of-word movement
+   ["e"] (end-of-word-movement inc small-word-boundary?)
+   ["E"] (end-of-word-movement inc big-word-boundary?)
+   ["g" "e"] (end-of-word-movement dec small-word-boundary?)
+   ["g" "E"] (end-of-word-movement dec big-word-boundary?)})
 
 ; ======= Operator keymaps =================================
 
