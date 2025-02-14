@@ -12,13 +12,11 @@
     sequence
     candidate)))
 
-(defn possible? [_db mode keymap-buffer]
+(defn possible? [_db keymaps keymap-buffer]
   (some
    (fn [v]
      (starts-with? v keymap-buffer))
-   (case mode
-     :normal (keys normal/keymaps)
-     #{})))
+   (keys keymaps)))
 
 (defn build-context [{:keys [bufnr winnr] :as cofx}]
   {:buffer (get-in cofx [:db :buffers bufnr])
@@ -58,7 +56,7 @@
         keymap
         (perform cofx keymap)
 
-        (possible? db :insert new-buffer)
+        (possible? db keymaps new-buffer)
         {:db (assoc db :keymap-buffer new-buffer)}
 
         :else
