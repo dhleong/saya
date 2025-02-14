@@ -34,6 +34,10 @@
              (perform-find-ch increment (complement boundary?))))
 
          ; backward:
-         (as-> ctx ctx
-           (perform-find-ch ctx increment (complement boundary?))
-           (perform-until-ch ctx increment boundary?)))))))
+         (-> ctx
+             (perform-find-ch increment (complement str/blank?))
+
+             (as-> ctx
+               (cond-> ctx
+                 (not (boundary? (buffers/char-at (:buffer ctx))))
+                 (perform-until-ch increment boundary?)))))))))

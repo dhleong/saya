@@ -72,6 +72,8 @@
                   (catch :default e
                     (println "ERROR performing " f ": " e)
                     (println (.-stack e))
-                    (throw e)))]
-    (is (= (buffer->str (get-buffer (make-context :buffer buffer-after)))
-           (buffer->str (get-buffer ctx'))))))
+                    (throw e)))
+        expected (buffer->str (get-buffer (make-context :buffer buffer-after)))
+        actual (buffer->str (get-buffer ctx'))]
+    (is (= expected actual)
+        (str "From " (buffer->str (get-buffer ctx)) "\n"))))
