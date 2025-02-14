@@ -11,6 +11,14 @@
       "For |the honor of Grayskull!")
 
     (with-keymap-compare-buffer (word-movement inc small-word-boundary?)
+      "|For-the honor of Grayskull!"
+      "For|-the honor of Grayskull!")
+
+    (with-keymap-compare-buffer (word-movement inc small-word-boundary?)
+      "For|-the honor of Grayskull!"
+      "For-|the honor of Grayskull!")
+
+    (with-keymap-compare-buffer (word-movement inc small-word-boundary?)
       "For the honor of |Grayskull"
       "For the honor of Grayskul|l")
 

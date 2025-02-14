@@ -14,7 +14,7 @@
         (if (and (> (:row next-cursor) (:row cursor))
                  (ch-pred "\n"))
           ; Special case! Newlines can count 
-          (assoc-in ctx [:buffer :cursor] cursor)
+          (assoc-in ctx [:buffer :cursor] next-cursor)
 
           (recur next-cursor))))))
 
