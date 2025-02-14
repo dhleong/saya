@@ -1,7 +1,6 @@
 (ns saya.modules.input.keymaps
   (:require
    [saya.modules.input.helpers :refer [*mode*]]
-   [saya.modules.input.normal :as normal]
    [saya.modules.logging.core :refer [log-fx]]))
 
 (defn- starts-with? [sequence candidate]
