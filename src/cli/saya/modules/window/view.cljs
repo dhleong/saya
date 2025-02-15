@@ -59,7 +59,8 @@
      [:> k/Box {:height 1
                 :flex-shrink 0
                 :flex-direction :column
-                :width :100%}
+                :width (when-not input-connr
+                         :100%)}
       [:> k/Text {:wrap :truncate-end}
        (for [[i part] (map-indexed vector (or (seq line)
                                               [""]))]
