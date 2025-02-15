@@ -78,3 +78,11 @@
 
     {::kodachi-fx/send! {:connection-id connr
                          :text text}})))
+
+(reg-event-fx
+ :connection/set-window-size
+ [unwrap]
+ (fn [_ {:keys [connr width height]}]
+   {::kodachi-fx/set-window-size! {:connection-id connr
+                                   :width width
+                                   :height height}}))

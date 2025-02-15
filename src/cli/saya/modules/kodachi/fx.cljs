@@ -38,3 +38,11 @@
    (api/request! {:type :Send
                   :connection_id connection-id
                   :text text})))
+
+(reg-fx
+ ::set-window-size!
+ (fn [{:keys [connection-id width height]}]
+   (api/request! {:type :WindowSize
+                  :connection_id connection-id
+                  :width width
+                  :height height})))
