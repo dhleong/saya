@@ -4,16 +4,21 @@
                                        clamp-scroll]]
    [saya.modules.input.normal :as normal]))
 
+(defn- extract-flags [f]
+  (meta f))
+
 (defn movement->motion [f]
   (fn movement-motion [{:keys [pending-operator] :as context}]
     (let [context' (f context)
           start (get-in context [:buffer :cursor])
           end (get-in context' [:buffer :cursor])
-          motion-range {:start start
-                        :end end
-                        ; TODO: There's eg o_v for turning a normally line-wise
-                        ; motion into a character-wise one
-                        :linewise? (not= (:row start) (:row end))}]
+          motion-range (merge
+                        (extract-flags f)
+                        {:start start
+                         :end end
+                         ; TODO: There's eg o_v for turning a normally line-wise
+                         ; motion into a character-wise one
+                         :linewise? (not= (:row start) (:row end))})]
       (if-not (= start end)
         (-> context
             (pending-operator motion-range)

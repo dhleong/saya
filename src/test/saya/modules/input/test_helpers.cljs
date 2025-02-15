@@ -2,8 +2,10 @@
   (:require
    [clojure.string :as str]
    [clojure.test :refer [is]]
+   [saya.cli.text-input.helpers :refer [split-text-by-state]]
    [saya.db :refer [default-db]]
-   [saya.modules.buffers.events :as buffer-events]))
+   [saya.modules.buffers.events :as buffer-events]
+   [saya.modules.input.insert :refer [line->string]]))
 
 (defn- extract-lines-and-cursor [s]
   (loop [raw-lines (str/split-lines s)
@@ -40,6 +42,18 @@
                   lines)
      :cursor cursor}))
 
+(defn- insert-cursor [s cursor]
+  (let [[before after] (split-text-by-state {:cursor cursor} s)]
+    (str before "|" after)))
+
+(defn buffer->str [{:keys [lines cursor]}]
+  (->> lines
+       (map-indexed (fn [i line]
+                      (cond-> (line->string line)
+                        (= i (:row cursor))
+                        (insert-cursor cursor))))
+       (into [])))
+
 (defn make-context [& {:keys [buffer window]}]
   {:buffer (or (when (and buffer (not= :empty buffer))
                  (str->buffer buffer))
@@ -58,6 +72,8 @@
                   (catch :default e
                     (println "ERROR performing " f ": " e)
                     (println (.-stack e))
-                    (throw e)))]
-    (is (= (get-buffer (make-context :buffer buffer-after))
-           (get-buffer ctx')))))
+                    (throw e)))
+        expected (buffer->str (get-buffer (make-context :buffer buffer-after)))
+        actual (buffer->str (get-buffer ctx'))]
+    (is (= expected actual)
+        (str "From " (buffer->str (get-buffer ctx)) "\n"))))

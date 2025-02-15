@@ -6,6 +6,9 @@
                                        clamp-scroll last-buffer-row
                                        update-cursor]]
    [saya.modules.input.insert :refer [line->string update-buffer-line-string]]
+   [saya.modules.input.motions.word :refer [big-word-boundary?
+                                            end-of-word-movement
+                                            small-word-boundary? word-movement]]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
 
 ; ======= Movement keymaps =================================
@@ -36,7 +39,19 @@
    ["k"] (update-cursor :row dec)
    ["j"] (update-cursor :row inc)
    ["h"] (update-cursor :col dec)
-   ["l"] (update-cursor :col inc)})
+   ["l"] (update-cursor :col inc)
+
+   ; Word movement
+   ["w"] (word-movement inc small-word-boundary?)
+   ["W"] (word-movement inc big-word-boundary?)
+   ["b"] (word-movement dec small-word-boundary?)
+   ["B"] (word-movement dec big-word-boundary?)
+
+   ; End-of-word movement
+   ["e"] (end-of-word-movement inc small-word-boundary?)
+   ["E"] (end-of-word-movement inc big-word-boundary?)
+   ["g" "e"] (end-of-word-movement dec small-word-boundary?)
+   ["g" "E"] (end-of-word-movement dec big-word-boundary?)})
 
 ; ======= Operator keymaps =================================
 
@@ -53,8 +68,10 @@
         (assoc-in [:cursor :row] start)
         (assoc :yanked {:lines yanked}))))
 
-(defn- delete-chars [buffer linenr start end]
-  (let [[start end] (align-start-end start end)]
+(defn- delete-chars [buffer {:keys [inclusive?]} linenr start end]
+  (let [[start end] (align-start-end start end)
+        end (cond-> end
+              inclusive? (inc))]
     ; TODO: It'd be nice not to have to convert the line to a string multiple times...
     (-> buffer
         (update-buffer-line-string
@@ -66,7 +83,7 @@
         (assoc :yanked {:chars (subs (line->string (nth (:lines buffer) linenr))
                                      start end)}))))
 
-(defn delete-operator [context {:keys [start end linewise?]}]
+(defn delete-operator [context {:keys [start end linewise?] :as flags}]
   (cond
     ; Line-wise delete
     linewise?
@@ -74,7 +91,7 @@
 
     ; Char-wise delete within a line
     (= (:row start) (:row end))
-    (update context :buffer delete-chars (:row start) (:col start) (:col end))
+    (update context :buffer delete-chars flags (:row start) (:col start) (:col end))
 
     :else
     {:error "TODO: support char-wise cross-line deletes"}))

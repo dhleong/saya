@@ -43,5 +43,18 @@
     (with-keymap-compare-buffer #(delete-operator % {:start {:row 0 :col 4}
                                                      :end {:row 0 :col 0}})
       "For |the honor of Grayskull!"
-      "|the honor of Grayskull!")))
+      "|the honor of Grayskull!"))
+
+  (testing "Inclusive delete"
+    (with-keymap-compare-buffer #(delete-operator % {:start {:row 0 :col 0}
+                                                     :end {:row 0 :col 2}
+                                                     :inclusive? true})
+      "For |the honor of Grayskull!"
+      "| the honor of Grayskull!")
+
+    (with-keymap-compare-buffer #(delete-operator % {:start (:cursor (:buffer %))
+                                                     :end {:row 0 :col 27}
+                                                     :inclusive? true})
+      "For the honor of Grayskull|!"
+      "For the honor of Grayskull|")))
 
