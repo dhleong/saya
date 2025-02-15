@@ -1,10 +1,11 @@
 (ns saya.modules.input.motions.word
   (:require
    [clojure.string :as str]
+   [saya.modules.buffers.util :as buffers]
    [saya.modules.input.helpers :refer [adjust-scroll-to-cursor clamp-cursor
                                        clamp-scroll]]
    [saya.modules.input.motions.find :refer [perform-find-ch perform-until-ch]]
-   [saya.modules.buffers.util :as buffers]))
+   [saya.util.functional :refer [with-meta->>]]))
 
 (defn small-word-boundary? [ch]
   (not (re-matches #"[a-zA-Z0-9]" ch)))
@@ -43,20 +44,21 @@
                  (perform-until-ch increment boundary?)))))))))
 
 (defn end-of-word-movement [increment boundary?]
-  (comp
-   clamp-scroll
-   adjust-scroll-to-cursor
-   clamp-cursor
-   (fn end-of-word-mover [ctx]
-     (let [backward? (< (increment 0) 0)
-           forward? (not backward?)]
-       (if forward?
-         (let [ctx' (perform-until-ch ctx increment boundary?)]
-           (cond-> ctx'
-             (= ctx ctx') (-> (perform-find-ch increment (complement boundary?))
-                              (perform-until-ch increment boundary?))))
+  (with-meta->> {:inclusive? true}
+    (comp
+     clamp-scroll
+     adjust-scroll-to-cursor
+     clamp-cursor
+     (fn end-of-word-mover [ctx]
+       (let [backward? (< (increment 0) 0)
+             forward? (not backward?)]
+         (if forward?
+           (let [ctx' (perform-until-ch ctx increment boundary?)]
+             (cond-> ctx'
+               (= ctx ctx') (-> (perform-find-ch increment (complement boundary?))
+                                (perform-until-ch increment boundary?))))
 
-         ; backward:
-         (-> ctx
-             (perform-until-ch increment boundary?)
-             (perform-find-ch increment (complement boundary?))))))))
+           ; backward:
+           (-> ctx
+               (perform-until-ch increment boundary?)
+               (perform-find-ch increment (complement boundary?)))))))))

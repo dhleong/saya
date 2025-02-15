@@ -68,8 +68,10 @@
         (assoc-in [:cursor :row] start)
         (assoc :yanked {:lines yanked}))))
 
-(defn- delete-chars [buffer linenr start end]
-  (let [[start end] (align-start-end start end)]
+(defn- delete-chars [buffer {:keys [inclusive?]} linenr start end]
+  (let [[start end] (align-start-end start end)
+        end (cond-> end
+              inclusive? (inc))]
     ; TODO: It'd be nice not to have to convert the line to a string multiple times...
     (-> buffer
         (update-buffer-line-string
@@ -81,7 +83,7 @@
         (assoc :yanked {:chars (subs (line->string (nth (:lines buffer) linenr))
                                      start end)}))))
 
-(defn delete-operator [context {:keys [start end linewise?]}]
+(defn delete-operator [context {:keys [start end linewise?] :as flags}]
   (cond
     ; Line-wise delete
     linewise?
@@ -89,7 +91,7 @@
 
     ; Char-wise delete within a line
     (= (:row start) (:row end))
-    (update context :buffer delete-chars (:row start) (:col start) (:col end))
+    (update context :buffer delete-chars flags (:row start) (:col start) (:col end))
 
     :else
     {:error "TODO: support char-wise cross-line deletes"}))
