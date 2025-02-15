@@ -23,8 +23,8 @@
                (last-buffer-row buffer)))))
 
 (def movement-keymaps
-  {["0"] to-start-of-line
-   ["$"] to-end-of-line
+  {["0"] #'to-start-of-line
+   ["$"] #'to-end-of-line
 
    ["g" "g"] (comp
               clamp-scroll
@@ -33,7 +33,7 @@
                 (assoc-in ctx [:buffer :cursor] {:col 0
                                                  :row 0})))
 
-   ["G"] scroll-to-bottom
+   ["G"] #'scroll-to-bottom
 
    ; Single char movement
    ["k"] (update-cursor :row dec)
