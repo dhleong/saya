@@ -89,9 +89,19 @@
        ; and we receive it here.
 
        {:type "Connected"}
-       {:dispatch [::buffer-events/new-line
-                   {:id bufnr
-                    :system [:connected (get-in db [:buffers bufnr :uri])]}]}
+       {:fx [[:dispatch
+              [::buffer-events/new-line
+               {:id bufnr
+                :system [:connected (get-in db [:buffers bufnr :uri])]}]]
+
+             ; TODO: Perhaps, send the "largest" window for this buffer?
+             (when-let [window (->> db :windows vals
+                                    (filter #(= bufnr (:bufnr %)))
+                                    (first))]
+               [:saya.modules.kodachi.fx/set-window-size!
+                {:connection-id connr
+                 :width (:width window)
+                 :height (:height window)}])]}
 
        {:type "Disconnected"}
        {:dispatch [::buffer-events/new-line
