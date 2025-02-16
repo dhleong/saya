@@ -13,3 +13,9 @@
 
 (defn log [& vals]
   (>evt (apply log-event vals)))
+
+#_{:clj-kondo/ignore [:unresolved-namespace]}
+(comment
+  ; Useful for seeing telnet debugging
+  (->> (:log @re-frame.db/app-db)
+       (filter #(str/starts-with? (:text %) "[kodachi]"))))

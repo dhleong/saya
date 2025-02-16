@@ -38,8 +38,12 @@
 (defn- spawn-kodachi [path]
   (-> (p/let [^js proc (spawn-proc path
                                    ["stdio" "--ui=external"]
-                                   {:stdio ["pipe" nil "pipe"]
-                                    :windowsHide true})]
+                                   {:stdio ["pipe" "pipe" "pipe"]
+                                    :windowsHide true
+                                    :env {:TERM js/process.env.TERM
+                                          ; NOTE: Debugging logs show up out of band,
+                                          ; so let's just always do this
+                                          :DEBUG "*"}})]
         (swap! instance
                (fn [^js old]
                  (when old
@@ -61,6 +65,14 @@
           (.on "error" (fn [err]
                          (log "Error from kodachi:" err)
                          (>evt [::events/on-error err]))))
+
+        (doto
+         (-> proc
+             .-stdout
+             (.pipe (split2)))
+
+          (.on "data" (fn [msg]
+                        (log "[kodachi] " msg))))
 
         :started)
 
@@ -98,7 +110,9 @@
       (clj->js)
       (js/JSON.stringify)))
 
-(defn- dispatch! [message]
+(defn dispatch! [message]
+  (log ">> " (cond-> message
+               (:text message) (assoc :text "<redacted>")))
   (if-some [^js proc @instance]
     (doto (.-stdin proc)
       (.write (serialize-message message))
@@ -130,7 +144,8 @@
                 (resolve m)))))))
 
 (defn request! [message]
-  (let [next-id (generate-next-request-id)]
-    (dispatch! (assoc message :id next-id))
+  (let [next-id (generate-next-request-id)
+        message' (assoc message :id next-id)]
+    (dispatch! message')
     (await-response next-id)))
 
