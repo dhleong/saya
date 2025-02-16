@@ -37,7 +37,9 @@
 
 (defn- spawn-kodachi [path]
   (-> (p/let [^js proc (spawn-proc path
-                                   ["stdio" "--ui=external"]
+                                   ["stdio" "external"
+                                    ; External UI Flags:
+                                    "--window-size-provided"]
                                    {:stdio ["pipe" "pipe" "pipe"]
                                     :windowsHide true
                                     :env {:TERM js/process.env.TERM
