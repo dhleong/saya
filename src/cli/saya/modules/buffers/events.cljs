@@ -90,12 +90,12 @@
 ;  [unwrap]
 ;  create-for-connection)
 
-(defn append-text [buffer {:keys [ansi parsed full-line? system]}]
+(defn append-text [buffer {:keys [ansi full-line? system]}]
   (update-in buffer [:lines (dec (count (:lines buffer)))]
              (fnil conj [])
              (if system
                {:system system}
-               (cond-> {:ansi ansi :parsed parsed}
+               (cond-> {:ansi ansi}
                  full-line? (assoc :full-line? true)))))
 
 (reg-event-db

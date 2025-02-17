@@ -10,18 +10,16 @@
 (deftest append-text-test
   (testing "Append initial chunk of text"
     (let [initial-buffer (empty-buffer)]
-      (is (= {:lines [[{:ansi "hello"
-                        :parsed :parsed}]]}
+      (is (= {:lines [[{:ansi "hello"}]]}
 
              (-> initial-buffer
                  (new-line)
-                 (append-text {:ansi "hello"
-                               :parsed :parsed})))))))
+                 (append-text {:ansi "hello"})))))))
 
 (deftest clear-partial-line-test
   (testing "Replace a partial line"
     (let [inital-buffer (empty-buffer)]
-      (is (= {:lines [[{:ansi "hello there" :parsed nil}]]}
+      (is (= {:lines [[{:ansi "hello there"}]]}
 
              (-> inital-buffer
                  (new-line)
