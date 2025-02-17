@@ -24,6 +24,8 @@
   (->plain [this])
   (ansi-chars [this]))
 
+(declare ->BufferLine)
+
 (deftype BufferLine [parts state]
   Object
   (equiv [this other]
