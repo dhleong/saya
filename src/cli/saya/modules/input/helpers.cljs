@@ -1,15 +1,12 @@
 (ns saya.modules.input.helpers
   (:require
-   [saya.modules.ansi.split :as split]))
+   [saya.modules.buffers.line :refer [ansi-chars]]))
 
 (def ^:dynamic *mode* :normal)
 
 (defn current-buffer-line [{:keys [lines cursor]}]
-  ; TODO: We should probably just store the :plain line...
   (->> (nth lines (:row cursor))
-       (map :ansi)
-       (apply str)
-       (split/chars-with-ansi)))
+       (ansi-chars)))
 
 (defn last-buffer-row [buffer]
   (max 0

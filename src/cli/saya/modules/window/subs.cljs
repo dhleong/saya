@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as str]
    [re-frame.core :refer [reg-sub subscribe]]
-   [saya.modules.ansi.split :as split]
+   [saya.modules.buffers.line :refer [ansi-chars buffer-line]]
    [saya.modules.buffers.subs :as buffer-subs]))
 
 (reg-sub
@@ -31,22 +31,10 @@
          (into
           []
           (comp
-             ; Transform the line for rendering:
-           (map (fn [line]
-                  (->> line
-                       (partition-by string?)
-                       (reduce
-                        (fn [formatted group]
-                          (concat
-                           formatted
-                           (if (string? (first group))
-                             (split/chars-with-ansi
-                              (apply str group))
+           ; Transform the line for rendering:
+           (map ansi-chars)
 
-                             group)))
-                        []))))
-
-             ; Index properly, accounting for filtering
+           ; Index properly, accounting for filtering
            (map-indexed (fn [i line]
                           [(+ i first-line-index) line])))))))
 
@@ -55,14 +43,14 @@
  (fn [[_ {:keys [winnr bufnr]}]]
    [(subscribe [::by-id winnr])
     (subscribe [::buffer-subs/by-id bufnr])
-    (subscribe [::buffer-subs/ansi-lines-by-id bufnr])])
+    (subscribe [::buffer-subs/lines-by-id bufnr])])
  (fn [[window buffer ansi-lines]]
    (or (seq (visible-lines window ansi-lines))
 
        ; NOTE: Non-connection buffers need some blank "starter" line
        ; for editing purposes
        (when-not (:connection-id buffer)
-         [[0 [{:ansi ""}]]]))))
+         [[0 (buffer-line)]]))))
 
 (reg-sub
  ::focused?

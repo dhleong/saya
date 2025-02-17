@@ -104,4 +104,8 @@
 (defn buffer-line
   ([] EMPTY)
   ([initial-part]
-   (->BufferLine [initial-part] (atom nil))))
+   (->BufferLine
+    [(if (string? initial-part)
+       {:ansi initial-part}
+       initial-part)]
+    (atom nil))))
