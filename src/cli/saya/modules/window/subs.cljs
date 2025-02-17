@@ -36,7 +36,8 @@
 
            ; Index properly, accounting for filtering
            (map-indexed (fn [i line]
-                          [(+ i first-line-index) line])))))))
+                          {:row (+ i first-line-index)
+                           :line line})))))))
 
 (reg-sub
  ::visible-lines
@@ -50,7 +51,7 @@
        ; NOTE: Non-connection buffers need some blank "starter" line
        ; for editing purposes
        (when-not (:connection-id buffer)
-         [[0 (buffer-line)]]))))
+         {:row 0 :line (buffer-line)}))))
 
 (reg-sub
  ::focused?
