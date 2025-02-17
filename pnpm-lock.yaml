@@ -57,8 +57,8 @@ importers:
         version: 7.1.0
     devDependencies:
       shadow-cljs:
-        specifier: ^2.28.15
-        version: 2.28.15
+        specifier: ^2.28.20
+        version: 2.28.20
       ws:
         specifier: ^8.18.0
         version: 8.18.0
@@ -507,8 +507,8 @@ packages:
   shadow-cljs-jar@1.3.4:
     resolution: {integrity: sha512-cZB2pzVXBnhpJ6PQdsjO+j/MksR28mv4QD/hP/2y1fsIa9Z9RutYgh3N34FZ8Ktl4puAXaIGlct+gMCJ5BmwmA==}
 
-  shadow-cljs@2.28.15:
-    resolution: {integrity: sha512-yK5QDwtOixKAo3WqgMd+0SP7HI2/YvQ5CpwtvwEScqHUqysz/1P6xQrFtGttCcAT2Zo32UuJxD8rCMoqBuwprw==}
+  shadow-cljs@2.28.20:
+    resolution: {integrity: sha512-Q9N+aw2suSUZ6vmWhZupl0rkyjoYrnpU1WbMrNrbuUiKE6XjvT1vcBkTUrqkMJEPraV7u+H9b5d/RcKnj8nbhg==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -1172,7 +1172,7 @@ snapshots:
 
   shadow-cljs-jar@1.3.4: {}
 
-  shadow-cljs@2.28.15:
+  shadow-cljs@2.28.20:
     dependencies:
       node-libs-browser: 2.2.1
       readline-sync: 1.4.10
