@@ -43,8 +43,12 @@
 
   ICounted
   (-count [this]
-    ; NOTE: Returns the *visual width* of this line, in characters
-    (count (ansi-chars this)))
+    (count (.-parts this)))
+
+  ISequential
+  ISeqable
+  (-seq [this]
+    (seq (.-parts this)))
 
   IBufferLine
   (->ansi [_]
@@ -63,7 +67,7 @@
 (extend-protocol IPrintWithWriter
   BufferLine
   (-pr-writer [a writer opts]
-    (-write writer "#object[BufferLine ")
+    (-write writer "#BufferLine[")
     (if (some :system (.-parts a))
       (do
         (-write writer "[")
