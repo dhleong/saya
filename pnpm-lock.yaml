@@ -52,6 +52,9 @@ importers:
       strip-ansi:
         specifier: ^7.1.0
         version: 7.1.0
+      wrap-ansi:
+        specifier: ^9.0.0
+        version: 9.0.0
     devDependencies:
       shadow-cljs:
         specifier: ^2.28.20

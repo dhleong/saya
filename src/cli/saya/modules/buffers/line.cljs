@@ -1,6 +1,8 @@
 (ns saya.modules.buffers.line
   (:require
    ["strip-ansi" :default strip-ansi]
+   ["wrap-ansi" :default wrap-ansi]
+   [clojure.string :as str]
    [saya.modules.ansi.split :as split]))
 
 (defn- ->ansi-chars [parts]
@@ -22,7 +24,8 @@
 (defprotocol IBufferLine
   (->ansi [this])
   (->plain [this])
-  (ansi-chars [this]))
+  (ansi-chars [this])
+  (wrapped-lines [this width]))
 
 (declare ->BufferLine)
 
@@ -64,7 +67,21 @@
 
   (ansi-chars [_]
     (or (:chars @state)
-        (:chars (swap! state assoc :chars (->ansi-chars parts))))))
+        (:chars (swap! state assoc :chars (->ansi-chars parts)))))
+
+  (wrapped-lines [this width]
+    (let [[for-width cached] (:wrapped @state)]
+      (or (when (= for-width width)
+            cached)
+          (-> (swap! state assoc :wrapped [width (-> (->ansi this)
+                                                     (wrap-ansi
+                                                      width
+                                                      #js {:trim false
+                                                           :hard true
+                                                           :wordWrap true})
+                                                     (str/split-lines))])
+              (:wrapped)
+              (second))))))
 
 (extend-protocol IPrintWithWriter
   BufferLine
