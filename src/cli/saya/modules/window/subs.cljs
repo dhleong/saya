@@ -16,28 +16,27 @@
    (subscribe [::by-id winnr]))
  :-> :bufnr)
 
-(defn- visible-lines [{:keys [height anchor-row] :or {height 10}}
-                      ansi-lines]
+(defn visible-lines [{:keys [height anchor-row] :or {height 10}}
+                     ansi-lines]
   ; NOTE: height might be unavailable on the first render
   (let [last-row-index (dec (count ansi-lines))
         anchor-row (or anchor-row
                        last-row-index)
         first-line-index (max 0 (- (inc anchor-row) height))]
-    (->> ansi-lines
-         ; Filter lines. We fill UP from the anchor-row
-         (drop-last (- last-row-index anchor-row))
-         (take-last height)
+    (->>
+     ; Filter lines. We fill UP from (including!) the anchor-row
+     (subvec ansi-lines (max 0 (- anchor-row (dec height))) (inc anchor-row))
 
-         (into
-          []
-          (comp
-           ; Transform the line for rendering:
-           (map ansi-chars)
+     (into
+      []
+      (comp
+       ; Transform the line for rendering:
+       (map ansi-chars)
 
-           ; Index properly, accounting for filtering
-           (map-indexed (fn [i line]
-                          {:row (+ i first-line-index)
-                           :line line})))))))
+       ; Index properly, accounting for filtering
+       (map-indexed (fn [i line]
+                      {:row (+ i first-line-index)
+                       :line line})))))))
 
 (reg-sub
  ::visible-lines
