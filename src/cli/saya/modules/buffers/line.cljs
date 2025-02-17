@@ -20,6 +20,21 @@
              group)))
         [])))
 
+(defn- ->wrapped-lines [ansi-parts width]
+  (->> ansi-parts
+       (partition-by string?)
+       (mapcat
+        (fn [group]
+          (if (string? (first group))
+            (->> (wrap-ansi
+                  (apply str group)
+                  width
+                  #js {:trim false
+                       :hard true
+                       :wordWrap true})
+                 (str/split-lines))
+            group)))))
+
 (defprotocol IBufferLine
   (->ansi [this])
   (ansi-chars [this])
@@ -66,13 +81,7 @@
     (let [[for-width cached] (:wrapped @state)]
       (or (when (= for-width width)
             cached)
-          (-> (swap! state assoc :wrapped [width (-> (->ansi this)
-                                                     (wrap-ansi
-                                                      width
-                                                      #js {:trim false
-                                                           :hard true
-                                                           :wordWrap true})
-                                                     (str/split-lines))])
+          (-> (swap! state assoc :wrapped [width (->wrapped-lines (ansi-chars this) width)])
               (:wrapped)
               (second))))))
 
