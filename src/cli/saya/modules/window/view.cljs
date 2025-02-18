@@ -111,7 +111,7 @@
               [buffer-line
                data
                {:cursor-col (when (and (= cursor-row row)
-                                       (<= col cursor-col (+ col (count line))))
+                                       (<= col cursor-col (dec (+ col (count line)))))
                               cursor-col)
                 :input-connr (when (and (= last-row cursor-row)
                                         (not scrolled?))

@@ -20,9 +20,12 @@
              group)))
         [])))
 
-(defn- ->wrapped-lines [ansi-parts width]
-  (->> ansi-parts
+(defn- ->wrapped-lines [parts width]
+  (->> parts
+       (map (fn [{:keys [ansi system]}]
+              (or system ansi)))
        (partition-by string?)
+
        (mapcat
         (fn [group]
           (if (string? (first group))
@@ -32,8 +35,17 @@
                   #js {:trim false
                        :hard true
                        :wordWrap true})
-                 (str/split-lines))
-            group)))))
+                 (str/split-lines)
+                 (map split/chars-with-ansi))
+
+            group)))
+
+       (reduce
+        (fn [result line]
+          (conj result {:col (+ (count (:line (peek result)))
+                                (:col (peek result) 0))
+                        :line line}))
+        [])))
 
 (defprotocol IBufferLine
   (->ansi [this])
@@ -77,11 +89,11 @@
     (or (:chars @state)
         (:chars (swap! state assoc :chars (->ansi-chars parts)))))
 
-  (wrapped-lines [this width]
+  (wrapped-lines [_ width]
     (let [[for-width cached] (:wrapped @state)]
       (or (when (= for-width width)
             cached)
-          (-> (swap! state assoc :wrapped [width (->wrapped-lines (ansi-chars this) width)])
+          (-> (swap! state assoc :wrapped [width (->wrapped-lines parts width)])
               (:wrapped)
               (second))))))
 
