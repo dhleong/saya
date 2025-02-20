@@ -50,6 +50,9 @@
 (defprotocol IBufferLine
   (->ansi [this])
   (ansi-chars [this])
+  (length
+    [this]
+    "Visual length of this line in bytes")
   (wrapped-lines [this width]))
 
 (declare ->BufferLine)
@@ -88,6 +91,9 @@
   (ansi-chars [_]
     (or (:chars @state)
         (:chars (swap! state assoc :chars (->ansi-chars parts)))))
+
+  (length [this]
+    (count (ansi-chars this)))
 
   (wrapped-lines [_ width]
     (let [[for-width cached] (:wrapped @state)]

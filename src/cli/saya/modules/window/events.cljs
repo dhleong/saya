@@ -1,7 +1,8 @@
 (ns saya.modules.window.events
   (:require
    [clojure.string :as str]
-   [re-frame.core :refer [reg-event-db reg-event-fx unwrap]]))
+   [re-frame.core :refer [reg-event-db reg-event-fx unwrap]]
+   [saya.modules.buffers.line :refer [buffer-line]]))
 
 (reg-event-fx
  ::on-measured
@@ -24,5 +25,4 @@
    (assoc-in db [:buffers [:conn/input connr] :lines]
              (->> text
                   (str/split-lines)
-                  (map (fn [line]
-                         [{:ansi line}]))))))
+                  (map buffer-line)))))

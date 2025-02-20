@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as str]
    [re-frame.core :refer [reg-sub subscribe]]
-   [saya.modules.buffers.line :refer [wrapped-lines]]
+   [saya.modules.buffers.line :refer [->ansi wrapped-lines]]
    [saya.modules.buffers.subs :as buffer-subs]))
 
 (reg-sub
@@ -100,6 +100,5 @@
    (subscribe [::buffer-subs/by-id [:conn/input connr]]))
  (fn [buffer]
    (->> (:lines buffer)
-        (map (partial mapcat :ansi))
-        (map (comp (partial apply str)))
+        (map ->ansi)
         (str/join "\n"))))
