@@ -52,7 +52,7 @@
   (ansi-chars [this])
   (length
     [this]
-    "Visual length of this line in bytes")
+    "Visual length of this line in chars")
   (wrapped-lines [this width]))
 
 (declare ->BufferLine)
