@@ -10,7 +10,7 @@
 (defn- ansi-cursor [v]
   (str "\u001B[" v " q"))
 
-(defn update-screen [{:keys [out last-lines]
+(defn update-screen [{:keys [out last-lines cursor-shape?]
                       :as state}
                      output]
   (let [lines (str/split-lines output)
@@ -44,13 +44,14 @@
         (>evt [:saya.events/set-global-cursor position])
         (swap! metrics assoc :moved-cursor [x y cursor-shape])
         (.write out (ansi/cursorTo x y))
-        (.write out (case cursor-shape
-                      :block/blink (ansi-cursor 1)
-                      :block (ansi-cursor 2)
-                      :underscore/blink (ansi-cursor 3)
-                      :underscore (ansi-cursor 4)
-                      :pipe/blink (ansi-cursor 5)
-                      :pipe (ansi-cursor 6)))
+        (when cursor-shape?
+          (.write out (case cursor-shape
+                        :block/blink (ansi-cursor 1)
+                        :block (ansi-cursor 2)
+                        :underscore/blink (ansi-cursor 3)
+                        :underscore (ansi-cursor 4)
+                        :pipe/blink (ansi-cursor 5)
+                        :pipe (ansi-cursor 6))))
         (.write out ansi/cursorShow))
 
       (do
@@ -79,22 +80,31 @@
 
 (defonce ^:private last-state (atom nil))
 
-(defn stdout []
-  (let [out js/process.stdout
-        state (atom {:out out})]
+(defn stdout
+  ([] (stdout {} js/process.stdout))
+  ([opts ^js out]
+   (stdout opts (atom {:out out}) out))
+  ([opts state ^js out]
+   (reset! last-state state)
 
-    (reset! last-state state)
+   (js/Object.defineProperties
+    (j/obj .-write (partial swap! state
+                            (fn [state str]
+                              (let [stripped (strip-provided-ansi str)]
+                                (cond
+                                  (some? stripped)
+                                  (update-screen state stripped)
 
-    (js/Object.defineProperties
-     (j/obj .-write (partial swap! state
-                             (fn [state str]
-                               (if-let [str (strip-provided-ansi str)]
-                                 (update-screen state str)
-                                 state)))
-            .-on (.bind (.-on out) out)
-            .-off (.bind (.-off out) out))
-     #js {:rows #js {:get #(.-rows out)}
-          :columns #js {:get #(.-columns out)}})))
+                                  (and (:always-render? opts)
+                                       (not= ansi/clearTerminal str))
+                                  (update-screen state str)
+
+                                  :else
+                                  state))))
+           .-on (.bind (.-on out) out)
+           .-off (.bind (.-off out) out))
+    #js {:rows #js {:get #(.-rows out)}
+         :columns #js {:get #(.-columns out)}})))
 
 (comment
   (take-last 5 (map count (:history @@last-state)))

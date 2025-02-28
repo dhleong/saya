@@ -11,7 +11,11 @@
    [saya.subs]
    [saya.util.logging :as logging]
    [saya.util.ink :as ink]
-   [saya.views :as views]))
+   [saya.views :as views]
+
+   ; NOTE: Required here just to convince shadow to build it in dev
+   ; Ideally we can strip this from prod builds...
+   [saya.util.ink-testing-utils]))
 
 (defonce ^:private functional-compiler (r/create-compiler
                                         {:function-components true}))
