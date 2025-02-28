@@ -1,12 +1,12 @@
 (ns saya.modules.input.insert
   (:require
    [saya.cli.text-input.helpers :refer [dec-to-zero split-text-by-state]]
-   [saya.modules.buffers.line :refer [->ansi buffer-line]]
+   [saya.modules.buffers.line :refer [buffer-line]]
    [saya.modules.input.helpers :refer [update-cursor]]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
 
 (defn line->string [line]
-  (->ansi line))
+  (str line))
 
 (defn- string->line [s]
   (buffer-line s))

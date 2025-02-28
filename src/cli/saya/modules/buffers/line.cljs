@@ -61,6 +61,8 @@
   Object
   (equiv [this other]
     (-equiv this other))
+  (toString [this]
+    (->ansi this))
 
   IEquiv
   (-equiv [o other] (-equiv (.-parts o) (if (instance? BufferLine other)
