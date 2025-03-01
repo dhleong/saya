@@ -7,8 +7,7 @@
    [saya.cli.fullscreen :refer [activate-alternate-screen]]
    [saya.env :as env]
    [saya.events :as events]
-   [saya.fx]
-   [saya.subs]
+   [saya.prelude]
    [saya.util.logging :as logging]
    [saya.util.ink :as ink]
    [saya.views :as views]
@@ -17,11 +16,7 @@
    ; Ideally we can strip this from prod builds...
    [saya.util.ink-testing-utils]))
 
-(defonce ^:private functional-compiler (r/create-compiler
-                                        {:function-components true}))
 (defonce ^:private ink-instance (atom nil))
-
-(r/set-default-compiler! functional-compiler)
 
 (defn ^:dev/after-load mount-root []
   (re-frame/clear-subscription-cache!)
