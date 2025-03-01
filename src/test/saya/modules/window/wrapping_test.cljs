@@ -25,7 +25,7 @@
 (defn- initialize-buffer [& lines]
   (rf/clear-subscription-cache!)
   (>evt [:saya.events/initialize-db])
-  (>evt [:command/enew])
+  (>evt [:submit-raw-command "enew"])
   (doseq [line lines]
     (>evt [:saya.modules.buffers.events/new-line {:id 0}])
     (>evt [:saya.modules.buffers.events/append-text
