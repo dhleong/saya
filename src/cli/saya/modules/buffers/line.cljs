@@ -40,7 +40,7 @@
                  (str/split-lines)
                  (map split/chars-with-ansi))
 
-            group)))
+            [group])))
 
        (reduce
         (fn [result line]

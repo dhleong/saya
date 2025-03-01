@@ -4,7 +4,7 @@
    [saya.modules.buffers.line :refer [ansi-continuation buffer-line
                                       wrapped-lines]]))
 
-(deftest buffer-line-test
+(deftest wrapped-lines-test
   (testing "Wrap lines"
     (is (= [{:col 0 :line ["f" "o" "r" " "]}
             {:col 4 :line ["t" "h" "e"]}]
@@ -12,6 +12,13 @@
             (buffer-line "for the")
             4))))
 
+  (testing "Preserve system messages"
+    (is (= [{:col 0 :line [[:local-send "honor"]]}]
+           (wrapped-lines
+            (buffer-line {:system [:local-send "honor"]})
+            4)))))
+
+(deftest ansi-continuation-test
   (testing "Capture final ansi"
     (is (empty?
          (ansi-continuation
