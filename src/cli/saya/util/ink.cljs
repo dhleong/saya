@@ -11,6 +11,7 @@
   (str "\u001B[" v " q"))
 
 (defn update-screen [{:keys [out last-lines cursor-shape?]
+                      :or {cursor-shape? true}
                       :as state}
                      output]
   (let [lines (str/split-lines output)
