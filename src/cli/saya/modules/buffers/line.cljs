@@ -50,7 +50,7 @@
         [])))
 
 (defn- ->ansi-continuation [ansi]
-  (when-let [parts (seq (.parse AnsiParser ansi))]
+  (when-let [parts (seq (.parse AnsiParser (str ansi " ")))]
     (let [ansi (j/get (nth parts (dec (count parts))) :style)]
       (when (seq ansi)
         ansi))))

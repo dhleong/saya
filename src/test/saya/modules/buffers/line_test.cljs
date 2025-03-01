@@ -25,5 +25,17 @@
           (buffer-line "for the"))))
     (is (= "\u001b[32m\u001b[42m"
            (ansi-continuation
-            (buffer-line "\u001B[32mfor \u001B[42mthe"))))))
+            (buffer-line "\u001B[32mfor \u001B[42mthe")))))
+
+  (testing "Handle trailing ansi"
+    ; If ansi state gets "reset" or otherwise changed the end of
+    ; the line, we should handle that correctly
+    (is (= "[38;5;007m"
+           (ansi-continuation
+            (buffer-line
+             "[38;5;006mOpen and close[38;5;007m"))))
+    (is (empty?
+         (ansi-continuation
+          (buffer-line
+           "[38;5;006mOpen and close[0m"))))))
 
