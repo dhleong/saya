@@ -113,7 +113,7 @@
                {:cursor-col (when (and (= cursor-row row)
                                        (<= col cursor-col (dec (+ col (count line)))))
                               cursor-col)
-                :input-connr (when (and (= last-row cursor-row)
+                :input-connr (when (and (= last-row row)
                                         (not scrolled?))
                                input-connr)}])]
            (when scrolled?
