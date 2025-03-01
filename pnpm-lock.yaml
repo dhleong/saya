@@ -16,6 +16,9 @@ importers:
       ansi-escapes:
         specifier: ^7.0.0
         version: 7.0.0
+      ansi-parser:
+        specifier: ^3.2.11
+        version: 3.2.11
       ansi-regex:
         specifier: ^6.1.0
         version: 6.1.0
@@ -72,6 +75,9 @@ packages:
   ansi-escapes@7.0.0:
     resolution: {integrity: sha512-GdYO7a61mR0fOlAsvC9/rIHf7L96sBc6dEWzeOu+KAea5bZyQRPIpojrVoI4AXGJS/ycu/fBTdLrUkA4ODrvjw==}
     engines: {node: '>=18'}
+
+  ansi-parser@3.2.11:
+    resolution: {integrity: sha512-HeEwCVf/pI9qQUVaTkoDBl9U/QU4RvWJ+Trg1jNSNvDzFsBAId6fHv6VLiC7HzwrOiL8uOEkO5T1eTgpnTFQfQ==}
 
   ansi-regex@6.1.0:
     resolution: {integrity: sha512-7HSX4QQb4CspciLpVFwyRe79O3xsIZDDLER21kERQ71oaPodF8jL725AgJMFAYbooIqolJoRLuM81SpeUkpkvA==}
@@ -642,6 +648,8 @@ snapshots:
   ansi-escapes@7.0.0:
     dependencies:
       environment: 1.1.0
+
+  ansi-parser@3.2.11: {}
 
   ansi-regex@6.1.0: {}
 

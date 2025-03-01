@@ -14,7 +14,19 @@
 
              (-> initial-buffer
                  (new-line)
-                 (append-text {:ansi "hello"})))))))
+                 (append-text {:ansi "hello"}))))))
+
+  (testing "Continue ansi on subsequent lines"
+    (let [initial-buffer (empty-buffer)]
+      (is (= ["\u001b[32mfor the"
+              "\u001b[32mhonor of"]
+
+             (-> initial-buffer
+                 (new-line)
+                 (append-text {:ansi "\u001b[32mfor the"})
+                 (new-line)
+                 (append-text {:ansi "honor of"})
+                 (->> :lines (map str))))))))
 
 (deftest clear-partial-line-test
   (testing "Replace a partial line"

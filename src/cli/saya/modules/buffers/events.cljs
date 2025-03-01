@@ -2,7 +2,7 @@
   (:require
    [re-frame.core :refer [->interceptor assoc-coeffect assoc-effect
                           get-coeffect get-effect reg-event-db unwrap]]
-   [saya.modules.buffers.line :refer [buffer-line]]))
+   [saya.modules.buffers.line :refer [ansi-continuation buffer-line]]))
 
 (defn- build-allocator [db-objs-key db-next-id-key]
   (fn allocate [db extras]
@@ -105,10 +105,13 @@
  append-text)
 
 (defn new-line [{{cursor-row :row} :cursor :as buffer}]
-  (cond-> (update buffer :lines conj (buffer-line))
-    (= cursor-row
-       (dec (count (:lines buffer))))
-    (update-in [:cursor :row] inc)))
+  (let [prev-line (peek (:lines buffer))]
+    (cond-> (update buffer :lines conj (buffer-line
+                                        (when prev-line
+                                          (ansi-continuation prev-line))))
+      (= cursor-row
+         (dec (count (:lines buffer))))
+      (update-in [:cursor :row] inc))))
 
 (reg-event-db
  ::new-line

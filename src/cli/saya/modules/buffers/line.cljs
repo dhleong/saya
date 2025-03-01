@@ -1,6 +1,8 @@
 (ns saya.modules.buffers.line
   (:require
+   ["ansi-parser" :default AnsiParser]
    ["wrap-ansi" :default wrap-ansi]
+   [applied-science.js-interop :as j]
    [clojure.string :as str]
    [saya.modules.ansi.split :as split]))
 
@@ -47,13 +49,22 @@
                         :line line}))
         [])))
 
+(defn- ->ansi-continuation [ansi]
+  (when-let [parts (seq (.parse AnsiParser ansi))]
+    (let [ansi (j/get (nth parts (dec (count parts))) :style)]
+      (when (seq ansi)
+        ansi))))
+
 (defprotocol IBufferLine
   (->ansi [this])
   (ansi-chars [this])
   (length
     [this]
     "Visual length of this line in chars")
-  (wrapped-lines [this width]))
+  (wrapped-lines [this width])
+  (ansi-continuation
+    [this]
+    "The final ansi code state at the end of this line"))
 
 (declare ->BufferLine)
 
@@ -103,7 +114,12 @@
             cached)
           (-> (swap! state assoc :wrapped [width (->wrapped-lines parts width)])
               (:wrapped)
-              (second))))))
+              (second)))))
+
+  (ansi-continuation [this]
+    ; NOTE: We don't cache this because we *shouldn't* need it
+    ; more than once per line anyway
+    (->ansi-continuation (->ansi this))))
 
 (extend-protocol IPrintWithWriter
   BufferLine
@@ -126,8 +142,10 @@
 (defn buffer-line
   ([] EMPTY)
   ([initial-part]
-   (->BufferLine
-    [(if (string? initial-part)
-       {:ansi initial-part}
-       initial-part)]
-    (atom nil))))
+   (if (some? initial-part)
+     (->BufferLine
+      [(if (string? initial-part)
+         {:ansi initial-part}
+         initial-part)]
+      (atom nil))
+     EMPTY)))
