@@ -16,7 +16,15 @@
     (is (= [{:col 0 :line [[:local-send "honor"]]}]
            (wrapped-lines
             (buffer-line {:system [:local-send "honor"]})
-            4)))))
+            4))))
+
+  (testing "Preserve ansi on split lines"
+    (is (= ["\u001b[32mf"
+            "\u001b[32mt"]
+           (->> (wrapped-lines
+                 (buffer-line "\u001b[32mfor the")
+                 4)
+                (map (comp first :line)))))))
 
 (deftest ansi-continuation-test
   (testing "Capture final ansi"
