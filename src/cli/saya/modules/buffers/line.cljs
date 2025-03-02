@@ -1,10 +1,9 @@
 (ns saya.modules.buffers.line
   (:require
    ["ansi-parser" :default AnsiParser]
-   ["wrap-ansi" :default wrap-ansi]
    [applied-science.js-interop :as j]
-   [clojure.string :as str]
-   [saya.modules.ansi.split :as split]))
+   [saya.modules.ansi.split :as split]
+   [saya.modules.ansi.wrap :refer [wrap-ansi]]))
 
 (defn- ->ansi-chars [parts]
   (->> parts
@@ -30,14 +29,12 @@
 
        (mapcat
         (fn [group]
+          (when (string? (first group))
+            (println (apply str group)))
           (if (string? (first group))
             (->> (wrap-ansi
                   (apply str group)
-                  width
-                  #js {:trim false
-                       :hard true
-                       :wordWrap true})
-                 (str/split-lines)
+                  width)
                  (map split/chars-with-ansi))
 
             [group])))

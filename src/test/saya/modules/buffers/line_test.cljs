@@ -6,8 +6,8 @@
 
 (deftest wrapped-lines-test
   (testing "Wrap lines"
-    (is (= [{:col 0 :line ["f" "o" "r" " "]}
-            {:col 4 :line ["t" "h" "e"]}]
+    (is (= [{:col 0 :line ["f" "o" "r" " \u001b[0m"]}
+            {:col 4 :line ["t" "h" "e\u001b[0m"]}]
            (wrapped-lines
             (buffer-line "for the")
             4))))
@@ -23,6 +23,13 @@
             "\u001b[32mt"]
            (->> (wrapped-lines
                  (buffer-line "\u001b[32mfor the")
+                 4)
+                (map (comp first :line)))))
+
+    (is (= ["\u001b[38;5;002mf"
+            "\u001b[38;5;002mt"]
+           (->> (wrapped-lines
+                 (buffer-line "\u001b[38;5;002mfor the")
                  4)
                 (map (comp first :line)))))))
 

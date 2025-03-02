@@ -6,7 +6,6 @@
    [applied-science.js-interop :as j]
    [reagent.core :as r]
    [saya.modules.ui.cursor :refer [strip-cursor]]
-   [saya.prelude]
    [saya.util.ink :as ink]))
 
 (defn render->string
