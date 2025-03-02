@@ -27,15 +27,36 @@
               (or system ansi)))
        (partition-by string?)
 
-       (mapcat
+       (map
         (fn [group]
           (if (string? (first group))
-            (->> (wrap-ansi
-                  (apply str group)
-                  width)
-                 (map split/chars-with-ansi))
+            {:strings (->> (wrap-ansi
+                            (apply str group)
+                            width)
+                           (map split/chars-with-ansi))}
 
-            [group])))
+            {:systems group})))
+
+       ; NOTE: These double vector is a bit itchy... can we do better?
+
+       ; From above, `strings` will be a sequence of split lines,
+       ; with each line being a sequence of chars-with-ansi;
+       ; `systems` will be a sequence of system message vectors
+       ; (basically, hiccup data).
+       ; We know this was all meant to be a single line, so here
+       ; we collapse the `systems` sequences *into* the preceeding
+       ; line sequence (if any). This does mean that on a narrow
+       ; screen a trailing system message could get clipped, but
+       ; that's probably fine.
+       (reduce
+        (fn [result {:keys [strings systems]}]
+          (if strings
+            (into result strings)
+            (conj (if (seq result)
+                    (pop result)
+                    result)
+                  (concat (peek result) systems))))
+        [])
 
        (reduce
         (fn [result line]

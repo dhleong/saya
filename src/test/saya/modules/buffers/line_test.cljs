@@ -16,7 +16,12 @@
     (is (= [{:col 0 :line [[:local-send "honor"]]}]
            (wrapped-lines
             (buffer-line {:system [:local-send "honor"]})
-            4))))
+            4)))
+
+    (is (= [{:col 0 :line ["f" "o" "r\u001b[0m" [:local-send "honor"]]}]
+           (-> (buffer-line "for")
+               (conj {:system [:local-send "honor"]})
+               (wrapped-lines 20)))))
 
   (testing "Preserve ansi on split lines"
     (is (= ["\u001b[32mf"
