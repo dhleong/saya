@@ -5,6 +5,7 @@
    [cljs.test :refer-macros [deftest is testing]]
    [day8.re-frame.test :as rft]
    [re-frame.core :as rf]
+   [saya.prelude]
    [saya.util.ink-testing-utils :refer [render->string]]
    [saya.views :as views]))
 
