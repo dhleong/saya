@@ -4,8 +4,16 @@
    ["strip-ansi" :default strip-ansi]
    [clojure.string :as str]))
 
+(defn- trim-suffix [s suffix]
+  (cond-> s
+    (str/ends-with? s suffix) (subs 0 (- (count s)
+                                         (count suffix)))))
+
 (defn- finalize-line [line]
-  (.stringify AnsiParser (to-array line)))
+  (-> (.stringify AnsiParser (to-array line))
+      ; This trailing "reset styles" is "nice" but unnecessary.
+      ; ink should handle it for us, so keeping it is just noise
+      (trim-suffix "\u001B[0m")))
 
 (defn wrap-ansi [s width]
   (loop [lines []

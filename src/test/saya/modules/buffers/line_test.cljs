@@ -6,8 +6,8 @@
 
 (deftest wrapped-lines-test
   (testing "Wrap lines"
-    (is (= [{:col 0 :line ["f" "o" "r" " \u001b[0m"]}
-            {:col 4 :line ["t" "h" "e\u001b[0m"]}]
+    (is (= [{:col 0 :line ["f" "o" "r" " "]}
+            {:col 4 :line ["t" "h" "e"]}]
            (wrapped-lines
             (buffer-line "for the")
             4))))
@@ -18,7 +18,7 @@
             (buffer-line {:system [:local-send "honor"]})
             4)))
 
-    (is (= [{:col 0 :line ["f" "o" "r\u001b[0m" [:local-send "honor"]]}]
+    (is (= [{:col 0 :line ["f" "o" "r" [:local-send "honor"]]}]
            (-> (buffer-line "for")
                (conj {:system [:local-send "honor"]})
                (wrapped-lines 20)))))
