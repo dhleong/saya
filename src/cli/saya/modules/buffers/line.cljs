@@ -29,8 +29,6 @@
 
        (mapcat
         (fn [group]
-          (when (string? (first group))
-            (println (apply str group)))
           (if (string? (first group))
             (->> (wrap-ansi
                   (apply str group)
