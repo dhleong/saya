@@ -33,8 +33,8 @@
     "ws": "^8.18.0"
   },
   "dependencies": {
-    "anser": "^2.3.0",
     "ansi-escapes": "^7.0.0",
+    "ansi-parser": "^3.2.11",
     "ansi-regex": "^6.1.0",
     "env-paths": "^3.0.0",
     "figures": "^3.2.0",

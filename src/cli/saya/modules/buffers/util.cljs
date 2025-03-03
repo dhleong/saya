@@ -1,5 +1,6 @@
 (ns saya.modules.buffers.util
   (:require
+   [saya.modules.buffers.line :refer [length]]
    [saya.modules.input.insert :refer [line->string]]))
 
 (defn readonly? [buffer]
@@ -9,11 +10,7 @@
 
 (defn line-length [{:keys [lines]} row]
   (->> (nth lines row)
-       (transduce
-        (comp
-         (map (comp count :ansi)))
-        +
-        0)))
+       (length)))
 
 (defn char-at
   ([{:keys [cursor] :as buffer}] (char-at buffer cursor))

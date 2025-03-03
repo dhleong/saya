@@ -5,6 +5,7 @@
    [saya.cli.text-input.helpers :refer [split-text-by-state]]
    [saya.db :refer [default-db]]
    [saya.modules.buffers.events :as buffer-events]
+   [saya.modules.buffers.line :refer [buffer-line]]
    [saya.modules.input.insert :refer [line->string]]))
 
 (defn- extract-lines-and-cursor [s]
@@ -36,10 +37,7 @@
 
 (defn str->buffer [s]
   (let [[lines cursor] (extract-lines-and-cursor s)]
-    {:lines (mapv (fn [line-str]
-                    [{:ansi line-str
-                      :plain line-str}])
-                  lines)
+    {:lines (mapv buffer-line lines)
      :cursor cursor}))
 
 (defn- insert-cursor [s cursor]

@@ -7,17 +7,16 @@
    [saya.cli.fullscreen :refer [activate-alternate-screen]]
    [saya.env :as env]
    [saya.events :as events]
-   [saya.fx]
-   [saya.subs]
+   [saya.prelude]
    [saya.util.logging :as logging]
    [saya.util.ink :as ink]
-   [saya.views :as views]))
+   [saya.views :as views]
 
-(defonce ^:private functional-compiler (r/create-compiler
-                                        {:function-components true}))
+   ; NOTE: Required here just to convince shadow to build it in dev
+   ; Ideally we can strip this from prod builds...
+   [saya.util.ink-testing-utils]))
+
 (defonce ^:private ink-instance (atom nil))
-
-(r/set-default-compiler! functional-compiler)
 
 (defn ^:dev/after-load mount-root []
   (re-frame/clear-subscription-cache!)

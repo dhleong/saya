@@ -4,8 +4,7 @@
    ["react" :as React]
    [archetype.util :refer [>evt]]
    [saya.cli.keys :refer [->key]]
-   [saya.modules.input.core :as input]
-   [saya.modules.logging.core :refer [log]]))
+   [saya.modules.input.core :as input]))
 
 (defonce ^:private active-token (atom nil))
 
@@ -19,8 +18,6 @@
    (let [token-ref (React/useRef [(js/Date.now) (js/Math.random)])]
      (use-keys #(.-current token-ref) on-key)))
   ([get-token on-key]
-   (log "mount" (resolve-token get-token))
-
    (React/useEffect
     (fn []
       (let [[last-token _] (reset-vals!

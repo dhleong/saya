@@ -9,16 +9,10 @@
  :=> get)
 
 (reg-sub
- ::ansi-lines-by-id
+ ::lines-by-id
  (fn [[_ id]]
    (subscribe [::by-id id]))
- :-> (fn [buffer]
-       (some->> buffer
-                :lines
-                (map (fn [line]
-                       (map (fn [{:keys [system ansi]}]
-                              (or system ansi))
-                            line))))))
+ :-> :lines)
 
 (reg-sub
  ::->connr

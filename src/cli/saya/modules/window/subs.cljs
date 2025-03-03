@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as str]
    [re-frame.core :refer [reg-sub subscribe]]
-   [saya.modules.ansi.split :as split]
+   [saya.modules.buffers.line :refer [wrapped-lines]]
    [saya.modules.buffers.subs :as buffer-subs]))
 
 (reg-sub
@@ -16,53 +16,52 @@
    (subscribe [::by-id winnr]))
  :-> :bufnr)
 
-(defn- visible-lines [{:keys [height anchor-row] :or {height 10}}
-                      ansi-lines]
+(defn visible-lines [{:keys [height width anchor-offset anchor-row]
+                      :or {height 10 width 50}}
+                     ansi-lines]
   ; NOTE: height might be unavailable on the first render
   (let [last-row-index (dec (count ansi-lines))
         anchor-row (or anchor-row
                        last-row-index)
         first-line-index (max 0 (- (inc anchor-row) height))]
-    (->> ansi-lines
-         ; Filter lines. We fill UP from the anchor-row
-         (drop-last (- last-row-index anchor-row))
-         (take-last height)
+    (->>
+      ; Filter lines. We fill UP from (including!) the anchor-row
+     (subvec ansi-lines (max 0 (- anchor-row (dec height))) (inc anchor-row))
 
-         (into
-          []
-          (comp
-             ; Transform the line for rendering:
-           (map (fn [line]
-                  (->> line
-                       (partition-by string?)
-                       (reduce
-                        (fn [formatted group]
-                          (concat
-                           formatted
-                           (if (string? (first group))
-                             (split/chars-with-ansi
-                              (apply str group))
+     (into
+      []
+      (comp
+          ; Transform the line for rendering within the window:
+       (map #(wrapped-lines % width))
 
-                             group)))
-                        []))))
+          ; Index properly, accounting for filtering
+       (map-indexed (fn [i lines]
+                      (map
+                       (fn [line]
+                         (assoc line :row (+ i first-line-index)))
+                       lines)))
+       (mapcat identity)))
 
-             ; Index properly, accounting for filtering
-           (map-indexed (fn [i line]
-                          [(+ i first-line-index) line])))))))
+     ; Apply anchor offset + height limit:
+
+     ((fn [wrapped]
+        (let [end (max 0 (- (count wrapped)
+                            anchor-offset))]
+          (subvec wrapped (max 0 (- end height)) end)))))))
 
 (reg-sub
  ::visible-lines
  (fn [[_ {:keys [winnr bufnr]}]]
    [(subscribe [::by-id winnr])
     (subscribe [::buffer-subs/by-id bufnr])
-    (subscribe [::buffer-subs/ansi-lines-by-id bufnr])])
+    (subscribe [::buffer-subs/lines-by-id bufnr])])
  (fn [[window buffer ansi-lines]]
    (or (seq (visible-lines window ansi-lines))
 
        ; NOTE: Non-connection buffers need some blank "starter" line
        ; for editing purposes
        (when-not (:connection-id buffer)
-         [[0 [{:ansi ""}]]]))))
+         [{:row 0 :col 0 :line []}]))))
 
 (reg-sub
  ::focused?
@@ -101,6 +100,4 @@
    (subscribe [::buffer-subs/by-id [:conn/input connr]]))
  (fn [buffer]
    (->> (:lines buffer)
-        (map (partial mapcat :ansi))
-        (map (comp (partial apply str)))
         (str/join "\n"))))

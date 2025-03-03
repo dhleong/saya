@@ -11,7 +11,5 @@
  (fn [buffer]
    ; NOTE: There should be only one, if any
    (or (some->> (:lines buffer)
-                (map (partial mapcat :ansi))
-                (map (comp (partial apply str)))
                 (str/join "\n"))
        "")))

@@ -43,7 +43,7 @@
     :on-submit #(>evt [:connection/send {:connr connr
                                          :text %}])}])
 
-(defn- buffer-line [line {:keys [cursor-col input-connr]}]
+(defn- buffer-line [{:keys [line col]} {:keys [cursor-col input-connr]}]
   (let [cursor-type (case (<sub [:mode])
                       :insert :pipe
                       :operator-pending :underscore
@@ -66,7 +66,7 @@
                                               [""]))]
          ^{:key i}
          [:<>
-          (when (= cursor-col i)
+          (when (= cursor-col (+ col i))
             [cursor cursor-type])
           (if (vector? part)
             (into [(system-messages (first part))] (rest part))
@@ -93,11 +93,11 @@
       (when-let [lines (<sub [::subs/visible-lines {:bufnr bufnr
                                                     :winnr id}])]
         (let [focused? (<sub [::subs/focused? id])
-              {:keys [row col]} (when focused?
-                                  (<sub [::buffer-subs/buffer-cursor bufnr]))
+              {cursor-row :row cursor-col :col} (when focused?
+                                                  (<sub [::buffer-subs/buffer-cursor bufnr]))
               input-connr (when (<sub [::subs/input-focused? id])
                             (<sub [::buffer-subs/->connr bufnr]))
-              last-row (first (last lines))
+              last-row (:row (last lines))
               scrolled? (<sub [::subs/scrolled? id])]
           [:> k/Box {:flex-direction :column
                      :height :100%
@@ -106,12 +106,14 @@
                       :flex-direction :column
                       :flex-grow 1
                       :width :100%}
-            (for [[i line] lines]
-              ^{:key [id i]}
+            (for [{:keys [row col line] :as data} lines]
+              ^{:key [id row col]}
               [buffer-line
-               line
-               {:cursor-col (when (= row i) col)
-                :input-connr (when (and (= last-row i)
+               data
+               {:cursor-col (when (and (= cursor-row row)
+                                       (<= col cursor-col (dec (+ col (count line)))))
+                              cursor-col)
+                :input-connr (when (and (= last-row row)
                                         (not scrolled?))
                                input-connr)}])]
            (when scrolled?

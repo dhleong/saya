@@ -13,12 +13,12 @@ importers:
 
   .:
     dependencies:
-      anser:
-        specifier: ^2.3.0
-        version: 2.3.0
       ansi-escapes:
         specifier: ^7.0.0
         version: 7.0.0
+      ansi-parser:
+        specifier: ^3.2.11
+        version: 3.2.11
       ansi-regex:
         specifier: ^6.1.0
         version: 6.1.0
@@ -69,12 +69,12 @@ packages:
     resolution: {integrity: sha512-3yWxPTq3UQ/FY9p1ErPxIyfT64elWaMvM9lIHnaqpyft63tkxodF5aUElYHrdisWve5cETkh1+KBw1yJuW0aRw==}
     engines: {node: '>=14.13.1'}
 
-  anser@2.3.0:
-    resolution: {integrity: sha512-pGGR7Nq1K/i9KGs29PvHDXA8AsfZ3OiYRMDClT3FIC085Kbns9CJ7ogq9MEiGnrjd9THOGoh7B+kWzePHzZyJQ==}
-
   ansi-escapes@7.0.0:
     resolution: {integrity: sha512-GdYO7a61mR0fOlAsvC9/rIHf7L96sBc6dEWzeOu+KAea5bZyQRPIpojrVoI4AXGJS/ycu/fBTdLrUkA4ODrvjw==}
     engines: {node: '>=18'}
+
+  ansi-parser@3.2.11:
+    resolution: {integrity: sha512-HeEwCVf/pI9qQUVaTkoDBl9U/QU4RvWJ+Trg1jNSNvDzFsBAId6fHv6VLiC7HzwrOiL8uOEkO5T1eTgpnTFQfQ==}
 
   ansi-regex@6.1.0:
     resolution: {integrity: sha512-7HSX4QQb4CspciLpVFwyRe79O3xsIZDDLER21kERQ71oaPodF8jL725AgJMFAYbooIqolJoRLuM81SpeUkpkvA==}
@@ -642,11 +642,11 @@ snapshots:
       ansi-styles: 6.2.1
       is-fullwidth-code-point: 4.0.0
 
-  anser@2.3.0: {}
-
   ansi-escapes@7.0.0:
     dependencies:
       environment: 1.1.0
+
+  ansi-parser@3.2.11: {}
 
   ansi-regex@6.1.0: {}
 
