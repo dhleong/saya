@@ -60,9 +60,24 @@
 
        (reduce
         (fn [result line]
-          (conj result {:col (+ (count (:line (peek result)))
-                                (:col (peek result) 0))
-                        :line line}))
+          (let [last-line (peek result)]
+            (cond-> result
+              ; When doing a hard split, we might end up with eg:
+              ; [{:col 0 :line []}
+              ;  {:col 0 :line ["-" "-" ..]}]
+              ; This collapses that useless bit on the same
+              ; column.
+              ; TODO: would be better to fix upstream, but this
+              ; prevents react complaining about duplicate keys
+              ; until then.
+              (and last-line
+                   (empty? (:line last-line)))
+              (pop)
+
+              :always
+              (conj {:col (+ (count (:line (peek result)))
+                             (:col (peek result) 0))
+                     :line line}))))
         [])))
 
 (defn- ->ansi-continuation [ansi]

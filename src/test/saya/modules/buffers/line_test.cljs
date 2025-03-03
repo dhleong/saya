@@ -36,7 +36,13 @@
            (->> (wrapped-lines
                  (buffer-line "\u001b[38;5;002mfor the")
                  4)
-                (map (comp first :line)))))))
+                (map (comp first :line))))))
+
+  (testing "Don't create keys due to long splits"
+    (is (= [{:col 0 :line ["-" "-" "-" "-"]}]
+           (->> (wrapped-lines
+                 (buffer-line "----")
+                 4))))))
 
 (deftest ansi-continuation-test
   (testing "Capture final ansi"
