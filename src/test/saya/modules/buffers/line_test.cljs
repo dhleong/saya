@@ -12,6 +12,12 @@
             (buffer-line "for the")
             4))))
 
+  (testing "Preserve empty lines"
+    (is (= [{:col 0 :line []}]
+           (wrapped-lines
+            (buffer-line)
+            4))))
+
   (testing "Preserve system messages"
     (is (= [{:col 0 :line [[:local-send "honor"]]}]
            (wrapped-lines

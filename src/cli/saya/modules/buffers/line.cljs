@@ -3,7 +3,8 @@
    ["ansi-parser" :default AnsiParser]
    [applied-science.js-interop :as j]
    [saya.modules.ansi.split :as split]
-   [saya.modules.ansi.wrap :refer [wrap-ansi]]))
+   [saya.modules.ansi.wrap :refer [wrap-ansi]]
+   [re-frame.core :as re-frame]))
 
 (defn- ->ansi-chars [parts]
   (->> parts
@@ -21,8 +22,11 @@
              group)))
         [])))
 
+(def ^:private EMPTY-PARTS [{:ansi ""}])
+
 (defn- ->wrapped-lines [parts width]
-  (->> parts
+  (->> (or (seq parts)
+           EMPTY-PARTS)
        (map (fn [{:keys [ansi system]}]
               (or system ansi)))
        (partition-by string?)
@@ -140,6 +144,8 @@
     (count (ansi-chars this)))
 
   (wrapped-lines [_ width]
+    ; TODO: This should probably be some kind of LRU cache when we support
+    ; splitting windows...
     (let [[for-width cached] (:wrapped @state)]
       (or (when (= for-width width)
             cached)
@@ -180,3 +186,10 @@
          initial-part)]
       (atom nil))
      EMPTY)))
+
+(comment
+  ; Clear all line caches
+  #_{:clj-kondo/ignore [:unresolved-namespace]}
+  (doseq [[_ buffer] (:buffers @re-frame.db/app-db)]
+    (doseq [line (:lines buffer)]
+      (reset! (.-state line) nil))))

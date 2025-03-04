@@ -18,15 +18,15 @@
 
 (defn visible-lines [{:keys [height width anchor-offset anchor-row]
                       :or {height 10 width 50}}
-                     ansi-lines]
+                     buffer-lines]
   ; NOTE: height might be unavailable on the first render
-  (let [last-row-index (dec (count ansi-lines))
+  (let [last-row-index (dec (count buffer-lines))
         anchor-row (or anchor-row
                        last-row-index)
-        first-line-index (max 0 (- (inc anchor-row) height))]
+        first-line-index (max 0 (- anchor-row (dec height)))]
     (->>
       ; Filter lines. We fill UP from (including!) the anchor-row
-     (subvec ansi-lines (max 0 (- anchor-row (dec height))) (inc anchor-row))
+     (subvec buffer-lines first-line-index (inc anchor-row))
 
      (into
       []
@@ -35,13 +35,14 @@
        (map #(wrapped-lines % width))
 
        ; Index properly, accounting for filtering
-       (map-indexed (fn [i wrapped-lines]
-                      (let [last-j (dec (count wrapped-lines))]
+       (map-indexed (fn [relative-row wrapped-lines]
+                      (let [last-wrapped-index (dec (count wrapped-lines))]
                         (map-indexed
-                         (fn [j line]
+                         (fn [wrapped-index line]
                            (assoc line
-                                  :row (+ i first-line-index)
-                                  :last-of-row? (= j last-j)))
+                                  :row (+ relative-row first-line-index)
+                                  :last-of-row? (= wrapped-index
+                                                   last-wrapped-index)))
                          wrapped-lines))))
        (mapcat identity)))
 
@@ -58,8 +59,8 @@
    [(subscribe [::by-id winnr])
     (subscribe [::buffer-subs/by-id bufnr])
     (subscribe [::buffer-subs/lines-by-id bufnr])])
- (fn [[window buffer ansi-lines]]
-   (or (seq (visible-lines window ansi-lines))
+ (fn [[window buffer buffer-lines]]
+   (or (seq (visible-lines window buffer-lines))
 
        ; NOTE: Non-connection buffers need some blank "starter" line
        ; for editing purposes
