@@ -106,12 +106,13 @@
                       :flex-direction :column
                       :flex-grow 1
                       :width :100%}
-            (for [{:keys [row col line] :as data} lines]
+            (for [{:keys [row col line last-of-row?] :as data} lines]
               ^{:key [id row col]}
               [buffer-line
                data
                {:cursor-col (when (and (= cursor-row row)
-                                       (<= col cursor-col (dec (+ col (count line)))))
+                                       (or last-of-row?
+                                           (<= col cursor-col (dec (+ col (count line))))))
                               cursor-col)
                 :input-connr (when (and (= last-row row)
                                         (not scrolled?))

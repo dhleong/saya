@@ -31,15 +31,18 @@
      (into
       []
       (comp
-          ; Transform the line for rendering within the window:
+       ; Transform the line for rendering within the window:
        (map #(wrapped-lines % width))
 
-          ; Index properly, accounting for filtering
-       (map-indexed (fn [i lines]
-                      (map
-                       (fn [line]
-                         (assoc line :row (+ i first-line-index)))
-                       lines)))
+       ; Index properly, accounting for filtering
+       (map-indexed (fn [i wrapped-lines]
+                      (let [last-j (dec (count wrapped-lines))]
+                        (map-indexed
+                         (fn [j line]
+                           (assoc line
+                                  :row (+ i first-line-index)
+                                  :last-of-row? (= j last-j)))
+                         wrapped-lines))))
        (mapcat identity)))
 
      ; Apply anchor offset + height limit:
