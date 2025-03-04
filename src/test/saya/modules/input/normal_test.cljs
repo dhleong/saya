@@ -1,6 +1,7 @@
 (ns saya.modules.input.normal-test
   (:require
    [cljs.test :refer-macros [deftest testing]]
+   [saya.modules.input.helpers :refer [update-cursor]]
    [saya.modules.input.normal :refer [delete-operator update-scroll]]
    [saya.modules.input.test-helpers :refer [with-keymap-compare-buffer]]))
 
@@ -122,3 +123,36 @@
        |Grayskull!"
       :window {:height 1}
       :window-expect {:height 1})))
+
+(deftest vertical-cursor-movement-test
+  (testing "Move cursor up with single lines"
+    (with-keymap-compare-buffer (update-cursor :row dec)
+      "For the
+       honor of
+       |Grayskull!"
+      "For the
+       |honor of
+       Grayskull!"
+      :window {:height 1}
+      :window-expect {:height 1 :anchor-row 1})
+
+    (with-keymap-compare-buffer (update-cursor :row dec)
+      "For the
+       |honor of
+       Grayskull!"
+      "|For the
+       honor of
+       Grayskull!"
+      :window {:height 1 :anchor-row 1}
+      :window-expect {:height 1 :anchor-row 0})
+
+    ; no-op at the top
+    (with-keymap-compare-buffer (update-cursor :row dec)
+      "|For the
+       honor of
+       Grayskull!"
+      "|For the
+       honor of
+       Grayskull!"
+      :window {:height 1 :anchor-row 0}
+      :window-expect {:height 1 :anchor-row 0})))
