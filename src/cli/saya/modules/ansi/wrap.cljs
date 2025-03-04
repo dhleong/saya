@@ -16,6 +16,7 @@
       (trim-suffix "\u001B[0m")))
 
 (defn wrap-ansi [s width]
+  {:pre [(number? width)]}
   (loop [lines []
          current-line []
          current-line-width 0

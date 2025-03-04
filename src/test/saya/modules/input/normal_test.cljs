@@ -68,7 +68,7 @@
       "For the
        |honor of
        Grayskull!"
-      :window {:height 1}
+      :window {:height 1 :width 10}
       :window-expect {:height 1 :anchor-row 1})
 
     (with-keymap-compare-buffer (update-scroll - (constantly 1))
@@ -78,7 +78,8 @@
       "|For the
        honor of
        Grayskull!"
-      :window {:height 1 :anchor-row 1}
+      :window {:height 1 :width 10
+               :anchor-row 1}
       :window-expect {:height 1 :anchor-row 0})
 
     ; no-op at the top
@@ -89,7 +90,8 @@
       "|For the
        honor of
        Grayskull!"
-      :window {:height 1 :anchor-row 0}
+      :window {:height 1 :width 10
+               :anchor-row 0}
       :window-expect {:height 1 :anchor-row 0}))
 
   (testing "Scroll down single lines"
@@ -100,7 +102,8 @@
       "For the
        |honor of
        Grayskull!"
-      :window {:height 1 :anchor-row 0}
+      :window {:height 1 :width 10
+               :anchor-row 0}
       :window-expect {:height 1 :anchor-row 1})
 
     (with-keymap-compare-buffer (update-scroll + (constantly 1))
@@ -110,7 +113,8 @@
       "For the
        honor of
        |Grayskull!"
-      :window {:height 1 :anchor-row 1}
+      :window {:height 1 :width 10
+               :anchor-row 1}
       :window-expect {:height 1})
 
     ; no-op at the bottom
@@ -121,8 +125,38 @@
       "For the
        honor of
        |Grayskull!"
-      :window {:height 1}
+      :window {:height 1 :width 10}
       :window-expect {:height 1})))
+
+(deftest wrapped-scroll-test
+  (testing "Move cursor up with wrapped lines"
+    (with-keymap-compare-buffer (update-scroll - (constantly 1))
+      "For the honor of |Grayskull!"
+      "For the h|onor of Grayskull!"
+      :window {:height 1 :width 10}
+      :window-expect {:height 1 :width 10
+                      :anchor-row 0
+                      :anchor-offset 1})
+
+    (with-keymap-compare-buffer (update-scroll - (constantly 1))
+      "For the h|onor of Grayskull!"
+      "F|or the honor of Grayskull!"
+      :window {:height 1 :width 10
+               :anchor-row 0
+               :anchor-offset 1}
+      :window-expect {:height 1 :width 10
+                      :anchor-row 0
+                      :anchor-offset 2})
+
+    ; no-op at the top
+    (with-keymap-compare-buffer (update-scroll - (constantly 1))
+      "|For the honor of Grayskull!"
+      "|For the honor of Grayskull!"
+      :window {:height 1 :width 10
+               :anchor-row 0 :anchor-offset 2}
+      :window-expect {:height 1 :width 10
+                      :anchor-row 0
+                      :anchor-offset 2})))
 
 (deftest vertical-cursor-movement-test
   (testing "Move cursor up with single lines"
@@ -133,7 +167,7 @@
       "For the
        |honor of
        Grayskull!"
-      :window {:height 1}
+      :window {:height 1 :width 10}
       :window-expect {:height 1 :anchor-row 1})
 
     (with-keymap-compare-buffer (update-cursor :row dec)
@@ -143,7 +177,8 @@
       "|For the
        honor of
        Grayskull!"
-      :window {:height 1 :anchor-row 1}
+      :window {:height 1 :width 10
+               :anchor-row 1}
       :window-expect {:height 1 :anchor-row 0})
 
     ; no-op at the top
@@ -154,5 +189,7 @@
       "|For the
        honor of
        Grayskull!"
-      :window {:height 1 :anchor-row 0}
-      :window-expect {:height 1 :anchor-row 0})))
+      :window {:height 1 :width 10
+               :anchor-row 0}
+      :window-expect {:height 1 :width 10
+                      :anchor-row 0})))
