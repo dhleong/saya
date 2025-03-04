@@ -64,8 +64,10 @@
   (-> (get-in ctx [:buffer])
       (select-keys [:lines :cursor])))
 
-(defn with-keymap-compare-buffer [f buffer-before buffer-after]
-  (let [ctx (make-context :buffer buffer-before)
+(defn with-keymap-compare-buffer
+  [f buffer-before buffer-after & {:keys [window window-expect]}]
+  (let [ctx (make-context :buffer buffer-before
+                          :window window)
         ctx' (try (f ctx)
                   (catch :default e
                     (println "ERROR performing " f ": " e)
@@ -74,4 +76,8 @@
         expected (buffer->str (get-buffer (make-context :buffer buffer-after)))
         actual (buffer->str (get-buffer ctx'))]
     (is (= expected actual)
-        (str "From " (buffer->str (get-buffer ctx)) "\n"))))
+        (str "From " (buffer->str (get-buffer ctx)) "\n"))
+
+    (when window-expect
+      (is (= window-expect (-> (get-in ctx' [:window])
+                               (select-keys (keys window-expect))))))))

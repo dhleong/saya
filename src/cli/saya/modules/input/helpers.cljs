@@ -58,7 +58,7 @@
                        (last-buffer-row buffer))
         min-cursor-row (max 0 (inc (- anchor-row height)))
         max-cursor-row (min (last-buffer-row buffer)
-                            (+ min-cursor-row height))]
+                            (+ min-cursor-row (dec height)))]
     (update-in ctx [:buffer :cursor :row]
                #(min max-cursor-row
                      (max min-cursor-row %)))))

@@ -110,7 +110,7 @@
 
 ; ======= Scroll keymaps ===================================
 
-(defn- update-scroll [f compute-amount]
+(defn update-scroll [f compute-amount]
   (comp
    adjust-scroll-to-cursor
    adjust-cursor-to-scroll
@@ -122,6 +122,7 @@
                 (compute-amount ctx)))))
 
 (defn- window-rows [{:keys [window]}]
+  ; Actually a page is 2 less than the window height
   (dec (:height window)))
 
 (def scroll-keymaps
