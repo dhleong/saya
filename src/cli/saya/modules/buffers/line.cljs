@@ -3,8 +3,7 @@
    ["ansi-parser" :default AnsiParser]
    [applied-science.js-interop :as j]
    [saya.modules.ansi.split :as split]
-   [saya.modules.ansi.wrap :refer [wrap-ansi]]
-   [re-frame.core :as re-frame]))
+   [saya.modules.ansi.wrap :refer [wrap-ansi]]))
 
 (defn- ->ansi-chars [parts]
   (->> parts
