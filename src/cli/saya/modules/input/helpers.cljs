@@ -97,12 +97,23 @@
       (update ctx :window dissoc :anchor-row)
 
       ; Derive anchor-row/offset 
-      (<= row (- anchor-row height))
-      (update ctx :window merge (derive-anchor-from-top-cursor
-                                 (:lines buffer)
-                                 width
-                                 cursor
-                                 height))
+      (< row anchor-row)
+      (let [from-cursor (derive-anchor-from-top-cursor
+                         (:lines buffer)
+                         width
+                         cursor
+                         height)]
+        ; NOTE: If deriving from the cursor would put the scroll "lower"
+        ; (IE: closer to the bottom) than it is, then our cursor is visible!
+        ; Only if it would put the scroll "higher" do we need to apply
+        (if (or (< (:anchor-row from-cursor)
+                   anchor-row)
+                (and (= (:anchor-row from-cursor)
+                        anchor-row)
+                     (> (:anchor-offset from-cursor)
+                        anchor-offset)))
+          (update ctx :window merge from-cursor)
+          ctx))
 
       (> row anchor-row)
       (assoc-in ctx [:window :anchor-row] row)
