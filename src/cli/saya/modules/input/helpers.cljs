@@ -9,6 +9,18 @@
   (or (nil? v)
       (= 0 v)))
 
+(defn- cursor-anchor-offset [line width {cursor-col :col}]
+  (loop [lines (wrapped-lines line width)
+         offset (dec (count lines))]
+    (if-some [{:keys [col line]} (first lines)]
+      (if (< cursor-col (+ col (count line)))
+        offset
+        (recur (next lines)
+               (dec offset)))
+
+      ; After the last char on the line
+      (inc offset))))
+
 (defn current-buffer-line [{:keys [lines cursor]}]
   (->> (nth lines (:row cursor))
        (ansi-chars)))
@@ -26,8 +38,38 @@
            ; Usually, we don't want to be *after* the last col, we want to be *on* it
            (dec after-last-col)))))
 
+(defn- derive-anchor-from-top-cursor
+  "Given a cursor position at the 'top' of the screen, derive
+   the anchor (row + offset) that would make that visible"
+  [lines width start amount]
+  (loop [anchor-row (:row start)
+         anchor-offset (cursor-anchor-offset (nth lines (:row start))
+                                             width
+                                             start)
+         to-consume amount]
+    (cond
+      (<= to-consume anchor-offset)
+      {:anchor-row anchor-row
+       :anchor-offset (- anchor-offset to-consume)}
+
+      (< (inc anchor-row) (count lines))
+      (recur
+       (inc anchor-row)
+       ; NOTE: This would not be a valid anchor-offset---the max
+       ; anchor-offset for a row should be `(dec (count ..))`---but
+       ; we also should always have at least 1 to-consume left here,
+       ; which would produce a valid anchor-offset above
+       (count (wrapped-lines (nth lines (inc anchor-row))
+                             width))
+       (- to-consume (max 1 anchor-offset)))
+
+      ; Bottom of the buffer, presumably
+      :else
+      {:anchor-row nil
+       :anchor-offset nil})))
+
 (defn clamp-scroll [{:keys [window buffer] :as ctx}]
-  (let [{:keys [height anchor-offset anchor-row]} window]
+  (let [{:keys [height width anchor-offset anchor-row]} window]
     (cond
       (and (>= anchor-row (last-buffer-row buffer))
            (nil-or-zero? anchor-offset))
@@ -35,14 +77,18 @@
 
       (and anchor-row
            (< (- anchor-row height) 0))
-      (assoc-in ctx [:window :anchor-row] (dec height))
+      (update ctx :window merge (derive-anchor-from-top-cursor
+                                 (:lines buffer)
+                                 width
+                                 {:row 0 :col 0}
+                                 height))
 
       ; Nothing to fix:
       :else ctx)))
 
 (defn adjust-scroll-to-cursor [{:keys [buffer window] :as ctx}]
-  (let [{:keys [height anchor-offset anchor-row]} window
-        {:keys [row]} (:cursor buffer)
+  (let [{:keys [height width anchor-offset anchor-row]} window
+        {:keys [row] :as cursor} (:cursor buffer)
         anchor-row (or anchor-row
                        (last-buffer-row buffer))]
     (cond
@@ -50,8 +96,13 @@
            (nil-or-zero? anchor-offset))
       (update ctx :window dissoc :anchor-row)
 
+      ; Derive anchor-row/offset 
       (<= row (- anchor-row height))
-      (assoc-in ctx [:window :anchor-row] (+ row (dec height)))
+      (update ctx :window merge (derive-anchor-from-top-cursor
+                                 (:lines buffer)
+                                 width
+                                 cursor
+                                 height))
 
       (> row anchor-row)
       (assoc-in ctx [:window :anchor-row] row)
@@ -105,7 +156,8 @@
 
 (defn update-cursor [col-or-row f]
   (comp
-   clamp-scroll
+   ; NOTE: clamp-scroll is redundant now with adjust-scroll-to-cursor;
+   ; we should only need it when directly adjusting scroll
    adjust-scroll-to-cursor
    clamp-cursor
    (fn cursor-updator [ctx]

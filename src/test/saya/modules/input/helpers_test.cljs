@@ -14,4 +14,36 @@
           ctx' (adjust-scroll-to-cursor ctx)]
       (is (nil? (:anchor-row (:window ctx'))))
       (is (= {:row 2 :col 0}
-             (:cursor (:buffer ctx')))))))
+             (:cursor (:buffer ctx'))))))
+
+  (testing "Scroll to top, wrapped"
+    (let [ctx (make-context
+               :buffer "|Talkin away I don't know
+                        what I'm to say
+                        I'll say it anyway"
+               :window {:height 2 :width 10})
+          ctx' (adjust-scroll-to-cursor ctx)]
+      (is (= 0 (:anchor-row (:window ctx'))))
+      (is (= 1 (:anchor-offset (:window ctx'))))))
+
+  (testing "Scroll to top, mixed-wrapped"
+    (let [ctx (make-context
+               :buffer "|Talkin
+                        away I
+                        don't know
+                        what I'm to say I'll
+                        say it anyway"
+               :window {:height 2 :width 10})
+          ctx' (adjust-scroll-to-cursor ctx)]
+      (is (= 1 (:anchor-row (:window ctx'))))
+      (is (= 0 (:anchor-offset (:window ctx'))))))
+
+  (testing "Scroll to top, non wrapped"
+    (let [ctx (make-context
+               :buffer "|Talkin away I don't know
+                        what I'm to say
+                        I'll say it anyway"
+               :window {:height 2 :width 30})
+          ctx' (adjust-scroll-to-cursor ctx)]
+      (is (= 1 (:anchor-row (:window ctx'))))
+      (is (= 0 (:anchor-offset (:window ctx')))))))
