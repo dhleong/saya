@@ -2,16 +2,23 @@
   (:require
    [clojure.string :as str]
    [re-frame.core :refer [reg-event-db reg-event-fx unwrap]]
-   [saya.modules.buffers.line :refer [buffer-line]]))
+   [saya.modules.buffers.line :refer [buffer-line]]
+   [saya.modules.input.helpers :refer [adjust-scroll-to-cursor]]
+   [saya.modules.input.keymaps :refer [build-context]]))
 
 (reg-event-fx
  ::on-measured
  [unwrap]
- (fn [{:keys [db]} {:keys [id width height]}]
+ (fn [{:keys [db] :as cofx} {:keys [id width height]}]
    (let [{:keys [bufnr]} (get-in db [:windows id])
-         connr (get-in db [:buffers bufnr :connection-id])]
-     {:db (update-in db [:windows id] merge {:width width
-                                             :height height})
+         connr (get-in db [:buffers bufnr :connection-id])
+         ctx' (-> cofx
+                  (assoc :bufnr bufnr :winnr id)
+                  (build-context)
+                  (update :window merge {:width width
+                                         :height height})
+                  (adjust-scroll-to-cursor))]
+     {:db (assoc-in db [:windows id] (:window ctx'))
       :fx [(when connr
              [:dispatch [:connection/set-window-size {:connr connr
                                                       :width width
