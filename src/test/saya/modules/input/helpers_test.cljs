@@ -1,8 +1,46 @@
 (ns saya.modules.input.helpers-test
   (:require
-   [clojure.test :refer [deftest testing is]]
-   [saya.modules.input.helpers :refer [adjust-scroll-to-cursor]]
+   [clojure.test :refer [deftest is testing]]
+   [saya.modules.input.helpers :refer [adjust-scroll-to-cursor
+                                       derive-anchor-from-top-cursor]]
    [saya.modules.input.test-helpers :refer [make-context]]))
+
+(defn derive-anchor-from-top-cursor' [{:keys [buffer window]}]
+  (derive-anchor-from-top-cursor
+   (:lines buffer)
+   (:width window)
+   (:cursor buffer)
+   (:height window)))
+
+(deftest derive-anchor-from-top-cursor-test
+  (testing "Handle non-wrapped lines"
+    (is (= {:anchor-row 1 :anchor-offset 0}
+           (derive-anchor-from-top-cursor'
+            (make-context
+             :buffer "For the
+                      |honor of
+                      Greyskull"
+             :window {:height 1 :width 10
+                      :anchor-row 2})))))
+
+  (testing "Handle wrapped lines"
+    (is (= {:anchor-row 0 :anchor-offset 3}
+           (derive-anchor-from-top-cursor'
+            (make-context
+             :buffer "|Talkin away I don't know
+                      what I'm to say
+                      I'll say it anyway"
+             ; NOTE: window/height is the key difference between
+             ; this test and the next
+             :window {:height 1 :width 10}))))
+
+    (is (= {:anchor-row 0 :anchor-offset 2}
+           (derive-anchor-from-top-cursor'
+            (make-context
+             :buffer "|Talkin away I don't know
+                      what I'm to say
+                      I'll say it anyway"
+             :window {:height 2 :width 10}))))))
 
 (deftest adjust-scroll-to-cursor-test
   (testing "Scroll to bottom"
@@ -24,7 +62,7 @@
                :window {:height 2 :width 10})
           ctx' (adjust-scroll-to-cursor ctx)]
       (is (= 0 (:anchor-row (:window ctx'))))
-      (is (= 1 (:anchor-offset (:window ctx'))))))
+      (is (= 2 (:anchor-offset (:window ctx'))))))
 
   (testing "Scroll to top, mixed-wrapped"
     (let [ctx (make-context

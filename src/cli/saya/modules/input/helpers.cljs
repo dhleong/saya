@@ -19,7 +19,7 @@
                (dec offset)))
 
       ; After the last char on the line
-      (inc offset))))
+      offset)))
 
 (defn current-buffer-line [{:keys [lines cursor]}]
   (->> (nth lines (:row cursor))
@@ -38,30 +38,32 @@
            ; Usually, we don't want to be *after* the last col, we want to be *on* it
            (dec after-last-col)))))
 
-(defn- derive-anchor-from-top-cursor
+(defn derive-anchor-from-top-cursor
   "Given a cursor position at the 'top' of the screen, derive
    the anchor (row + offset) that would make that visible"
   [lines width start amount]
   (loop [anchor-row (:row start)
-         anchor-offset (cursor-anchor-offset (nth lines (:row start))
-                                             width
-                                             start)
-         to-consume amount]
+         anchor-offset (cursor-anchor-offset
+                        (nth lines (:row start))
+                        width
+                        start)
+         to-consume (dec amount)]
     (cond
       (<= to-consume anchor-offset)
       {:anchor-row anchor-row
        :anchor-offset (- anchor-offset to-consume)}
 
       (< (inc anchor-row) (count lines))
-      (recur
-       (inc anchor-row)
-       ; NOTE: This would not be a valid anchor-offset---the max
-       ; anchor-offset for a row should be `(dec (count ..))`---but
-       ; we also should always have at least 1 to-consume left here,
-       ; which would produce a valid anchor-offset above
-       (count (wrapped-lines (nth lines (inc anchor-row))
-                             width))
-       (- to-consume (max 1 anchor-offset)))
+      (let [next-row (inc anchor-row)]
+        (recur
+         next-row
+          ; NOTE: This would not be a valid anchor-offset---the max
+          ; anchor-offset for a row should be `(dec (count ..))`---but
+          ; we also should always have at least 1 to-consume left here,
+          ; which would produce a valid anchor-offset above
+         (dec (count (wrapped-lines (nth lines next-row)
+                                    width)))
+         (- to-consume (max 1 anchor-offset))))
 
       ; Bottom of the buffer, presumably
       :else
@@ -96,7 +98,8 @@
            (nil-or-zero? anchor-offset))
       (update ctx :window dissoc :anchor-row)
 
-      ; Derive anchor-row/offset 
+      ; Derive anchor-row/offset
+      ; TODO: 
       (< row anchor-row)
       (let [from-cursor (derive-anchor-from-top-cursor
                          (:lines buffer)

@@ -58,7 +58,7 @@
                (-> (buffer-events/create-blank default-db)
                    (second)
                    :buffer))
-   :window (merge {:height 2} window)})
+   :window (merge {:height 2 :width 20} window)})
 
 (defn get-buffer [ctx]
   (-> (get-in ctx [:buffer])

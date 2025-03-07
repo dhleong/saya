@@ -29,7 +29,6 @@
    ["$"] #'to-end-of-line
 
    ["g" "g"] (comp
-              clamp-scroll
               adjust-scroll-to-cursor
               (fn to-first-line [ctx]
                 (assoc-in ctx [:buffer :cursor] {:col 0
@@ -114,10 +113,10 @@
 
 (defn update-scroll [f compute-amount]
   (comp
-   adjust-scroll-to-cursor
+   ; adjust-scroll-to-cursor
    adjust-cursor-to-scroll
-   clamp-cursor
-   clamp-scroll
+   ; clamp-cursor
+   ; clamp-scroll
    (fn scroll-updater [{:keys [buffer window] :as ctx}]
      (loop [anchor-row (:anchor-row window (last-buffer-row buffer))
             anchor-offset (:anchor-offset window 0)
