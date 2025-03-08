@@ -1,7 +1,8 @@
 (ns saya.modules.input.normal-test
   (:require
    [cljs.test :refer-macros [deftest testing]]
-   [saya.modules.input.normal :refer [delete-operator]]
+   [saya.modules.input.helpers :refer [update-cursor]]
+   [saya.modules.input.normal :refer [delete-operator update-scroll]]
    [saya.modules.input.test-helpers :refer [with-keymap-compare-buffer]]))
 
 (deftest delete-operator-test
@@ -58,3 +59,153 @@
       "For the honor of Grayskull|!"
       "For the honor of Grayskull|")))
 
+(deftest scroll-test
+  (testing "Scroll up single lines"
+    (with-keymap-compare-buffer (update-scroll - (constantly 1))
+      "For the
+       honor of
+       |Grayskull!"
+      "For the
+       |honor of
+       Grayskull!"
+      :window {:height 1 :width 10}
+      :window-expect {:height 1 :anchor-row 1})
+
+    (with-keymap-compare-buffer (update-scroll - (constantly 1))
+      "For the
+       |honor of
+       Grayskull!"
+      "|For the
+       honor of
+       Grayskull!"
+      :window {:height 1 :width 10
+               :anchor-row 1}
+      :window-expect {:height 1 :anchor-row 0})
+
+    ; no-op at the top
+    (with-keymap-compare-buffer (update-scroll - (constantly 1))
+      "|For the
+       honor of
+       Grayskull!"
+      "|For the
+       honor of
+       Grayskull!"
+      :window {:height 1 :width 10
+               :anchor-row 0}
+      :window-expect {:height 1 :anchor-row 0}))
+
+  (testing "Scroll down single lines"
+    (with-keymap-compare-buffer (update-scroll + (constantly 1))
+      "|For the
+       honor of
+       Grayskull!"
+      "For the
+       |honor of
+       Grayskull!"
+      :window {:height 1 :width 10
+               :anchor-row 0}
+      :window-expect {:height 1 :anchor-row 1})
+
+    (with-keymap-compare-buffer (update-scroll + (constantly 1))
+      "For the
+       |honor of
+       Grayskull!"
+      "For the
+       honor of
+       |Grayskull!"
+      :window {:height 1 :width 10
+               :anchor-row 1}
+      :window-expect {:height 1})
+
+    ; no-op at the bottom
+    (with-keymap-compare-buffer (update-scroll + (constantly 1))
+      "For the
+       honor of
+       |Grayskull!"
+      "For the
+       honor of
+       |Grayskull!"
+      :window {:height 1 :width 10}
+      :window-expect {:height 1})))
+
+(deftest wrapped-scroll-test
+  (testing "Move cursor up with wrapped lines"
+    (with-keymap-compare-buffer (update-scroll - (constantly 1))
+      "For the honor of |Grayskull!"
+      "For the |honor of Grayskull!"
+      :window {:height 1 :width 10}
+      :window-expect {:height 1 :width 10
+                      :anchor-row 0
+                      :anchor-offset 1})
+
+    (with-keymap-compare-buffer (update-scroll - (constantly 1))
+      "For the |honor of Grayskull!"
+      "|For the honor of Grayskull!"
+      :window {:height 1 :width 10
+               :anchor-row 0
+               :anchor-offset 1}
+      :window-expect {:height 1 :width 10
+                      :anchor-row 0
+                      :anchor-offset 2})
+
+    ; no-op at the top
+    (with-keymap-compare-buffer (update-scroll - (constantly 1))
+      "|For the honor of Grayskull!"
+      "|For the honor of Grayskull!"
+      :window {:height 1 :width 10
+               :anchor-row 0 :anchor-offset 2}
+      :window-expect {:height 1 :width 10
+                      :anchor-row 0
+                      :anchor-offset 2})))
+
+(deftest vertical-cursor-movement-test
+  (testing "Move cursor up with single lines"
+    (with-keymap-compare-buffer (update-cursor :row dec)
+      "For the
+       honor of
+       |Grayskull!"
+      "For the
+       |honor of
+       Grayskull!"
+      :window {:height 1 :width 10}
+      :window-expect {:height 1 :anchor-row 1})
+
+    (with-keymap-compare-buffer (update-cursor :row dec)
+      "For the
+       |honor of
+       Grayskull!"
+      "|For the
+       honor of
+       Grayskull!"
+      :window {:height 1 :width 10
+               :anchor-row 1}
+      :window-expect {:height 1 :anchor-row 0})
+
+    ; no-op at the top
+    (with-keymap-compare-buffer (update-cursor :row dec)
+      "|For the
+       honor of
+       Grayskull!"
+      "|For the
+       honor of
+       Grayskull!"
+      :window {:height 1 :width 10
+               :anchor-row 0}
+      :window-expect {:height 1 :width 10
+                      :anchor-row 0}))
+
+  (testing "Move cursor up with mixed lines"
+    (with-keymap-compare-buffer (update-cursor :row dec)
+      "Talkin
+       away I
+       |don't know
+       what I'm to say
+       I'll say it anyway"
+      "Talkin
+       |away I
+       don't know
+       what I'm to say
+       I'll say it anyway"
+      :window {:height 3 :width 10
+               :anchor-row 3 :anchor-offset 1}
+      :window-expect {:anchor-row 2 :anchor-offset 0})))

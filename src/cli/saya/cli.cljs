@@ -12,9 +12,10 @@
    [saya.util.ink :as ink]
    [saya.views :as views]
 
-   ; NOTE: Required here just to convince shadow to build it in dev
-   ; Ideally we can strip this from prod builds...
-   [saya.util.ink-testing-utils]))
+   ; NOTE: Required here just to convince shadow to build them in dev
+   ; Ideally we can strip these from prod builds...
+   [saya.util.ink-testing-utils]
+   [saya.modules.input.test-helpers]))
 
 (defonce ^:private ink-instance (atom nil))
 

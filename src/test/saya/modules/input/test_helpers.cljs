@@ -6,7 +6,8 @@
    [saya.db :refer [default-db]]
    [saya.modules.buffers.events :as buffer-events]
    [saya.modules.buffers.line :refer [buffer-line]]
-   [saya.modules.input.insert :refer [line->string]]))
+   [saya.modules.input.insert :refer [line->string]]
+   [saya.modules.window.subs :refer [visible-lines]]))
 
 (defn- extract-lines-and-cursor [s]
   (loop [raw-lines (str/split-lines s)
@@ -58,14 +59,16 @@
                (-> (buffer-events/create-blank default-db)
                    (second)
                    :buffer))
-   :window (merge {:height 2} window)})
+   :window (merge {:height 2 :width 20} window)})
 
 (defn get-buffer [ctx]
   (-> (get-in ctx [:buffer])
       (select-keys [:lines :cursor])))
 
-(defn with-keymap-compare-buffer [f buffer-before buffer-after]
-  (let [ctx (make-context :buffer buffer-before)
+(defn with-keymap-compare-buffer
+  [f buffer-before buffer-after & {:keys [window window-expect]}]
+  (let [ctx (make-context :buffer buffer-before
+                          :window window)
         ctx' (try (f ctx)
                   (catch :default e
                     (println "ERROR performing " f ": " e)
@@ -74,4 +77,20 @@
         expected (buffer->str (get-buffer (make-context :buffer buffer-after)))
         actual (buffer->str (get-buffer ctx'))]
     (is (= expected actual)
-        (str "From " (buffer->str (get-buffer ctx)) "\n"))))
+        (str "From " (buffer->str (get-buffer ctx)) "\n"))
+
+    (when window-expect
+      (is (= window-expect (-> (get-in ctx' [:window])
+                               (select-keys (keys window-expect))))
+          (letfn [(vis' [ctx]
+                    (->> (visible-lines
+                          (:window ctx)
+                          (:lines (:buffer ctx)))
+                         (map (fn [{:keys [line]}]
+                                (str/join line)))))]
+            (str "Visible lines:\n"
+                 (vis' ctx)
+                 "\n -> \n"
+                 (vis' ctx')
+                 "\n Expected:\n"
+                 (vis' (update ctx :window merge window-expect))))))))

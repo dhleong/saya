@@ -1,5 +1,7 @@
 (ns saya.modules.input.normal
   (:require
+   [saya.cli.text-input.helpers :refer [dec-to-zero]]
+   [saya.modules.buffers.line :refer [wrapped-lines]]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.input.helpers :refer [adjust-cursor-to-scroll
                                        adjust-scroll-to-cursor clamp-cursor
@@ -22,17 +24,18 @@
      (assoc-in ctx [:buffer :cursor :row]
                (last-buffer-row buffer)))))
 
+(def scroll-to-top
+  (comp
+   adjust-scroll-to-cursor
+   (fn to-first-line [ctx]
+     (assoc-in ctx [:buffer :cursor] {:col 0
+                                      :row 0}))))
+
 (def movement-keymaps
   {["0"] #'to-start-of-line
    ["$"] #'to-end-of-line
 
-   ["g" "g"] (comp
-              clamp-scroll
-              adjust-scroll-to-cursor
-              (fn to-first-line [ctx]
-                (assoc-in ctx [:buffer :cursor] {:col 0
-                                                 :row 0})))
-
+   ["g" "g"] #'scroll-to-top
    ["G"] #'scroll-to-bottom
 
    ; Single char movement
@@ -110,18 +113,51 @@
 
 ; ======= Scroll keymaps ===================================
 
-(defn- update-scroll [f compute-amount]
+(defn update-scroll [f compute-amount]
   (comp
-   adjust-scroll-to-cursor
+   ; adjust-scroll-to-cursor
    adjust-cursor-to-scroll
-   clamp-cursor
-   clamp-scroll
-   (fn scroll-updater [{:keys [buffer] :as ctx}]
-     (update-in ctx [:window :anchor-row]
-                (fnil f (last-buffer-row buffer))
-                (compute-amount ctx)))))
+   ; clamp-cursor
+   ; clamp-scroll
+   (fn scroll-updater [{:keys [buffer window] :as ctx}]
+     (loop [anchor-row (:anchor-row window (last-buffer-row buffer))
+            anchor-offset (:anchor-offset window 0)
+            scroll-to-consume (compute-amount ctx)]
+       (let [available-lines (count
+                              (wrapped-lines
+                               (get-in buffer [:lines anchor-row])
+                               (:width window)))
+             max-anchor-offset (dec-to-zero available-lines)
+             available-lines (- available-lines
+                                anchor-offset)
+             next-anchor-offset (f anchor-offset
+                                   (* -1 scroll-to-consume))]
+         (cond
+           (and (> available-lines 0)
+                (<= 0 next-anchor-offset max-anchor-offset)
+                (<= scroll-to-consume available-lines))
+           (update ctx :window assoc
+                   :anchor-row anchor-row
+                   :anchor-offset next-anchor-offset)
+
+           (or (= 0 scroll-to-consume)
+               (let [next-row (f anchor-row 1)]
+                 (or (> next-row (last-buffer-row buffer))
+                     (< next-row 0))))
+           (update ctx :window assoc
+                   :anchor-row anchor-row
+                   :anchor-offset anchor-offset)
+
+           :else
+           (recur
+            (f anchor-row 1)
+            ; TODO: Actually if scrolling forward this probably should be
+            ; (dec full-available-lines), I think
+            0
+            (- scroll-to-consume available-lines))))))))
 
 (defn- window-rows [{:keys [window]}]
+  ; Actually a page is 2 less than the window height
   (dec (:height window)))
 
 (def scroll-keymaps
