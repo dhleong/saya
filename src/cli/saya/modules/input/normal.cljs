@@ -5,13 +5,36 @@
    [saya.modules.buffers.util :as buffers]
    [saya.modules.input.helpers :refer [adjust-cursor-to-scroll
                                        adjust-scroll-to-cursor clamp-cursor
-                                       clamp-scroll last-buffer-row
-                                       update-cursor]]
+                                       clamp-scroll
+                                       current-buffer-line-last-col
+                                       last-buffer-row update-cursor]]
    [saya.modules.input.insert :refer [line->string update-buffer-line-string]]
    [saya.modules.input.motions.word :refer [big-word-boundary?
                                             end-of-word-movement
                                             small-word-boundary? word-movement]]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
+
+; ======= Mode-change keymaps ==============================
+
+(defn- mode<- [new-mode]
+  (fn [ctx]
+    (assoc ctx :mode new-mode)))
+
+(def ^:private mode-change-keymaps
+  {["i"] (mode<- :insert)
+   ["I"] (comp
+          (mode<- :insert)
+          to-start-of-line)
+
+   ["a"] (comp
+          (fn [{:keys [buffer] :as ctx}]
+            (cond-> ctx
+              (> (current-buffer-line-last-col buffer) 0)
+              (update-in [:buffer :cursor :col] inc)))
+          (mode<- :insert))
+   ["A"] (comp
+          to-end-of-line
+          (mode<- :insert))})
 
 ; ======= Movement keymaps =================================
 
@@ -169,6 +192,7 @@
 
 (def keymaps
   (merge
+   mode-change-keymaps
    movement-keymaps
    operator-keymaps
    scroll-keymaps))

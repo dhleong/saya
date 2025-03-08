@@ -60,8 +60,6 @@
      [:normal :ctrl/c {:submit? true}] {:dispatch [::cancel-cmdline]}
      [:insert :ctrl/c {:submit? true}] {:dispatch [::cancel-cmdline]}
 
-     [:normal "i" {:bufnr? true}] {:db (assoc db :mode :insert)}
-
      [:normal key {:bufnr? true}]
      (keymaps/maybe-perform-with-keymap-buffer
       :mode :normal
