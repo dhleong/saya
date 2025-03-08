@@ -109,7 +109,7 @@
         (assoc :yanked {:chars (subs (line->string (nth (:lines buffer) linenr))
                                      start end)}))))
 
-(defn delete-operator [context {:keys [start end linewise?] :as flags}]
+(defn delete-operator {:char "d"} [context {:keys [start end linewise?] :as flags}]
   (cond
     ; Line-wise delete
     linewise?
@@ -132,7 +132,7 @@
              :pending-operator operator))))
 
 (def operator-keymaps
-  {["d"] (enqueue-operator delete-operator)})
+  {["d"] (enqueue-operator #'delete-operator)})
 
 ; ======= Scroll keymaps ===================================
 

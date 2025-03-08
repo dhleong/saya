@@ -105,12 +105,20 @@
 
      [:operator-pending key {:bufnr? true
                              :readonly? false}]
-     (-> (keymaps/maybe-perform-with-keymap-buffer
-          :mode :operator-pending
-          :keymaps op/keymaps
-          :key key
-          :cofx cofx)
-         (update :db (fnil assoc db) :mode :normal))
+     (->
+      (if (= key (:char (meta (:pending-operator db))))
+        (keymaps/maybe-perform-with-keymap-buffer
+         :mode :operator-pending
+         :keymaps op/full-line-keymap
+         :key :full-line
+         :cofx cofx)
+
+        (keymaps/maybe-perform-with-keymap-buffer
+         :mode :operator-pending
+         :keymaps op/keymaps
+         :key key
+         :cofx cofx))
+      (update :db (fnil assoc db) :mode :normal))
 
      :else nil
      #_{:fx [[:log ["unhandled: " mode key]]]})))

@@ -23,8 +23,9 @@
       offset)))
 
 (defn current-buffer-line [{:keys [lines cursor]}]
-  (->> (nth lines (:row cursor))
-       (ansi-chars)))
+  (when (seq lines)
+    (->> (nth lines (:row cursor))
+         (ansi-chars))))
 
 (defn last-buffer-row [buffer]
   (max 0

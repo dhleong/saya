@@ -66,9 +66,10 @@
       (select-keys [:lines :cursor])))
 
 (defn with-keymap-compare-buffer
-  [f buffer-before buffer-after & {:keys [window window-expect]}]
-  (let [ctx (make-context :buffer buffer-before
-                          :window window)
+  [f buffer-before buffer-after & {:keys [window window-expect pending-operator]}]
+  (let [ctx (-> (make-context :buffer buffer-before
+                              :window window)
+                (assoc :pending-operator pending-operator))
         ctx' (try (f ctx)
                   (catch :default e
                     (println "ERROR performing " f ": " e)
