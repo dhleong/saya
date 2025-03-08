@@ -125,22 +125,38 @@
       ; Nothing to fix:
       :else ctx)))
 
-(defn- visible-cursor-range [{:keys [window buffer]}]
-  ; NOTE: We *could* use a Flow to cache this in the DB and
-  ; avoid having to recompute on the fly?
-  (let [all-visible (visible-lines window (:lines buffer))]
-    [(let [{:keys [row col]} (first all-visible)]
-       {:row row :col col})
+(defn- visible-cursor-range
+  ([ctx] (visible-cursor-range ctx nil))
+  ([{:keys [window buffer]} {:keys [preserve-col?]}]
+   ; NOTE: We *could* use a Flow to cache this in the DB and
+   ; avoid having to recompute on the fly?
+   (let [all-visible (visible-lines window (:lines buffer))]
+     [(let [{:keys [row col]} (first all-visible)]
+        {:row row :col col})
 
-     (let [{:keys [row col line last-of-line?]} (peek all-visible)]
-       ; TODO: Ideally, if we're moving the cursor we should
-       ; preserve its virtual col
-       {:row row
-        :col (cond-> (+ col (count line))
-               (not last-of-line?) (dec))})]))
+      (let [{:keys [row col line last-of-line?]} (peek all-visible)]
+        {:row row
+         :col (if preserve-col?
+                (let [cursor-line (nth (:lines buffer) (:row (:cursor buffer)))
+                      offset (cursor-anchor-offset
+                              cursor-line
+                              (:width window)
+                              (:cursor buffer))
+                      cursor-wrapped-line (->>
+                                           (wrapped-lines
+                                            cursor-line
+                                            (:width window))
+                                           (drop-last offset)
+                                           (last))
+                      cursor-relative-col (- (:col (:cursor buffer))
+                                             (:col cursor-wrapped-line))]
+                  (+ col cursor-relative-col))
+
+                (cond-> (+ col (count line))
+                  (not last-of-line?) (dec)))})])))
 
 (defn adjust-cursor-to-scroll [ctx]
-  (let [visible-range (visible-cursor-range ctx)]
+  (let [visible-range (visible-cursor-range ctx {:preserve-col? true})]
     (update-in ctx [:buffer :cursor] buffers/clamp-cursor visible-range)))
 
 (defn clamp-cursor [{:keys [window buffer] :as ctx}]

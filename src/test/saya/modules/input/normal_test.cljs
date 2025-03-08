@@ -132,15 +132,15 @@
   (testing "Move cursor up with wrapped lines"
     (with-keymap-compare-buffer (update-scroll - (constantly 1))
       "For the honor of |Grayskull!"
-      "For the h|onor of Grayskull!"
+      "For the |honor of Grayskull!"
       :window {:height 1 :width 10}
       :window-expect {:height 1 :width 10
                       :anchor-row 0
                       :anchor-offset 1})
 
     (with-keymap-compare-buffer (update-scroll - (constantly 1))
-      "For the h|onor of Grayskull!"
-      "F|or the honor of Grayskull!"
+      "For the |honor of Grayskull!"
+      "|For the honor of Grayskull!"
       :window {:height 1 :width 10
                :anchor-row 0
                :anchor-offset 1}

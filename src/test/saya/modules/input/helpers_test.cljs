@@ -110,7 +110,7 @@
        say it |anyway"
       "Talkin
        away I
-       don't know what I'm to| say I'll
+       don't know what |I'm to say I'll
        say it anyway"
       :window {:height 4 :width 10}
       :window-expect {:anchor-row 2 :anchor-offset 1})))
