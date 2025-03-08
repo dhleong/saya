@@ -3,7 +3,9 @@
    [clojure.test :refer [deftest is testing]]
    [saya.modules.input.helpers :refer [adjust-scroll-to-cursor
                                        derive-anchor-from-top-cursor]]
-   [saya.modules.input.test-helpers :refer [make-context]]))
+   [saya.modules.input.normal :refer [scroll-to-top]]
+   [saya.modules.input.test-helpers :refer [make-context
+                                            with-keymap-compare-buffer]]))
 
 (defn derive-anchor-from-top-cursor' [{:keys [buffer window]}]
   (derive-anchor-from-top-cursor
@@ -84,4 +86,17 @@
                :window {:height 2 :width 30})
           ctx' (adjust-scroll-to-cursor ctx)]
       (is (= 1 (:anchor-row (:window ctx'))))
-      (is (= 0 (:anchor-offset (:window ctx')))))))
+      (is (= 0 (:anchor-offset (:window ctx'))))))
+
+  (testing "Scroll to top, tall window"
+    (with-keymap-compare-buffer scroll-to-top
+      "Talkin
+       away I
+       don't know what I'm to say I'll
+       say it |anyway"
+      "|Talkin
+       away I
+       don't know what I'm to say I'll
+       say it anyway"
+      :window {:height 7 :width 10}
+      :window-expect {:anchor-row 3 :anchor-offset 1})))

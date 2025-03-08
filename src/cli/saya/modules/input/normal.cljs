@@ -24,16 +24,18 @@
      (assoc-in ctx [:buffer :cursor :row]
                (last-buffer-row buffer)))))
 
+(def scroll-to-top
+  (comp
+   adjust-scroll-to-cursor
+   (fn to-first-line [ctx]
+     (assoc-in ctx [:buffer :cursor] {:col 0
+                                      :row 0}))))
+
 (def movement-keymaps
   {["0"] #'to-start-of-line
    ["$"] #'to-end-of-line
 
-   ["g" "g"] (comp
-              adjust-scroll-to-cursor
-              (fn to-first-line [ctx]
-                (assoc-in ctx [:buffer :cursor] {:col 0
-                                                 :row 0})))
-
+   ["g" "g"] #'scroll-to-top
    ["G"] #'scroll-to-bottom
 
    ; Single char movement
