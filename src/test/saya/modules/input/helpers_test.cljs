@@ -3,7 +3,7 @@
    [clojure.test :refer [deftest is testing]]
    [saya.modules.input.helpers :refer [adjust-scroll-to-cursor
                                        derive-anchor-from-top-cursor]]
-   [saya.modules.input.normal :refer [scroll-to-top]]
+   [saya.modules.input.normal :refer [scroll-to-top update-scroll]]
    [saya.modules.input.test-helpers :refer [make-context
                                             with-keymap-compare-buffer]]))
 
@@ -100,3 +100,17 @@
        say it anyway"
       :window {:height 7 :width 10}
       :window-expect {:anchor-row 3 :anchor-offset 1})))
+
+(deftest adjust-cursor-to-scroll-test
+  (testing "Handle wrapped lines"
+    (with-keymap-compare-buffer (update-scroll - (constantly 3))
+      "Talkin
+       away I
+       don't know what I'm to say I'll
+       say it |anyway"
+      "Talkin
+       away I
+       don't know what I'm to| say I'll
+       say it anyway"
+      :window {:height 4 :width 10}
+      :window-expect {:anchor-row 2 :anchor-offset 1})))

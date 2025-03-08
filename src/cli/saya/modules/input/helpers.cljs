@@ -1,7 +1,8 @@
 (ns saya.modules.input.helpers
   (:require
-   [saya.cli.text-input.helpers :refer [dec-to-zero]]
-   [saya.modules.buffers.line :refer [ansi-chars wrapped-lines]]))
+   [saya.modules.buffers.line :refer [ansi-chars wrapped-lines]]
+   [saya.modules.buffers.util :as buffers]
+   [saya.modules.window.subs :refer [visible-lines]]))
 
 (def ^:dynamic *mode* :normal)
 
@@ -124,30 +125,23 @@
       ; Nothing to fix:
       :else ctx)))
 
-(defn adjust-cursor-to-scroll [{:keys [window buffer] :as ctx}]
-  (let [{:keys [height width anchor-offset anchor-row]} window
-        anchor-row (or anchor-row
-                       (last-buffer-row buffer))
-        min-cursor-row (max 0 (inc (- anchor-row height)))
-        max-cursor-row (min (last-buffer-row buffer)
-                            (+ min-cursor-row (dec height)))
-        {:keys [col row]} (:cursor buffer)
-        row' (min max-cursor-row
-                  (max min-cursor-row row))
-        wrapped (wrapped-lines
-                 (get-in buffer [:lines row])
-                 width)]
-    (cond-> (assoc-in ctx [:buffer :cursor :row] row')
-      ; Adjust :col to be within the visible part of the line
-      (= anchor-row row)
-      (as-> ctx
-        (let [visible-lines (drop-last anchor-offset wrapped)
-              last-visible-col (dec-to-zero
-                                (+ (:col (last visible-lines))
-                                   (count (last visible-lines))))]
-          (cond-> ctx
-            (> col last-visible-col)
-            (assoc-in [:buffer :cursor :col] last-visible-col)))))))
+(defn- visible-cursor-range [{:keys [window buffer]}]
+  ; NOTE: We *could* use a Flow to cache this in the DB and
+  ; avoid having to recompute on the fly?
+  (let [all-visible (visible-lines window (:lines buffer))]
+    [(let [{:keys [row col]} (first all-visible)]
+       {:row row :col col})
+
+     (let [{:keys [row col line last-of-line?]} (peek all-visible)]
+       ; TODO: Ideally, if we're moving the cursor we should
+       ; preserve its virtual col
+       {:row row
+        :col (cond-> (+ col (count line))
+               (not last-of-line?) (dec))})]))
+
+(defn adjust-cursor-to-scroll [ctx]
+  (let [visible-range (visible-cursor-range ctx)]
+    (update-in ctx [:buffer :cursor] buffers/clamp-cursor visible-range)))
 
 (defn clamp-cursor [{:keys [window buffer] :as ctx}]
   (let [{:keys [height anchor-row]} window
