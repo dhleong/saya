@@ -192,4 +192,20 @@
       :window {:height 1 :width 10
                :anchor-row 0}
       :window-expect {:height 1 :width 10
-                      :anchor-row 0})))
+                      :anchor-row 0}))
+
+  (testing "Move cursor up with mixed lines"
+    (with-keymap-compare-buffer (update-cursor :row dec)
+      "Talkin
+       away I
+       |don't know
+       what I'm to say
+       I'll say it anyway"
+      "Talkin
+       |away I
+       don't know
+       what I'm to say
+       I'll say it anyway"
+      :window {:height 3 :width 10
+               :anchor-row 3 :anchor-offset 1}
+      :window-expect {:anchor-row 2 :anchor-offset 0})))

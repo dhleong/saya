@@ -6,7 +6,8 @@
    [saya.db :refer [default-db]]
    [saya.modules.buffers.events :as buffer-events]
    [saya.modules.buffers.line :refer [buffer-line]]
-   [saya.modules.input.insert :refer [line->string]]))
+   [saya.modules.input.insert :refer [line->string]]
+   [saya.modules.window.subs :refer [visible-lines]]))
 
 (defn- extract-lines-and-cursor [s]
   (loop [raw-lines (str/split-lines s)
@@ -80,4 +81,16 @@
 
     (when window-expect
       (is (= window-expect (-> (get-in ctx' [:window])
-                               (select-keys (keys window-expect))))))))
+                               (select-keys (keys window-expect))))
+          (letfn [(vis' [ctx]
+                    (->> (visible-lines
+                          (:window ctx)
+                          (:lines (:buffer ctx)))
+                         (map (fn [{:keys [line]}]
+                                (str/join line)))))]
+            (str "Visible lines:\n"
+                 (vis' ctx)
+                 "\n -> \n"
+                 (vis' ctx')
+                 "\n Expected:\n"
+                 (vis' (update ctx :window merge window-expect))))))))
