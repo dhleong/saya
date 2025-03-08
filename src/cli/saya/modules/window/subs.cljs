@@ -65,7 +65,7 @@
        ; NOTE: Non-connection buffers need some blank "starter" line
        ; for editing purposes
        (when-not (:connection-id buffer)
-         [{:row 0 :col 0 :line []}]))))
+         [{:row 0 :col 0 :line [] :last-of-row? true}]))))
 
 (reg-sub
  ::focused?
