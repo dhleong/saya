@@ -47,6 +47,7 @@
                         (nth lines (:row start))
                         width
                         start)
+         consumable (max 1 anchor-offset)
          to-consume (dec amount)]
     (cond
       (<= to-consume anchor-offset)
@@ -54,16 +55,14 @@
        :anchor-offset (- anchor-offset to-consume)}
 
       (< (inc anchor-row) (count lines))
-      (let [next-row (inc anchor-row)]
+      (let [next-row (inc anchor-row)
+            wrapped-lines-count (count (wrapped-lines (nth lines next-row)
+                                                      width))]
         (recur
          next-row
-          ; NOTE: This would not be a valid anchor-offset---the max
-          ; anchor-offset for a row should be `(dec (count ..))`---but
-          ; we also should always have at least 1 to-consume left here,
-          ; which would produce a valid anchor-offset above
-         (dec (count (wrapped-lines (nth lines next-row)
-                                    width)))
-         (- to-consume (max 1 anchor-offset))))
+         (dec wrapped-lines-count)
+         wrapped-lines-count
+         (- to-consume consumable)))
 
       ; Bottom of the buffer, presumably
       :else
@@ -99,7 +98,7 @@
       (update ctx :window dissoc :anchor-row)
 
       ; Derive anchor-row/offset
-      ; TODO: 
+      ; TODO: Improve within-row offset handling
       (< row anchor-row)
       (let [from-cursor (derive-anchor-from-top-cursor
                          (:lines buffer)
@@ -107,8 +106,9 @@
                          cursor
                          height)]
         ; NOTE: If deriving from the cursor would put the scroll "lower"
-        ; (IE: closer to the bottom) than it is, then our cursor is visible!
-        ; Only if it would put the scroll "higher" do we need to apply
+        ; (IE: closer to the bottom of the screen) than it is, then our
+        ; cursor is visible! Only if it would put the scroll "higher" do
+        ; we need to apply
         (if (or (< (:anchor-row from-cursor)
                    anchor-row)
                 (and (= (:anchor-row from-cursor)
