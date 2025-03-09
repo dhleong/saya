@@ -1,7 +1,6 @@
 (ns saya.modules.command.registry.buffer
   (:require
-   [day8.re-frame-10x.inlined-deps.re-frame.v1v3v0.re-frame.core :refer [unwrap]]
-   [re-frame.core :refer [reg-event-fx]]
+   [re-frame.core :refer [reg-event-fx unwrap]]
    [saya.modules.buffers.events :as buffer-events]
    [saya.modules.command.interceptors :refer [aliases]]
    [saya.modules.logging.core :refer [log-fx]]))
