@@ -9,9 +9,14 @@
 (reg-event-fx
  :command/connect
  [(aliases :c :co :con :conn) unwrap]
- (fn [_ {[uri] :params}]
+ (fn [_ {[uri-param] :params :keys [uri]}]
+   ; NOTE: This may be invoked either as:
+   ;   [:command/connect {:uri uri}]
+   ; OR, as from the UI:
+   ;   [:command/connect {:params [uri]}]
    {:dispatch [::kodachi-events/connect
                {:uri (or uri
+                         uri-param
                          (when config/debug?
                            ; TODO: Clean this up
                            "legendsofthejedi.com:5656"))}]}))
