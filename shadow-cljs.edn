@@ -19,7 +19,7 @@
                 ; ::inject/sub cofx (for subscriptions in event handlers)
                 [re-frame-utils "0.1.0"]
 
-                [org.babashka/sci "0.8.43"]
+                [org.babashka/sci "0.9.44"]
 
                 ; etc:
                 [alandipert/storage-atom "2.0.1"]

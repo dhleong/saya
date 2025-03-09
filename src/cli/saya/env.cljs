@@ -3,9 +3,12 @@
    ["node:fs/promises" :as fs]
    [promesa.core :as p]
    [saya.util.paths :as paths]
+   [saya.modules.scripting.core]
    [sci.core :as sci]))
 
-(def ^:private saya-core-ns (sci/create-ns 'saya.core))
+(def ^:private saya-core-ns
+  (let [core-ns (sci/create-ns 'saya.core)]
+    (sci/copy-ns saya.modules.scripting.core core-ns)))
 
 (def ^:private context-opts {:namespaces
                              {'saya.core saya-core-ns}})
@@ -57,12 +60,13 @@
                            [:found fns])
                        [:unresolved]))]
 
-    {:main main-result
+    {:ns ns
+     :main main-result
      :after-load after-load}))
 
 ; TODO: Remove these
-(def ^:private current-context (atom nil))
-(def ^:private state (atom nil))
+(defonce ^:private current-context (atom nil))
+(defonce ^:private state (atom nil))
 
 (defn initialize
   "Initialize the scripting context"
@@ -75,3 +79,9 @@
       (p/catch (fn [e]
                  ; TODO: Emit event
                  (reset! state e)))))
+
+(defn- load-string [s]
+  (let [context @current-context]
+    (eval-script context
+                 {:first-load? true}
+                 s)))
