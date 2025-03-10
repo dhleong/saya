@@ -99,12 +99,19 @@
                [:saya.modules.kodachi.fx/set-window-size!
                 {:connection-id connr
                  :width (:width window)
-                 :height (:height window)}])]}
+                 :height (:height window)}])
+
+             [:saya.modules.scripting.fx/trigger-callback
+              {:connection-id connr
+               :callback-kind :on-connected}]]}
 
        {:type "Disconnected"}
        {:dispatch [::buffer-events/new-line
                    {:id bufnr
-                    :system [:disconnected (get-in db [:buffers bufnr :uri])]}]}
+                    :system [:disconnected (get-in db [:buffers bufnr :uri])]}]
+        :fx [[:saya.modules.scripting.fx/trigger-callback
+              {:connection-id connr
+               :callback-kind :on-disconnected}]]}
 
        ; TODO:
        :else

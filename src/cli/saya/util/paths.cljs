@@ -2,7 +2,8 @@
   (:require [applied-science.js-interop :as j]
             ["env-paths" :as env-paths]
             ["node:os" :as os]
-            ["node:path" :as path]))
+            ["node:path" :as path]
+            ["untildify" :default untildify]))
 
 (def ^:private app-name "saya")
 
@@ -23,3 +24,10 @@
   ([] (platform :data))
   ([sub-path]
    (path/join (internal-data) sub-path)))
+
+(defn resolve-user
+  "Given a user-provided path, resolve the absolute path to it,
+   handling things like ~ for HOME"
+  [user-path]
+  (-> (untildify user-path)
+      (path/resolve)))

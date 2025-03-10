@@ -1,13 +1,13 @@
 (ns saya.events
   (:require
    [re-frame.core :refer [path reg-event-db reg-event-fx trim-v unwrap]]
-   [saya.cli.args :refer [parse-cli-args]]
    [saya.db :as db]
    [saya.modules.command.parse :refer [parse-command]]
    [saya.modules.command.registry]
    [saya.modules.input.keymaps :as keymaps]
    [saya.modules.input.normal :refer [scroll-to-bottom]]
-   [saya.modules.kodachi.fx :as kodachi-fx]))
+   [saya.modules.kodachi.fx :as kodachi-fx]
+   [saya.modules.scripting.fx :as scripting-fx]))
 
 (reg-event-fx
  ::initialize-db
@@ -17,13 +17,19 @@
 (reg-event-fx
  ::initialize-cli
  [trim-v]
- (fn [{:keys [db]} [args]]
+ (fn [{:keys [db]} [cli-args]]
    (try
-     (let [new-db (assoc db :cli/args (parse-cli-args args))]
+     (let [new-db (assoc db :cli/args cli-args)]
        {:db new-db
         :fx [[::kodachi-fx/init new-db]]})
      (catch :default e
        {:db (assoc db :err e)}))))
+
+(reg-event-fx
+ ::load-script
+ [trim-v]
+ (fn [_ [script-file]]
+   {::scripting-fx/load-script script-file}))
 
 (reg-event-db
  ::set-dimens

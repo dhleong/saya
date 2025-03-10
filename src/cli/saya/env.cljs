@@ -2,8 +2,9 @@
   (:require
    ["node:fs/promises" :as fs]
    [promesa.core :as p]
+   [saya.modules.logging.core :refer [log]]
+   [saya.modules.scripting.core :as scripting-core]
    [saya.util.paths :as paths]
-   [saya.modules.scripting.core]
    [sci.core :as sci]))
 
 (def ^:private saya-core-ns
@@ -11,7 +12,14 @@
     (sci/copy-ns saya.modules.scripting.core core-ns)))
 
 (def ^:private context-opts {:namespaces
-                             {'saya.core saya-core-ns}})
+                             {'saya.core saya-core-ns}
+
+                             ; Convenience to convert `#send "string"` into
+                             ; a mapping that sends "string" to the connection
+                             :readers
+                             {'send (fn [text]
+                                      (fn do-send [conn]
+                                        (scripting-core/send conn text)))}})
 
 (defn- read-init []
   (-> (p/let [init-path (paths/user-config "init.clj")
@@ -43,7 +51,7 @@
                 (symbol ns-sym sym))))))
 
 (defn- eval-script [ctx {:keys [first-load?]} script-string]
-  (let [{:keys [ns]} (sci/eval-string+ ctx script-string)
+  (let [{:keys [ns val]} (sci/eval-string+ ctx script-string)
 
         ; Check if a -main was declared
         main-result (when first-load?
@@ -62,7 +70,8 @@
 
     {:ns ns
      :main main-result
-     :after-load after-load}))
+     :after-load after-load
+     :val val}))
 
 ; TODO: Remove these
 (defonce ^:private current-context (atom nil))
@@ -78,6 +87,7 @@
           (reset! current-context ctx)))
       (p/catch (fn [e]
                  ; TODO: Emit event
+                 (log "ERROR Loading init: " e)
                  (reset! state e)))))
 
 (defn- load-string [s]
@@ -85,3 +95,11 @@
     (eval-script context
                  {:first-load? true}
                  s)))
+
+(defn load-script [path]
+  (p/let [buf (fs/readFile path)
+          text (.toString buf)]
+    (load-string text)))
+
+(comment
+  (initialize))
