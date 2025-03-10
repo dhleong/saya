@@ -1,0 +1,19 @@
+(ns saya.modules.scripting.fx
+  (:require
+   [re-frame.core :refer [reg-fx]]
+   [saya.env :as env]
+   [saya.modules.logging.core :refer [log]]
+   [saya.modules.scripting.callbacks :refer [trigger-callback]]
+   [saya.util.paths :as paths]))
+
+(reg-fx
+ ::trigger-callback
+ (fn [{:keys [connection-id callback-kind]}]
+   (trigger-callback connection-id callback-kind)))
+
+(reg-fx
+ ::load-script
+ (fn [script-path]
+   (let [expanded-path (paths/resolve-user script-path)]
+     (log "[script:load] " script-path)
+     (env/load-script expanded-path))))
