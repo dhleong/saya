@@ -54,7 +54,7 @@
 
   ; Else, trigger a connection
   (-> (perform-connect uri)
-      (p/then (partial perform-config config))
+      (p/then #(perform-config % config))
       (p/catch (fn [e]
                  ; TODO: Echo
                  (log "ERROR in config: " e)))))

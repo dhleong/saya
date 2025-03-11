@@ -1,5 +1,6 @@
 (ns saya.modules.scripting.fx
   (:require
+   [promesa.core :as p]
    [re-frame.core :refer [reg-fx]]
    [saya.env :as env]
    [saya.modules.logging.core :refer [log]]
@@ -16,4 +17,6 @@
  (fn [script-path]
    (let [expanded-path (paths/resolve-user script-path)]
      (log "[script:load] " script-path)
-     (env/load-script expanded-path))))
+     (-> (env/load-script expanded-path)
+         (p/catch (fn [e]
+                    (log "[script:load] ERROR: " e)))))))
