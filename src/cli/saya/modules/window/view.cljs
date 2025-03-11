@@ -40,8 +40,14 @@
     :completion (->ConnectionCompletionSource connr)
     :on-persist-value #(>evt [::window-events/set-input-text {:connr connr
                                                               :text %}])
-    :on-submit #(>evt [:connection/send {:connr connr
-                                         :text %}])}])
+    :on-submit (fn [text]
+                 ; NOTE: Ensure input is cleared; on-persist-value *may not*
+                 ; be called from the cmdline window. This is kinda hacks,
+                 ; but fixing properly in input-window feels... annoying
+                 (>evt [::window-events/set-input-text {:connr connr
+                                                        :text ""}])
+                 (>evt [:connection/send {:connr connr
+                                          :text text}]))}])
 
 (defn- buffer-line [{:keys [line col]} {:keys [cursor-col input-connr]}]
   (let [cursor-type (case (<sub [:mode])
