@@ -2,7 +2,6 @@
   (:require
    [clojure.core.match :refer [match]]
    [re-frame.core :refer [reg-event-fx trim-v]]
-   [saya.modules.buffers.line :refer [->ansi]]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
    [saya.modules.input.fx :as fx]
@@ -14,8 +13,9 @@
 
 (defn- get-current-cmdline [db bufnr]
   (let [{:keys [lines cursor]} (get-in db [:buffers bufnr])
-        current-line (nth lines (:row cursor))]
-    (->ansi current-line)))
+        current-line (when (seq lines)
+                       (nth lines (:row cursor)))]
+    (str current-line)))
 
 (reg-event-fx
  ::submit-cmdline

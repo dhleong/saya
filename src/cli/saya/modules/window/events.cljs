@@ -32,4 +32,4 @@
    (assoc-in db [:buffers [:conn/input connr] :lines]
              (->> text
                   (str/split-lines)
-                  (map buffer-line)))))
+                  (mapv buffer-line)))))

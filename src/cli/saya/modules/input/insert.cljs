@@ -9,12 +9,16 @@
   (str line))
 
 (defn update-buffer-line-string [buffer linenr f]
-  (-> buffer
-      (update-in [:lines linenr]
-                 (comp
-                  buffer-line
-                  f
-                  (fnil str "")))))
+  (cond-> buffer
+    (not (:lines buffer))
+    (assoc :lines [])
+
+    :always
+    (update-in [:lines linenr]
+               (comp
+                buffer-line
+                f
+                (fnil str "")))))
 
 (defn- update-cursor-line-string [{:keys [buffer] :as context} f]
   (let [{linenr :row} (:cursor buffer)]
