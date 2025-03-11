@@ -13,7 +13,7 @@
        (str/join "\n")))
 
 (defn parse-cli-args [args]
-  (when (some #{"--help"} args)
+  (when (some #{"--help" "help"} args)
     (println help)
     (js/process.exit 0))
 
@@ -25,13 +25,17 @@
                (drop 2 before-node)
                (drop 1 args))
         uri (first args)]
-    (if (and (some? uri)
-             (str/includes? uri ":"))
+    (cond
+      (not (string? uri))
+      nil
+
+      (str/includes? uri ":")
       [:connect uri]
 
-      (if (exists-sync? (paths/resolve-user uri))
-        [:load-script uri]
+      (exists-sync? (paths/resolve-user uri))
+      [:load-script uri]
 
-        (do
-          (println "saya: No such script file: " uri)
-          (js/process.exit 1))))))
+      :else
+      (do
+        (println "saya: No such script file: " uri)
+        (js/process.exit 1)))))
