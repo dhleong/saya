@@ -60,7 +60,8 @@
     (subscribe [::buffer-subs/by-id bufnr])
     (subscribe [::buffer-subs/lines-by-id bufnr])])
  (fn [[window buffer buffer-lines]]
-   (or (seq (visible-lines window buffer-lines))
+   (or (seq (when buffer-lines
+              (visible-lines window buffer-lines)))
 
        ; NOTE: Non-connection buffers need some blank "starter" line
        ; for editing purposes
