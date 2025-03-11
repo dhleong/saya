@@ -3,6 +3,7 @@
   (:require
    [archetype.util :refer [>evt]]
    [clojure.core.match :as m]
+   [clojure.string :as str]
    [promesa.core :as p]
    [re-frame.core :as rf]
    [saya.modules.kodachi.events :as kodachi]
@@ -60,4 +61,7 @@
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn send [conn s]
-  (>evt [:connection/send {:connr (->connr conn) :text s}]))
+  (let [text (cond
+               (string? s) s
+               (coll? s) (str/join "\r\n" s))]
+    (>evt [:connection/send {:connr (->connr conn) :text text}])))

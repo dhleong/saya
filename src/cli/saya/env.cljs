@@ -3,7 +3,7 @@
    ["node:fs/promises" :as fs]
    [promesa.core :as p]
    [saya.modules.logging.core :refer [log]]
-   [saya.modules.scripting.core :as scripting-core]
+   [saya.modules.scripting.core]
    [saya.util.paths :as paths]
    [sci.core :as sci]))
 
@@ -18,8 +18,8 @@
                              ; a mapping that sends "string" to the connection
                              :readers
                              {'send (fn [text]
-                                      (fn do-send [conn]
-                                        (scripting-core/send conn text)))}})
+                                      `(fn do-send [conn#]
+                                         (~'saya.core/send conn# ~text)))}})
 
 (defn- read-init []
   (-> (p/let [init-path (paths/user-config "init.clj")
