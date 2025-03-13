@@ -9,7 +9,10 @@
    [re-frame.db :as rfdb]
    [saya.modules.kodachi.events :as kodachi]
    [saya.modules.logging.core :refer [log]]
-   [saya.modules.scripting.callbacks :refer [register-callback]]))
+   [saya.modules.scripting.callbacks :refer [register-callback]]
+   [saya.modules.scripting.events :as events]))
+
+(def ^:dynamic *script-file* nil)
 
 (defn- perform-connect [uri]
   (let [callback-id [::on-connection uri]
@@ -38,6 +41,8 @@
     (register-callback connr (fn [kind]
                                (when-some [cb (get config kind)]
                                  (cb conn))))
+    (>evt [::events/assign-script-to-connection {:connection-id connr
+                                                 :script-file *script-file*}])
 
     ; TODO: 
     (log "TODO: map keys: " keymaps " for " connr)))
@@ -56,7 +61,8 @@
   [uri & config]
   {:pre [(string? uri)]}
   (let [db @rfdb/app-db
-        buf (current-buffer db)]
+        buf (current-buffer db)
+        script-file *script-file*]
     ; FIXME: Probably, migrate this to an event+fx somehow? This is terribly impure
     (cond
       ; If current buffer is still connected to the same URI...
@@ -73,7 +79,8 @@
       ; Else, trigger a connection
       :else
       (-> (perform-connect uri)
-          (p/then #(perform-config % config))
+          (p/then #(binding [*script-file* script-file]
+                     (perform-config % config)))
           (p/catch (fn [e]
                      ; TODO: Echo
                      (log "ERROR in config: " e)))))))

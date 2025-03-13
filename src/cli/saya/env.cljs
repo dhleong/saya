@@ -3,7 +3,7 @@
    ["node:fs/promises" :as fs]
    [promesa.core :as p]
    [saya.modules.logging.core :refer [log]]
-   [saya.modules.scripting.core]
+   [saya.modules.scripting.core :refer [*script-file*]]
    [saya.util.paths :as paths]
    [sci.core :as sci]))
 
@@ -99,7 +99,8 @@
 (defn load-script [path]
   (p/let [buf (fs/readFile path)
           text (.toString buf)]
-    (load-string text)))
+    (binding [*script-file* path]
+      (load-string text))))
 
 (comment
   (initialize))
