@@ -74,7 +74,7 @@
  [unwrap]
  (fn [{:keys [db] :as cofx} {:keys [connr text]}]
    (merge
-    (let [bufnr (get-in db [:connection->bufnr connr])
+    (let [bufnr (get-in db [:connections connr :bufnr])
           winnr (:current-winnr db)]
       ; Scroll to the bottom in the current window (only) IF it is
       ; associated with this connection

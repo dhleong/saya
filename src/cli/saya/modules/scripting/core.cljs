@@ -6,6 +6,7 @@
    [clojure.string :as str]
    [promesa.core :as p]
    [re-frame.core :as rf]
+   [re-frame.db :as rfdb]
    [saya.modules.kodachi.events :as kodachi]
    [saya.modules.logging.core :refer [log]]
    [saya.modules.scripting.callbacks :refer [register-callback]]))
@@ -41,6 +42,10 @@
     ; TODO: 
     (log "TODO: map keys: " keymaps " for " connr)))
 
+(defn- current-buffer [db]
+  (let [current-window (get-in db [:windows (:current-winnr db)])]
+    (get-in db [:buffers (:bufnr current-window)])))
+
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn setup-connection
   "Ensure that a connection exists in the current window for the given URI,
@@ -49,15 +54,29 @@
    nop (and any callbacks will not be called).
    "
   [uri & config]
-  ; TODO: First, check if we're already actively connected. If so,
-  ; perform config directly
+  {:pre [(string? uri)]}
+  (let [db @rfdb/app-db
+        buf (current-buffer db)]
+    ; FIXME: Probably, migrate this to an event+fx somehow? This is terribly impure
+    (cond
+      ; If current buffer is still connected to the same URI...
+      (and (= :connected (get-in db [:connections (:connection-id buf) :state]))
+           (= uri (:uri buf)))
+      ; ... re-configure the active connection
+      (perform-config (:connection-id buf) config)
 
-  ; Else, trigger a connection
-  (-> (perform-connect uri)
-      (p/then #(perform-config % config))
-      (p/catch (fn [e]
-                 ; TODO: Echo
-                 (log "ERROR in config: " e)))))
+      ; If current buffer is still connected elsewhere, reject
+      (= :connected (get-in db [:connections (:connection-id buf) :state]))
+      ; TODO: echo
+      (log "Error: still connected to " (:uri buf))
+
+      ; Else, trigger a connection
+      :else
+      (-> (perform-connect uri)
+          (p/then #(perform-config % config))
+          (p/catch (fn [e]
+                     ; TODO: Echo
+                     (log "ERROR in config: " e)))))))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn send [conn s]
