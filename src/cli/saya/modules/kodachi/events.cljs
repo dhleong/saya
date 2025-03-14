@@ -36,10 +36,9 @@
  ::connecting
  [unwrap]
  (fn [{:keys [db]} {:keys [connection-id uri] :as params}]
-   ; TODO: Stash connection state somewhere?
-   (let [db (buffer-events/create-for-connection db params)
-         bufnr (get-in db [:connection->bufnr connection-id])]
-     {:db db
+   (let [db' (buffer-events/create-for-connection db params)
+         bufnr (get-in db' [:connections connection-id :bufnr])]
+     {:db db'
       :dispatch [::buffer-events/new-line
                  {:id bufnr
                   :system [:connecting uri]}]})))
@@ -49,7 +48,7 @@
  [unwrap]
  (fn [{:keys [db]} {connr :connection_id :as params}]
    (log "<< " params)
-   (when-let [bufnr (get-in db [:connection->bufnr connr])]
+   (when-let [bufnr (get-in db [:connections connr :bufnr])]
      (m/match params
        {:type "ExternalUI"
         :data {:type "Text"
@@ -87,7 +86,8 @@
        ; and we receive it here.
 
        {:type "Connected"}
-       {:fx [[:dispatch
+       {:db (assoc-in db [:connections connr :state] :connected)
+        :fx [[:dispatch
               [::buffer-events/new-line
                {:id bufnr
                 :system [:connected (get-in db [:buffers bufnr :uri])]}]]
@@ -99,12 +99,20 @@
                [:saya.modules.kodachi.fx/set-window-size!
                 {:connection-id connr
                  :width (:width window)
-                 :height (:height window)}])]}
+                 :height (:height window)}])
+
+             [:saya.modules.scripting.fx/trigger-callback
+              {:connection-id connr
+               :callback-kind :on-connected}]]}
 
        {:type "Disconnected"}
-       {:dispatch [::buffer-events/new-line
+       {:db (assoc-in db [:connections connr :state] :disconnected)
+        :dispatch [::buffer-events/new-line
                    {:id bufnr
-                    :system [:disconnected (get-in db [:buffers bufnr :uri])]}]}
+                    :system [:disconnected (get-in db [:buffers bufnr :uri])]}]
+        :fx [[:saya.modules.scripting.fx/trigger-callback
+              {:connection-id connr
+               :callback-kind :on-disconnected}]]}
 
        ; TODO:
        :else

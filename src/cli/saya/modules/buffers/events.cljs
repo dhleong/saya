@@ -67,10 +67,11 @@
       ; Reuse existing buffer
       (-> db
           (update-in current-path assoc :connection-id connection-id)
-          (update :connection->bufnr
+          (update :connections
                   assoc
                   connection-id
-                  (:id current-buffer)))
+                  {:bufnr (:id current-buffer)
+                   :state :connecting}))
 
       ; TODO: Also, tabpage
       (let [[db {buffer :buffer}] (create-blank
@@ -79,10 +80,11 @@
                                     {:uri uri
                                      :connection-id connection-id}})]
         (-> db
-            (update :connection->bufnr
+            (update :connections
                     assoc
                     connection-id
-                    (:id buffer)))))))
+                    {:bufnr (:id buffer)
+                     :state :connecting}))))))
 
 ; NOTE: Adapters like kodachi.events can use the event handler directly, assuming they use [unwrap]
 ; The handler expects the db as its first param; be aware if your event handler is -fx!

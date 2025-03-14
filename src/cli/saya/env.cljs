@@ -2,13 +2,24 @@
   (:require
    ["node:fs/promises" :as fs]
    [promesa.core :as p]
+   [saya.modules.logging.core :refer [log]]
+   [saya.modules.scripting.core :refer [*script-file*]]
    [saya.util.paths :as paths]
    [sci.core :as sci]))
 
-(def ^:private saya-core-ns (sci/create-ns 'saya.core))
+(def ^:private saya-core-ns
+  (let [core-ns (sci/create-ns 'saya.core)]
+    (sci/copy-ns saya.modules.scripting.core core-ns)))
 
 (def ^:private context-opts {:namespaces
-                             {'saya.core saya-core-ns}})
+                             {'saya.core saya-core-ns}
+
+                             ; Convenience to convert `#send "string"` into
+                             ; a mapping that sends "string" to the connection
+                             :readers
+                             {'send (fn [text]
+                                      `(fn do-send [conn#]
+                                         (~'saya.core/send conn# ~text)))}})
 
 (defn- read-init []
   (-> (p/let [init-path (paths/user-config "init.clj")
@@ -40,7 +51,7 @@
                 (symbol ns-sym sym))))))
 
 (defn- eval-script [ctx {:keys [first-load?]} script-string]
-  (let [{:keys [ns]} (sci/eval-string+ ctx script-string)
+  (let [{:keys [ns val]} (sci/eval-string+ ctx script-string)
 
         ; Check if a -main was declared
         main-result (when first-load?
@@ -57,12 +68,14 @@
                            [:found fns])
                        [:unresolved]))]
 
-    {:main main-result
-     :after-load after-load}))
+    {:ns ns
+     :main main-result
+     :after-load after-load
+     :val val}))
 
 ; TODO: Remove these
-(def ^:private current-context (atom nil))
-(def ^:private state (atom nil))
+(defonce ^:private current-context (atom nil))
+(defonce ^:private state (atom nil))
 
 (defn initialize
   "Initialize the scripting context"
@@ -74,4 +87,20 @@
           (reset! current-context ctx)))
       (p/catch (fn [e]
                  ; TODO: Emit event
+                 (log "ERROR Loading init: " e)
                  (reset! state e)))))
+
+(defn- load-string [s]
+  (let [context @current-context]
+    (eval-script context
+                 {:first-load? true}
+                 s)))
+
+(defn load-script [path]
+  (p/let [buf (fs/readFile path)
+          text (.toString buf)]
+    (binding [*script-file* path]
+      (load-string text))))
+
+(comment
+  (initialize))

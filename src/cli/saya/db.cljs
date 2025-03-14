@@ -10,7 +10,7 @@
    :buffers {}
    :windows {}
 
-   :connection->bufnr {}
+   :connections {}
 
    :current-winnr nil
    :next-bufnr 0

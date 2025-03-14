@@ -3,7 +3,8 @@
    [re-frame.registrar :refer [get-handler]]
    [saya.modules.command.registry.buffer]
    [saya.modules.command.registry.connection]
-   [saya.modules.command.registry.core]))
+   [saya.modules.command.registry.core]
+   [saya.modules.command.registry.scripting]))
 
 (defn- extract-aliases [registered-handler]
   ; registered-handler looks like '({:id ...} ...)
