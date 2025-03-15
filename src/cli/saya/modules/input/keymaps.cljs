@@ -54,8 +54,9 @@
                                            :or {with-unhandled identity}}]
   (binding [*mode* mode]
     (let [new-buffer ((fnil conj []) keymap-buffer key)
-          keymap (get keymaps new-buffer)
-          {:keys [db]} cofx]
+          {:keys [db bufnr]} cofx
+          user-maps (get-in db [:buffers bufnr :keymaps mode])
+          keymap (get (merge keymaps user-maps) new-buffer)]
       (cond
         keymap
         (perform cofx keymap)
