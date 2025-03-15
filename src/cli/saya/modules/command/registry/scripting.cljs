@@ -9,7 +9,7 @@
  :command/reload
  [(aliases :r :re :rel) unwrap]
  (fn [{:keys [db]} _]
-   (let [winnr (:current-window db)
+   (let [winnr (:current-winnr db)
          bufnr (get-in db [:windows winnr :bufnr])
          connr (get-in db [:buffers bufnr :connection-id])
          script-file (get-in db [:connections connr :script-file])]
