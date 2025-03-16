@@ -143,8 +143,9 @@
    ; clamp-cursor
    ; clamp-scroll
    (fn scroll-updater [{:keys [buffer window] :as ctx}]
-     (loop [anchor-row (:anchor-row window (last-buffer-row buffer))
-            anchor-offset (:anchor-offset window 0)
+     (loop [anchor-row (or (:anchor-row window)
+                           (last-buffer-row buffer))
+            anchor-offset (or (:anchor-offset window) 0)
             scroll-to-consume (compute-amount ctx)]
        (let [available-lines (count
                               (wrapped-lines
