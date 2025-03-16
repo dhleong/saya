@@ -42,7 +42,10 @@
 (reg-sub
  ::candidates
  :<- [::state]
- :-> :candidates)
+ :-> (fn [{:keys [candidates word-to-complete]}]
+       (when (seq word-to-complete)
+         ; TODO: It could be nice to be able to scroll through all?
+         (take 15 candidates))))
 
 (reg-sub
  ::ghost
