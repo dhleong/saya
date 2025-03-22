@@ -3,6 +3,7 @@
    ["ink" :as k]
    [archetype.util :refer [<sub]]
    [saya.modules.command.view :refer [command-line-mode-view]]
+   [saya.modules.home.echo :refer [echo-window]]
    [saya.modules.input.cmdline :refer [cmdline-window]]
    [saya.modules.kodachi.subs :as kodachi]
    [saya.modules.logging.view :refer [logging-view]]
@@ -35,7 +36,9 @@
       :command [command-line-mode-view]
 
       ; Default:
-      [placeholders/line])))
+      (or (when (seq (<sub [:echo-lines]))
+            [echo-window])
+          [placeholders/line]))))
 
 (defn home-view []
   [:> k/Box {:flex-direction :column

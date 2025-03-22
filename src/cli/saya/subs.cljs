@@ -34,3 +34,37 @@
 (reg-sub
  :global-cursor
  :-> :cursor)
+
+; ======= Echo =============================================
+
+(reg-sub
+ ::echo-history
+ :-> :echo-history)
+
+(reg-sub
+ ::echo-ack-pending-since
+ :-> :echo-ack-pending-since)
+
+(reg-sub
+ ::echo-cleared-at
+ :-> :echo-cleared-at)
+
+(reg-sub
+ :echo-lines
+ :<- [::echo-history]
+ :<- [::echo-cleared-at]
+ :<- [::echo-ack-pending-since]
+ (fn [[history echo-cleared-at ack-pending-since]]
+   (or (when ack-pending-since
+         (->> history
+              (reverse)
+              (take-while (fn [{:keys [timestamp]}]
+                            (> timestamp ack-pending-since)))
+              (reverse)))
+
+       ; TODO: last echo if not cleared
+       (let [latest (peek history)]
+         (when (or (not echo-cleared-at)
+                   (< echo-cleared-at
+                      (:timestamp latest)))
+           latest)))))

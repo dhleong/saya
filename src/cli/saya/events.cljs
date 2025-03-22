@@ -1,13 +1,16 @@
 (ns saya.events
   (:require
-   [re-frame.core :refer [path reg-event-db reg-event-fx trim-v unwrap]]
+   [clojure.string :as str]
+   [re-frame.core :refer [inject-cofx path reg-event-db reg-event-fx trim-v
+                          unwrap]]
    [saya.db :as db]
    [saya.modules.command.parse :refer [parse-command]]
    [saya.modules.command.registry]
    [saya.modules.input.keymaps :as keymaps]
    [saya.modules.input.normal :refer [scroll-to-bottom]]
    [saya.modules.kodachi.fx :as kodachi-fx]
-   [saya.modules.scripting.fx :as scripting-fx]))
+   [saya.modules.scripting.fx :as scripting-fx]
+   [saya.config :as config]))
 
 (reg-event-fx
  ::initialize-db
@@ -92,3 +95,21 @@
    {::kodachi-fx/set-window-size! {:connection-id connr
                                    :width width
                                    :height height}}))
+
+; ======= Echo =============================================
+
+(reg-event-fx
+ :echo
+ [trim-v (inject-cofx :now)]
+ (fn [{:keys [db now]} message]
+   (let [last-echo (peek (:echo-history db))]
+     {:db (-> db
+              (update :echo-history (fnil conj [])
+                      {:timestamp now
+                       :message (str/join " " message)})
+              (assoc :echo-ack-pending-since
+                     (or (:echo-ack-pending-since db)
+                         (when (< (- (:timestamp last-echo)
+                                     now)
+                                  config/echo-prompt-window-ms)
+                           now))))})))
