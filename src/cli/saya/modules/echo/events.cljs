@@ -1,8 +1,7 @@
 (ns saya.modules.echo.events
   (:require
    [clojure.string :as str]
-   [day8.re-frame-10x.inlined-deps.re-frame.v1v3v0.re-frame.core :refer [trim-v]]
-   [re-frame.core :refer [inject-cofx reg-event-fx]]
+   [re-frame.core :refer [inject-cofx reg-event-db reg-event-fx trim-v]]
    [saya.config :as config]))
 
 (reg-event-fx
@@ -12,6 +11,21 @@
    {:db (-> db
             (dissoc :echo-ack-pending-since)
             (assoc :echo-cleared-at now))}))
+
+(reg-event-db
+ ::reveal-latest
+ (fn [db _]
+   (assoc
+    db
+    :echo-ack-pending-since
+    (->> (subvec
+          (:echo-history db)
+          (max 0
+               (- (count (:echo-history db))
+                  15)))
+         (first)
+         :timestamp
+         dec))))
 
 (reg-event-fx
  :echo
