@@ -102,14 +102,28 @@
  :echo
  [trim-v (inject-cofx :now)]
  (fn [{:keys [db now]} message]
-   (let [last-echo (peek (:echo-history db))]
+   (let [last-echo (peek (:echo-history db))
+         new-entries (->> message
+                          (str/join " ")
+                          (str/split-lines)
+                          (map (fn [msg]
+                                 {:timestamp now
+                                  ; OOF This is not very pure, but...
+                                  ; let's 80/20
+                                  :key [now (js/Math.random)]
+                                  :message msg})))]
      {:db (-> db
-              (update :echo-history (fnil conj [])
-                      {:timestamp now
-                       :message (str/join " " message)})
+              (update :echo-history (fnil into []) new-entries)
+
               (assoc :echo-ack-pending-since
                      (or (:echo-ack-pending-since db)
-                         (when (< (- (:timestamp last-echo)
-                                     now)
-                                  config/echo-prompt-window-ms)
+                         (when (or (< (- (:timestamp last-echo)
+                                         now)
+                                      config/echo-prompt-window-ms)
+
+                                   (> (count new-entries) 1))
                            now))))})))
+
+(comment
+  (re-frame.core/dispatch [:echo "hi\nthere"]))
+

@@ -59,12 +59,12 @@
          (->> history
               (reverse)
               (take-while (fn [{:keys [timestamp]}]
-                            (> timestamp ack-pending-since)))
+                            (>= timestamp ack-pending-since)))
               (reverse)))
 
-       ; TODO: last echo if not cleared
+       ; Last echo if not cleared
        (let [latest (peek history)]
          (when (or (not echo-cleared-at)
                    (< echo-cleared-at
                       (:timestamp latest)))
-           latest)))))
+           [latest])))))
