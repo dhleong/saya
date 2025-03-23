@@ -125,5 +125,6 @@
                            now))))})))
 
 (comment
+  (re-frame.core/dispatch [:echo "For the honor of grayskull!"])
   (re-frame.core/dispatch [:echo "hi\nthere"]))
 

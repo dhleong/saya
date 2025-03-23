@@ -1,5 +1,6 @@
 (ns saya.modules.input.keymaps
   (:require
+   [saya.modules.home.events :as home-events]
    [saya.modules.input.helpers :refer [*mode*]]
    [saya.modules.logging.core :refer [log-fx]]))
 
@@ -37,7 +38,10 @@
                  ; TODO: Store yanked in a register, if set
                  (merge (select-keys context' [:mode :pending-operator])))
          :fx [(when-let [e (:error context')]
-                (log-fx "ERROR: " e))]}
+                (log-fx "ERROR: " e))
+
+              (when (:mode context')
+                [:dispatch [::home-events/ack-echo]])]}
 
         {:db (-> (:db cofx)
                  ; Still clear this even if nothing happened:
