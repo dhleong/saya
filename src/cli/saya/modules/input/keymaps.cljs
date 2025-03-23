@@ -1,5 +1,6 @@
 (ns saya.modules.input.keymaps
   (:require
+   [saya.modules.echo.core :refer [echo-fx]]
    [saya.modules.echo.events :as echo-events]
    [saya.modules.input.helpers :refer [*mode*]]
    [saya.modules.logging.core :refer [log-fx]]))
@@ -48,10 +49,9 @@
                  (dissoc :keymap-buffer :pending-operator))}))
 
     (catch :default e
-      ; TODO: echo?
       #_{:clj-kondo/ignore [:inline-def]}
       (def last-exception e)
-      {:fx [(log-fx "ERROR performing" f ":" e)]})))
+      {:fx [(echo-fx :exception "ERROR performing" f ":" e)]})))
 
 (defn maybe-perform-with-keymap-buffer [& {:keys [keymaps keymap-buffer cofx
                                                   mode with-unhandled key]

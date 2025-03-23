@@ -62,9 +62,8 @@
          (throw (ex-info (str "No such command: " (:command parsed))
                          {:parsed parsed}))))
      (catch :default e
-        ; TODO: echo
        {:db (update db :buffers dissoc :cmd)
-        :fx [[:log (str e)]
+        :fx [[:dispatch [:echo :exception e]]
              [:dispatch [:exit-command-mode]]]}))))
 
 (reg-event-db

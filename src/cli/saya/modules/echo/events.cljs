@@ -24,6 +24,13 @@
          message (if (some? message-config)
                    (next message)
                    message)
+
+         message (if (ex-data (first message))
+                   [(ex-message (first message))
+                    "\nContext:\n"
+                    (ex-data (first message))]
+                   message)
+
          last-echo (peek (:echo-history db))
          new-entries (->> message
                           (str/join " ")
