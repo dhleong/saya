@@ -117,14 +117,15 @@
 
               (assoc :echo-ack-pending-since
                      (or (:echo-ack-pending-since db)
-                         (when (or (< (- (:timestamp last-echo)
-                                         now)
+                         (when (or (< (- now
+                                         (:timestamp last-echo))
                                       config/echo-prompt-window-ms)
 
                                    (> (count new-entries) 1))
                            now))))})))
 
 (comment
-  (re-frame.core/dispatch [:echo "For the honor of grayskull!"])
+  (do (re-frame.core/dispatch [:echo "For the honor"])
+      (re-frame.core/dispatch [:echo "of grayskull!"]))
   (re-frame.core/dispatch [:echo "hi\nthere"]))
 
