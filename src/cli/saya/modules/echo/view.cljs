@@ -1,14 +1,20 @@
-(ns saya.modules.home.echo
+(ns saya.modules.echo.view
   (:require
    ["ink" :as k]
    [archetype.util :refer [<sub >evt]]
    [saya.cli.input :refer [use-keys]]
-   [saya.modules.home.events :as events]
+   [saya.modules.echo.events :as events]
    [saya.modules.input.core :as input]
    [saya.modules.ui.placeholders :as placeholders]))
 
-(defn- echo-line [{:keys [message]}]
-  [:> k/Text message])
+(defn- echo-line [{:keys [type message]}]
+  [:> k/Text (case type
+               :exception {:color :white
+                           :background-color :red}
+               :error {:color :red}
+               :warn {:color :orange}
+               {})
+   message])
 
 (defn- blocking-window []
   (let [lines (<sub [:echo-lines])]

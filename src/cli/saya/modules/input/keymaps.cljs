@@ -1,6 +1,6 @@
 (ns saya.modules.input.keymaps
   (:require
-   [saya.modules.home.events :as home-events]
+   [saya.modules.echo.events :as echo-events]
    [saya.modules.input.helpers :refer [*mode*]]
    [saya.modules.logging.core :refer [log-fx]]))
 
@@ -41,7 +41,7 @@
                 (log-fx "ERROR: " e))
 
               (when (:mode context')
-                [:dispatch [::home-events/ack-echo]])]}
+                [:dispatch [::echo-events/ack-echo]])]}
 
         {:db (-> (:db cofx)
                  ; Still clear this even if nothing happened:

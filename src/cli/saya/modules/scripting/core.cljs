@@ -7,8 +7,8 @@
    [promesa.core :as p]
    [re-frame.core :as rf]
    [re-frame.db :as rfdb]
+   [saya.modules.echo.core :refer [echo]]
    [saya.modules.kodachi.events :as kodachi]
-   [saya.modules.logging.core :refer [log]]
    [saya.modules.scripting.callbacks :refer [register-callback]]
    [saya.modules.scripting.events :as events]))
 
@@ -72,8 +72,7 @@
 
       ; If current buffer is still connected elsewhere, reject
       (= :connected (get-in db [:connections (:connection-id buf) :state]))
-      ; TODO: echo
-      (log "Error: still connected to " (:uri buf))
+      (echo :error "Error: still connected to " (:uri buf))
 
       ; Else, trigger a connection
       :else
@@ -81,8 +80,7 @@
           (p/then #(binding [*script-file* script-file]
                      (perform-config % config)))
           (p/catch (fn [e]
-                     ; TODO: Echo
-                     (log "ERROR in config: " e)))))))
+                     (echo :exception "ERROR in config: " e)))))))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn send [conn s]

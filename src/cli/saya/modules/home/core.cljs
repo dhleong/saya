@@ -3,12 +3,11 @@
    ["ink" :as k]
    [archetype.util :refer [<sub]]
    [saya.modules.command.view :refer [command-line-mode-view]]
-   [saya.modules.home.echo :refer [echo-window]]
+   [saya.modules.echo.view :refer [echo-window]]
    [saya.modules.input.cmdline :refer [cmdline-window]]
    [saya.modules.kodachi.subs :as kodachi]
    [saya.modules.logging.view :refer [logging-view]]
    [saya.modules.ui.error-boundary :refer [error-boundary]]
-   [saya.modules.ui.placeholders :as placeholders]
    [saya.modules.window.view :refer [window-view]]))
 
 (defn- home-content []
@@ -36,9 +35,7 @@
       :command [command-line-mode-view]
 
       ; Default:
-      (or (when (seq (<sub [:echo-lines]))
-            [echo-window])
-          [placeholders/line]))))
+      [echo-window])))
 
 (defn home-view []
   [:> k/Box {:flex-direction :column

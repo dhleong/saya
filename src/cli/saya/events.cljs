@@ -1,16 +1,18 @@
 (ns saya.events
   (:require
-   [clojure.string :as str]
-   [re-frame.core :refer [inject-cofx path reg-event-db reg-event-fx trim-v
+   [re-frame.core :refer [path reg-event-db reg-event-fx trim-v
                           unwrap]]
    [saya.db :as db]
    [saya.modules.command.parse :refer [parse-command]]
    [saya.modules.command.registry]
+   [saya.modules.echo.events]
    [saya.modules.input.keymaps :as keymaps]
    [saya.modules.input.normal :refer [scroll-to-bottom]]
    [saya.modules.kodachi.fx :as kodachi-fx]
-   [saya.modules.scripting.fx :as scripting-fx]
-   [saya.config :as config]))
+   [saya.modules.scripting.fx :as scripting-fx]))
+
+; NOTE: We include the whole echo module as top-level to let it
+; declare the :echo event globally
 
 (reg-event-fx
  ::initialize-db
@@ -95,37 +97,4 @@
    {::kodachi-fx/set-window-size! {:connection-id connr
                                    :width width
                                    :height height}}))
-
-; ======= Echo =============================================
-
-(reg-event-fx
- :echo
- [trim-v (inject-cofx :now)]
- (fn [{:keys [db now]} message]
-   (let [last-echo (peek (:echo-history db))
-         new-entries (->> message
-                          (str/join " ")
-                          (str/split-lines)
-                          (map (fn [msg]
-                                 {:timestamp now
-                                  ; OOF This is not very pure, but...
-                                  ; let's 80/20
-                                  :key [now (js/Math.random)]
-                                  :message msg})))]
-     {:db (-> db
-              (update :echo-history (fnil into []) new-entries)
-
-              (assoc :echo-ack-pending-since
-                     (or (:echo-ack-pending-since db)
-                         (when (or (< (- now
-                                         (:timestamp last-echo))
-                                      config/echo-prompt-window-ms)
-
-                                   (> (count new-entries) 1))
-                           now))))})))
-
-(comment
-  (do (re-frame.core/dispatch [:echo "For the honor"])
-      (re-frame.core/dispatch [:echo "of grayskull!"]))
-  (re-frame.core/dispatch [:echo "hi\nthere"]))
 
