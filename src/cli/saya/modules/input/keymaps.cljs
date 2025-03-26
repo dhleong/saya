@@ -1,5 +1,7 @@
 (ns saya.modules.input.keymaps
   (:require
+   [saya.modules.echo.core :refer [echo-fx]]
+   [saya.modules.echo.events :as echo-events]
    [saya.modules.input.helpers :refer [*mode*]]
    [saya.modules.logging.core :refer [log-fx]]))
 
@@ -37,17 +39,19 @@
                  ; TODO: Store yanked in a register, if set
                  (merge (select-keys context' [:mode :pending-operator])))
          :fx [(when-let [e (:error context')]
-                (log-fx "ERROR: " e))]}
+                (log-fx "ERROR: " e))
+
+              (when (:mode context')
+                [:dispatch [::echo-events/ack-echo]])]}
 
         {:db (-> (:db cofx)
                  ; Still clear this even if nothing happened:
                  (dissoc :keymap-buffer :pending-operator))}))
 
     (catch :default e
-      ; TODO: echo?
       #_{:clj-kondo/ignore [:inline-def]}
       (def last-exception e)
-      {:fx [(log-fx "ERROR performing" f ":" e)]})))
+      {:fx [(echo-fx :exception "ERROR performing" f ":" e)]})))
 
 (defn maybe-perform-with-keymap-buffer [& {:keys [keymaps keymap-buffer cofx
                                                   mode with-unhandled key]

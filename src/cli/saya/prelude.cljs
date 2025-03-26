@@ -1,6 +1,7 @@
 (ns saya.prelude
   (:require
    [reagent.core :as r]
+   [saya.cofx]
    [saya.events]
    [saya.fx]
    [saya.subs]))

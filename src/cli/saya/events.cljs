@@ -1,13 +1,18 @@
 (ns saya.events
   (:require
-   [re-frame.core :refer [path reg-event-db reg-event-fx trim-v unwrap]]
+   [re-frame.core :refer [path reg-event-db reg-event-fx trim-v
+                          unwrap]]
    [saya.db :as db]
    [saya.modules.command.parse :refer [parse-command]]
    [saya.modules.command.registry]
+   [saya.modules.echo.events]
    [saya.modules.input.keymaps :as keymaps]
    [saya.modules.input.normal :refer [scroll-to-bottom]]
    [saya.modules.kodachi.fx :as kodachi-fx]
    [saya.modules.scripting.fx :as scripting-fx]))
+
+; NOTE: We include the whole echo module as top-level to let it
+; declare the :echo event globally
 
 (reg-event-fx
  ::initialize-db
@@ -57,9 +62,8 @@
          (throw (ex-info (str "No such command: " (:command parsed))
                          {:parsed parsed}))))
      (catch :default e
-        ; TODO: echo
        {:db (update db :buffers dissoc :cmd)
-        :fx [[:log (str e)]
+        :fx [[:dispatch [:echo :exception e]]
              [:dispatch [:exit-command-mode]]]}))))
 
 (reg-event-db
@@ -92,3 +96,4 @@
    {::kodachi-fx/set-window-size! {:connection-id connr
                                    :width width
                                    :height height}}))
+

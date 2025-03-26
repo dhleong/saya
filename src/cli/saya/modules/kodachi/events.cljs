@@ -27,10 +27,11 @@
 (reg-event-fx
  ::on-error
  [trim-v]
- (fn [_ [_err]]
+ (fn [_ [err]]
     ; TODO: Cleanup any connection state, etc.
-    ; TODO: Echo an error message
-   {:fx [[:saya.modules.kodachi.fx/init]]}))
+   {:fx [[:saya.modules.kodachi.fx/init]
+         [:dispatch
+          [:echo :exception "Kodachi error: " err]]]}))
 
 (reg-event-fx
  ::connecting

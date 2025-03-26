@@ -24,7 +24,8 @@
                   (>evt [::events/set-cmdline-bufnr {:bufnr bufnr
                                                      :on-submit on-submit}]))
 
-                ; TODO: echo
+                ; TODO: echo; also, need to somehow show this *above*
+                ; the cmd line
                 (log "Invalid in command-line window; <CR> executes, CTRL-C quits"))
     [:ctrl/c] (let [input @input-ref]
                 ; NOTE: ctrl-c once to clear, again to exit

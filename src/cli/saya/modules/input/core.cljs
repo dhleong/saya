@@ -4,6 +4,7 @@
    [re-frame.core :refer [reg-event-fx trim-v]]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
+   [saya.modules.echo.events :as echo-events]
    [saya.modules.input.fx :as fx]
    [saya.modules.input.helpers :refer [update-cursor]]
    [saya.modules.input.insert :as insert]
@@ -53,7 +54,8 @@
                                     (buffers/readonly?
                                      (get-in db [:buffers bufnr])))
                      :submit? (some? (get-in db [:windows winnr :on-submit]))}]
-     [:normal ":" _] {:db (assoc db :mode :command)}
+     [:normal ":" _] {:db (assoc db :mode :command)
+                      :fx [[:dispatch [::echo-events/ack-echo]]]}
 
      [:normal :return {:submit? true}] {:dispatch [::submit-cmdline]}
      [:insert :return {:submit? true}] {:dispatch [::submit-cmdline]}

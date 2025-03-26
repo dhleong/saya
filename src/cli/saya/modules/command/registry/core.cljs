@@ -1,7 +1,15 @@
 (ns saya.modules.command.registry.core
   (:require
    [re-frame.core :refer [reg-event-fx]]
-   [saya.modules.command.interceptors :refer [aliases]]))
+   [saya.modules.command.interceptors :refer [aliases]]
+   [saya.modules.echo.events :as echo-events]))
+
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+(reg-event-fx
+ :command/messages
+ [(aliases :mes :mess)]
+ (fn [_ _]
+   {:dispatch [::echo-events/reveal-latest]}))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (reg-event-fx

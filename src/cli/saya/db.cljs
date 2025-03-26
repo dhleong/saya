@@ -14,5 +14,9 @@
 
    :current-winnr nil
    :next-bufnr 0
-   :next-winnr 0})
+   :next-winnr 0
+
+   :echo-history []
+   :echo-cleared-at nil
+   :echo-ack-pending-since nil})
 
