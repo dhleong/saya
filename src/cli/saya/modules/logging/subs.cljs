@@ -3,9 +3,12 @@
    [re-frame.core :refer [reg-sub]]))
 
 (reg-sub ::all-logs :-> :log)
+(reg-sub ::window-size :-> :log-window-size)
 
 (reg-sub
  ::recent-logs
  :<- [::all-logs]
- :-> (fn [log]
-       (distinct (take-last 2 log))))
+ :<- [::window-size]
+ :-> (fn [[log window-size]]
+       (when window-size
+         (distinct (take-last window-size log)))))
