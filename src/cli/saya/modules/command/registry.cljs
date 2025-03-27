@@ -4,6 +4,7 @@
    [saya.modules.command.registry.buffer]
    [saya.modules.command.registry.connection]
    [saya.modules.command.registry.core]
+   [saya.modules.command.registry.debug]
    [saya.modules.command.registry.scripting]))
 
 (defn- extract-aliases [registered-handler]
