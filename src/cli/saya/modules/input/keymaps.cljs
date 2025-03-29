@@ -39,7 +39,7 @@
                  ; TODO: Store yanked in a register, if set
                  (merge (select-keys context' [:mode :pending-operator])))
          :fx [(when-let [e (:error context')]
-                (log-fx "ERROR: " e))
+                (echo-fx :exception "ERROR:" e))
 
               (when (:mode context')
                 [:dispatch [::echo-events/ack-echo]])]}

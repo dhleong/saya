@@ -3,9 +3,10 @@
    [saya.modules.buffers.line :refer [length]]))
 
 (defn readonly? [buffer]
-  (some?
-   (:readonly
-    (:flags buffer))))
+  (or (:connection-id buffer)
+      (some?
+       (:readonly
+        (:flags buffer)))))
 
 (defn line-length [{:keys [lines]} row]
   (->> (nth lines row)
