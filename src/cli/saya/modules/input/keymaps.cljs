@@ -2,8 +2,7 @@
   (:require
    [saya.modules.echo.core :refer [echo-fx]]
    [saya.modules.echo.events :as echo-events]
-   [saya.modules.input.helpers :refer [*mode*]]
-   [saya.modules.logging.core :refer [log-fx]]))
+   [saya.modules.input.helpers :refer [*mode*]]))
 
 (defn- starts-with? [sequence candidate]
   (every?
