@@ -6,7 +6,9 @@
  ::start
  [unwrap]
  (fn [db {:keys [bufnr word-to-complete]}]
-   (assoc-in db [:buffers bufnr :completion :word-to-complete] word-to-complete)))
+   (-> db
+       (assoc-in [:buffers bufnr :completion :word-to-complete] word-to-complete)
+       (update-in [:buffers bufnr :completion] dissoc :applied-candidate))))
 
 (reg-event-db
  ::on-applied-candidate

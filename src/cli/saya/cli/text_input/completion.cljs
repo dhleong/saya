@@ -4,11 +4,11 @@
    [saya.modules.completion.helpers :refer [word-to-complete]]))
 
 (defn- try-update-completion [state {:keys [word] :as new-state}]
-  (when word
-    (if (some? (:index state))
-      ; If there's a non-nil index, we're cycling through candidates
-      state
-      new-state)))
+  ; NOTE: While cycling through candidates, the :word should be
+  ; unchanged
+  (if (= word (:word state))
+    state
+    new-state))
 
 (defn- clamp-to-candidates [candidates idx]
   (when-not (or (>= idx (count candidates))

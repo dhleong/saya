@@ -31,7 +31,7 @@
                                        :index 0}}
                          (fnil inc -1)
                          "connect"
-                         {:word "connect"
+                         {:word "c"
                           :candidates ["connect"]}))))
 
   (testing "Ensure cycling works when restarting a continued completion"
@@ -50,4 +50,21 @@
                          (fnil inc -1)
                          "con"
                          {:word "con"
-                          :candidates ["connect"]})))))
+                          :candidates ["connect"]}))))
+
+  (testing "Reset state correctly with new completion"
+    (is (=
+         {:cursor 9
+          :completion {:word "h"
+                       :candidates ["honor"]
+                       :result "for honor"
+                       :index 0}}
+         (next-candidate {:cursor 5
+                          :completion {:word "f"
+                                       :candidates ["for"]
+                                       :result "for"
+                                       :index 0}}
+                         (fnil inc -1)
+                         "for h"
+                         {:word "h"
+                          :candidates ["honor"]})))))
