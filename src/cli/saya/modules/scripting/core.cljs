@@ -16,7 +16,7 @@
 
 ; ======= setup-connection =================================
 
-(defn- perform-connect [uri]
+(defn- perform-connect [uri {:keys [auto-prompt?]}]
   (let [callback-id [::on-connection uri]
         stop-listening (fn stop-listening []
                          (rf/remove-post-event-callback callback-id))]
@@ -33,7 +33,8 @@
 
             :else nil)))
 
-       (>evt [:command/connect {:uri uri}])))))
+       (>evt [:command/connect {:uri uri
+                                :auto-prompts auto-prompt?}])))))
 
 ; "Unpacks" a `conn` into a connr. For now, a no-op
 (def ^:private ->connr identity)
@@ -78,7 +79,7 @@
 
       ; Else, trigger a connection
       :else
-      (-> (perform-connect uri)
+      (-> (perform-connect uri config)
           (p/then #(binding [*script-file* script-file]
                      (perform-config % config)))
           (p/catch (fn [e]

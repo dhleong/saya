@@ -96,6 +96,10 @@
                 :wrap :truncate-end}
      text]))
 
+(defn- conn-single-prompt [input-connr]
+  (when-some [single-prompt (<sub [::subs/single-prompt input-connr])]
+    [:> k/Text single-prompt]))
+
 (defn window-view [id]
   (let [ref (React/useRef)]
     (React/useLayoutEffect
@@ -149,6 +153,12 @@
                   :suffix-text (when (and input-line?
                                           (not inputting?))
                                  [input-placeholder input-connr])}
+
+                 ; NOTE: This *should* be relatively safe due to the way 
+                 ; Kodachi clears the "partial" line to handle prompts
+                 (when (and input-line? (empty? line))
+                   [conn-single-prompt input-connr])
+
                  (when (and input-line? inputting?)
                    [input-window input-connr])]))]
            (cond

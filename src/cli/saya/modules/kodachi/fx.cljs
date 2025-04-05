@@ -18,9 +18,11 @@
 
 (reg-fx
  ::connect!
- (fn [{:keys [uri]}]
-   (p/let [{:keys [connection_id]} (api/request! {:type :Connect
-                                                  :uri uri})]
+ (fn [{:keys [uri] :as payload}]
+   (p/let [{:keys [connection_id]} (api/request!
+                                    (merge
+                                     payload
+                                     {:type :Connect}))]
      (log "Opened connection" connection_id "to" uri)
      (>evt [::events/connecting {:uri uri
                                  :connection-id connection_id}])

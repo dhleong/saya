@@ -9,7 +9,7 @@
 (reg-event-fx
  :command/connect
  [(aliases :c :co :con :conn) unwrap]
- (fn [_ {[uri-param] :params :keys [uri]}]
+ (fn [_ {[uri-param] :params :keys [uri auto-prompts]}]
    ; NOTE: This may be invoked either as:
    ;   [:command/connect {:uri uri}]
    ; OR, as from the UI:
@@ -19,7 +19,8 @@
                          uri-param
                          (when config/debug?
                            ; TODO: Clean this up
-                           "legendsofthejedi.com:5656"))}]}))
+                           "legendsofthejedi.com:5656"))
+                :auto_prompts auto-prompts}]}))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (reg-event-fx
