@@ -150,14 +150,15 @@
                   ; chars get truncated from the buffer-line part... It's
                   ; definitely something to do with our cursor hack but I'm not
                   ; certain *what*, exactly.
-                  :suffix-text (when (and input-line?
-                                          (not inputting?))
-                                 [input-placeholder input-connr])}
-
-                 ; NOTE: This *should* be relatively safe due to the way 
-                 ; Kodachi clears the "partial" line to handle prompts
-                 (when (and input-line? (empty? line))
-                   [conn-single-prompt input-connr])
+                  :suffix-text [:<>
+                                ; NOTE: This *should* be relatively safe
+                                ; due to the way Kodachi clears the
+                                ; "partial" line to handle prompts
+                                (when (and input-line? (empty? line))
+                                  [conn-single-prompt input-connr])
+                                (when (and input-line?
+                                           (not inputting?))
+                                  [input-placeholder input-connr])]}
 
                  (when (and input-line? inputting?)
                    [input-window input-connr])]))]
