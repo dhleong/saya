@@ -162,17 +162,21 @@
 
                  (when (and input-line? inputting?)
                    [input-window input-connr])]))]
-           (cond
-             (and scrolled? input-focused? input-connr)
-             [input-window (<sub [::buffer-subs/->connr bufnr])]
+           [:> k/Box {:flex-direction :row
+                      :flex-wrap :wrap}
+            (when scrolled?
+              [conn-single-prompt input-connr])
+            (cond
+              (and scrolled? input-focused? input-connr)
+              [input-window (<sub [::buffer-subs/->connr bufnr])]
 
-             (and scrolled? input-connr)
-             [input-placeholder input-connr]
+              (and scrolled? input-connr)
+              [input-placeholder input-connr]
 
-             scrolled?
-             [placeholders/line]
+              scrolled?
+              [placeholders/line]
 
-             ; NOTE: We *may* actually want to render something here to avoid the
-             ; window size changing when we scroll... For now, though...
-             ; it looks nicer without anything!
-             :else nil)])))))
+              ; NOTE: We *may* actually want to render something here to avoid the
+              ; window size changing when we scroll... For now, though...
+              ; it looks nicer without anything!
+              :else nil)]])))))
