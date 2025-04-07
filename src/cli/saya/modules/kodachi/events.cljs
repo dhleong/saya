@@ -115,6 +115,11 @@
               {:connection-id connr
                :callback-kind :on-disconnected}]]}
 
+       {:type "PromptUpdated"}
+       {:db (assoc-in db [:connections connr :prompts
+                          (:group_id params) (:index params)]
+                      (get-in params [:content :ansi]))}
+
        ; TODO:
        :else
        nil))))
@@ -122,8 +127,8 @@
 (reg-event-fx
  ::connect
  [unwrap]
- (fn [_ {:keys [uri]}]
-   {:saya.modules.kodachi.fx/connect! {:uri uri}}))
+ (fn [_ payload]
+   {:saya.modules.kodachi.fx/connect! payload}))
 
 (reg-event-fx
  ::disconnect

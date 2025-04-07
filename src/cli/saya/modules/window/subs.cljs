@@ -106,3 +106,20 @@
  (fn [buffer]
    (->> (:lines buffer)
         (str/join "\n"))))
+(reg-sub
+ ::connections
+ :-> :connections)
+
+(reg-sub
+ ::connection-by-id
+ :<- [::connections]
+ :=> get)
+
+(reg-sub
+ ::single-prompt
+ (fn [[_ connr]]
+   (subscribe [::connection-by-id connr]))
+ (fn [{:keys [prompts]} _]
+   (when (and (= 1 (count prompts))
+              (= 1 (count (get prompts 0))))
+     (get-in prompts [0 0]))))
