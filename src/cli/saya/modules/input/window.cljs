@@ -14,7 +14,8 @@
    [saya.modules.logging.core :refer [log]]))
 
 (defn- on-key [{:keys [bufnr winnr input-ref
-                       on-change on-prepare-buffer on-submit]}
+                       on-change on-persist-value
+                       on-prepare-buffer on-submit]}
                key]
   (match [key]
     [:ctrl/f] (if (not= :cmdline winnr)
@@ -34,7 +35,9 @@
                   (>evt [::input/on-key key])))
 
     ; See input.core
-    [:escape] (>evt [::input/on-key key])
+    [:escape] (let [to-persist @input-ref]
+                (on-persist-value to-persist)
+                (>evt [::input/on-key key]))
     :else nil))
 
 (defn input-window [{:keys [initial-value on-persist-value on-submit
@@ -57,6 +60,7 @@
           on-key (partial on-key {:bufnr bufnr
                                   :winnr (<sub [:current-winnr])
                                   :input-ref input-ref
+                                  :on-persist-value on-persist-value
                                   :on-prepare-buffer on-prepare-buffer
                                   :on-change on-change
                                   :on-submit on-submit})]

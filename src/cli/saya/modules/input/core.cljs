@@ -79,9 +79,6 @@
                                    (assoc :mode :normal)
                                    (update :buffers dissoc :cmd))}
 
-     ; TODO: If we're in an input window, that should be handled
-     ; special somehow (escaping to normal mode should not cause
-     ; us to leave that input window!)
      [:insert :escape _] {:db (exit-insert-mode cofx)}
      [:insert :ctrl/c _] {:db (-> cofx
                                   (exit-insert-mode)
