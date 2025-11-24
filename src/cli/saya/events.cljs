@@ -1,8 +1,8 @@
 (ns saya.events
   (:require
-   [re-frame.core :refer [path reg-event-db reg-event-fx trim-v
-                          unwrap]]
+   [re-frame.core :refer [path reg-event-db reg-event-fx trim-v unwrap]]
    [saya.db :as db]
+   [saya.modules.command.interceptors :refer [with-buffer-context]]
    [saya.modules.command.parse :refer [parse-command]]
    [saya.modules.command.registry]
    [saya.modules.echo.events]
@@ -75,16 +75,15 @@
 
 (reg-event-fx
  :connection/send
- [unwrap]
+ [with-buffer-context unwrap]
  (fn [{:keys [db] :as cofx} {:keys [connr text]}]
    (merge
     (let [bufnr (get-in db [:connections connr :bufnr])
           winnr (:current-winnr db)]
       ; Scroll to the bottom in the current window (only) IF it is
       ; associated with this connection
-      (cond-> cofx
-        (= (get-in db [:windows winnr :bufnr]) bufnr)
-        (keymaps/perform scroll-to-bottom)))
+      (when (= (get-in db [:windows winnr :bufnr]) bufnr)
+        (keymaps/perform cofx scroll-to-bottom)))
 
     {::kodachi-fx/send! {:connection-id connr
                          :text text}})))
