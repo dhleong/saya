@@ -83,8 +83,8 @@
   (-> (p/let [ctx (sci/init context-opts)
               init-script (read-init)]
         (when init-script
-          (eval-script ctx {:first-load? true} init-script)
-          (reset! current-context ctx)))
+          (eval-script ctx {:first-load? true} init-script))
+        (reset! current-context ctx))
       (p/catch (fn [e]
                  ; TODO: Emit event
                  (log "ERROR Loading init: " e)
