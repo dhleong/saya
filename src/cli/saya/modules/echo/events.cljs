@@ -1,5 +1,6 @@
 (ns saya.modules.echo.events
   (:require
+   [applied-science.js-interop :as j]
    [clojure.string :as str]
    [re-frame.core :refer [inject-cofx reg-event-db reg-event-fx trim-v]]
    [saya.config :as config]))
@@ -27,6 +28,20 @@
          :timestamp
          dec))))
 
+(defn- transform-message-part [part]
+  (cond
+    (ex-data part)
+    [(ex-message part)
+     "\nContext:\n"
+     (ex-data part)
+     (j/get part :stack)]
+
+    (ex-message part)
+    [(ex-message part)
+     (j/get part :stack)]
+
+    :else [part]))
+
 (reg-event-fx
  :echo
  [trim-v (inject-cofx :now)]
@@ -39,11 +54,7 @@
                    (next message)
                    message)
 
-         message (if (ex-data (first message))
-                   [(ex-message (first message))
-                    "\nContext:\n"
-                    (ex-data (first message))]
-                   message)
+         message (mapcat transform-message-part message)
 
          last-echo (peek (:echo-history db))
          new-entries (->> message

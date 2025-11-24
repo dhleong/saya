@@ -3,6 +3,7 @@
    [promesa.core :as p]
    [re-frame.core :refer [reg-fx]]
    [saya.env :as env]
+   [saya.modules.echo.core :refer [echo]]
    [saya.modules.logging.core :refer [log]]
    [saya.modules.scripting.callbacks :refer [trigger-callback]]
    [saya.util.paths :as paths]))
@@ -19,4 +20,5 @@
      (log "[script:load] " script-path)
      (-> (env/load-script expanded-path)
          (p/catch (fn [e]
-                    (log "[script:load] ERROR: " e)))))))
+                    (log "[script:load] ERROR: " e)
+                    (echo :error "Error detected while processing" expanded-path "\n" e)))))))
