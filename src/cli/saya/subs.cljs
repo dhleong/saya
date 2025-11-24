@@ -63,7 +63,7 @@
               (reverse)))
 
        ; Last echo if not cleared
-       (when-let [latest (seq (peek history))]
+       (when-let [latest (peek history)]
          (when (or (not echo-cleared-at)
                    (< echo-cleared-at
                       (:timestamp latest)))
