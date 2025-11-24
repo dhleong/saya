@@ -13,6 +13,13 @@
    [saya.modules.input.events :as events]
    [saya.modules.logging.core :refer [log]]))
 
+(defn- safely [f & args]
+  (let [f (partial f args)]
+    (fn safely-wrapper [& extra]
+      (try (apply f extra)
+           (catch :default e
+             (>evt [:echo :error e]))))))
+
 (defn- on-key [{:keys [bufnr winnr input-ref
                        on-change on-persist-value
                        on-prepare-buffer on-submit]}
@@ -36,7 +43,8 @@
 
     ; See input.core
     [:escape] (let [to-persist @input-ref]
-                (on-persist-value to-persist)
+                (when on-persist-value
+                  (on-persist-value to-persist))
                 (>evt [::input/on-key key]))
     :else nil))
 
@@ -57,13 +65,13 @@
                       (on-change "")
                       (on-submit v))
 
-          on-key (partial on-key {:bufnr bufnr
-                                  :winnr (<sub [:current-winnr])
-                                  :input-ref input-ref
-                                  :on-persist-value on-persist-value
-                                  :on-prepare-buffer on-prepare-buffer
-                                  :on-change on-change
-                                  :on-submit on-submit})]
+          on-key (safely on-key {:bufnr bufnr
+                                 :winnr (<sub [:current-winnr])
+                                 :input-ref input-ref
+                                 :on-persist-value on-persist-value
+                                 :on-prepare-buffer on-prepare-buffer
+                                 :on-change on-change
+                                 :on-submit on-submit})]
       (React/useEffect
        (fn []
          (>evt [::completion-events/set-bufnr bufnr])
