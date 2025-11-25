@@ -11,6 +11,7 @@
    [saya.env :as env]
    [saya.events :as events]
    [saya.modules.input.test-helpers]
+   [saya.modules.ui.cursor :refer [get-cursor-shape]]
    [saya.prelude]
    [saya.util.ink :as ink]
    [saya.util.ink-testing-utils]
@@ -38,7 +39,7 @@
   (p/do
     (activate-alternate-screen
      :on-deactivate #(when-some [^js ink @ink-instance]
-                       (.unmount ink)))
+                       (ink/unmount ink)))
 
     (logging/patch)
     (re-frame/dispatch-sync [::events/initialize-db])

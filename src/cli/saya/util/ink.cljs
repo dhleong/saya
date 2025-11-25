@@ -10,6 +10,15 @@
 (defn- ansi-cursor [v]
   (str "\u001B[" v " q"))
 
+(defn- ansi-cursor-shape [cursor-shape]
+  (case cursor-shape
+    :block/blink (ansi-cursor 1)
+    :block (ansi-cursor 2)
+    :underscore/blink (ansi-cursor 3)
+    :underscore (ansi-cursor 4)
+    :pipe/blink (ansi-cursor 5)
+    :pipe (ansi-cursor 6)))
+
 (defn update-screen [{:keys [out last-lines cursor-shape?]
                       :or {cursor-shape? true}
                       :as state}
@@ -46,13 +55,7 @@
         (swap! metrics assoc :moved-cursor [x y cursor-shape])
         (.write out (ansi/cursorTo x y))
         (when cursor-shape?
-          (.write out (case cursor-shape
-                        :block/blink (ansi-cursor 1)
-                        :block (ansi-cursor 2)
-                        :underscore/blink (ansi-cursor 3)
-                        :underscore (ansi-cursor 4)
-                        :pipe/blink (ansi-cursor 5)
-                        :pipe (ansi-cursor 6))))
+          (.write out (ansi-cursor-shape cursor-shape)))
         (.write out ansi/cursorShow))
 
       (do
@@ -106,6 +109,13 @@
            .-off (.bind (.-off out) out))
     #js {:rows #js {:get #(.-rows out)}
          :columns #js {:get #(.-columns out)}})))
+
+(defn unmount [^js instance]
+  (.unmount instance)
+  (when-not (= :block (get-cursor-shape))
+    ; Reset cursor
+    (print (ansi-cursor-shape :block)))
+  (print ansi/cursorShow))
 
 (comment
   (take-last 5 (map count (:history @@last-state)))
