@@ -6,7 +6,8 @@
    [archetype.util :refer [>evt]]
    [promesa.core :as p]
    [saya.modules.kodachi.events :as events]
-   [saya.modules.logging.core :refer [log]]))
+   [saya.modules.logging.core :refer [log]]
+   [saya.modules.scripting.core :refer [echo]]))
 
 (def ^:private default-paths
   ["../kodachi/target/release/kodachi"
@@ -31,9 +32,17 @@
         (js/JSON.parse)
         (js->clj :keywordize-keys true))
     (catch :default e
-      (throw (ex-info "ERROR: Failed to parse"
-                      {:raw-message raw-message
-                       :cause e})))))
+      #_{:clj-kondo/ignore [:inline-def :unused-private-var]}
+      (def ^:private last-message raw-message)
+      #_{:clj-kondo/ignore [:inline-def :unused-private-var]}
+      (def ^:private last-error e)
+
+      (if-not (seq raw-message)
+        (log "Received empty message from kodachi...")
+        (echo :error "[kodachi] ERROR "
+              (ex-info "ERROR: Failed to parse"
+                       {:raw-message raw-message
+                        :cause e}))))))
 
 (defn- spawn-kodachi [path]
   (-> (p/let [^js proc (spawn-proc path
