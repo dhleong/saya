@@ -46,15 +46,23 @@
 
 (defn- spawn-kodachi [path]
   (-> (p/let [^js proc (spawn-proc path
-                                   ["stdio" "external"
-                                    ; External UI Flags:
-                                    "--window-size-provided"]
+                                   (concat
+                                    (if (seq js/process.env.REPLAY_DUMP)
+                                       ; Yuck...
+                                      ["replay-dump" js/process.env.REPLAY_DUMP]
+                                      ["stdio"])
+
+                                    ["external"
+                                      ; External UI Flags:
+                                     "--window-size-provided"])
                                    {:stdio ["pipe" "pipe" "pipe"]
                                     :windowsHide true
                                     :env {:TERM js/process.env.TERM
                                           ; NOTE: Debugging logs show up out of band,
                                           ; so let's just always do this
-                                          :DEBUG "*"}})]
+                                          :DEBUG "*"
+                                          ; Forward this along for debugging:
+                                          :KODACHI_DUMP js/process.env.KODACHI_DUMP}})]
         (swap! instance
                (fn [^js old]
                  (when old

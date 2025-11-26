@@ -44,85 +44,95 @@
                  {:id bufnr
                   :system [:connecting uri]}]})))
 
+(defn- process-message [db connr bufnr params]
+  (m/match params
+    {:type "ExternalUI"
+     :data {:type "Text"
+            :ansi ansi}}
+    {:dispatch [::buffer-events/append-text
+                (let [ansi' (str/trim-newline ansi)]
+                  {:id bufnr
+                   :full-line? (not= ansi' ansi)
+                   :ansi ansi'})]}
+
+    {:type "ExternalUI"
+     :data {:type "LocalSend"
+            :text text}}
+    {:fx [[:dispatch
+           [::buffer-events/append-text
+            {:id bufnr
+             :system [:local-send text]
+             :full-line? true}]]
+          [:dispatch
+           [::buffer-events/new-line
+            {:id bufnr}]]]}
+
+    {:type "ExternalUI"
+     :data {:type "NewLine"}}
+    {:dispatch [::buffer-events/new-line
+                {:id bufnr}]}
+
+    {:type "ExternalUI"
+     :data {:type "ClearPartialLine"}}
+    {:dispatch [::buffer-events/clear-partial-line
+                {:id bufnr}]}
+
+  ; NOTE: "Connecting" is usually handled in its explicit event handler
+  ; due to timing issues between when that completes and we receive it
+  ; here.
+
+    {:type "Connected"}
+    {:db (assoc-in db [:connections connr :state] :connected)
+     :fx [[:dispatch
+           [::buffer-events/new-line
+            {:id bufnr
+             :system [:connected (get-in db [:buffers bufnr :uri])]}]]
+
+        ; TODO: Perhaps, send the "largest" window for this buffer?
+          (when-let [window (->> db :windows vals
+                                 (filter #(= bufnr (:bufnr %)))
+                                 (first))]
+            [:saya.modules.kodachi.fx/set-window-size!
+             {:connection-id connr
+              :width (:width window)
+              :height (:height window)}])
+
+          [:saya.modules.scripting.fx/trigger-callback
+           {:connection-id connr
+            :callback-kind :on-connected}]]}
+
+    {:type "Disconnected"}
+    {:db (assoc-in db [:connections connr :state] :disconnected)
+     :dispatch [::buffer-events/new-line
+                {:id bufnr
+                 :system [:disconnected (get-in db [:buffers bufnr :uri])]}]
+     :fx [[:saya.modules.scripting.fx/trigger-callback
+           {:connection-id connr
+            :callback-kind :on-disconnected}]]}
+
+    {:type "PromptUpdated"}
+    {:db (assoc-in db [:connections connr :prompts
+                       (:group_id params) (:index params)]
+                   (get-in params [:content :ansi]))}
+
+  ; TODO:
+    :else
+    nil))
+
 (reg-event-fx
  ::on-message
  [unwrap]
  (fn [{:keys [db]} {connr :connection_id :as params}]
    (log "<< " params)
-   (when-let [bufnr (get-in db [:connections connr :bufnr])]
-     (m/match params
-       {:type "ExternalUI"
-        :data {:type "Text"
-               :ansi ansi}}
-       {:dispatch [::buffer-events/append-text
-                   (let [ansi' (str/trim-newline ansi)]
-                     {:id bufnr
-                      :full-line? (not= ansi' ansi)
-                      :ansi ansi'})]}
+   (let [bufnr (get-in db [:connections connr :bufnr])]
+     (cond
+       (some? bufnr)
+       (process-message db connr bufnr params)
 
-       {:type "ExternalUI"
-        :data {:type "LocalSend"
-               :text text}}
-       {:fx [[:dispatch
-              [::buffer-events/append-text
-               {:id bufnr
-                :system [:local-send text]
-                :full-line? true}]]
-             [:dispatch
-              [::buffer-events/new-line
-               {:id bufnr}]]]}
-
-       {:type "ExternalUI"
-        :data {:type "NewLine"}}
-       {:dispatch [::buffer-events/new-line
-                   {:id bufnr}]}
-
-       {:type "ExternalUI"
-        :data {:type "ClearPartialLine"}}
-       {:dispatch [::buffer-events/clear-partial-line
-                   {:id bufnr}]}
-
-       ; NOTE: "Connecting" is handled in its explicit event handler
-       ; due to timing issues between when that completes
-       ; and we receive it here.
-
-       {:type "Connected"}
-       {:db (assoc-in db [:connections connr :state] :connected)
-        :fx [[:dispatch
-              [::buffer-events/new-line
-               {:id bufnr
-                :system [:connected (get-in db [:buffers bufnr :uri])]}]]
-
-             ; TODO: Perhaps, send the "largest" window for this buffer?
-             (when-let [window (->> db :windows vals
-                                    (filter #(= bufnr (:bufnr %)))
-                                    (first))]
-               [:saya.modules.kodachi.fx/set-window-size!
-                {:connection-id connr
-                 :width (:width window)
-                 :height (:height window)}])
-
-             [:saya.modules.scripting.fx/trigger-callback
-              {:connection-id connr
-               :callback-kind :on-connected}]]}
-
-       {:type "Disconnected"}
-       {:db (assoc-in db [:connections connr :state] :disconnected)
-        :dispatch [::buffer-events/new-line
-                   {:id bufnr
-                    :system [:disconnected (get-in db [:buffers bufnr :uri])]}]
-        :fx [[:saya.modules.scripting.fx/trigger-callback
-              {:connection-id connr
-               :callback-kind :on-disconnected}]]}
-
-       {:type "PromptUpdated"}
-       {:db (assoc-in db [:connections connr :prompts
-                          (:group_id params) (:index params)]
-                      (get-in params [:content :ansi]))}
-
-       ; TODO:
-       :else
-       nil))))
+       (and (seq js/process.env.REPLAY_DUMP)
+            (= "Connecting" (:type params)))
+       {:dispatch [::connecting {:uri "replay"
+                                 :connection-id connr}]}))))
 
 (reg-event-fx
  ::connect
