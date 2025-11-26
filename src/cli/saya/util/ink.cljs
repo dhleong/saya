@@ -79,8 +79,16 @@
   ; since they typically do things like "clear N lines" which
   ; will break things unexpectedly, and *should* be followed by
   ; a normal "full screen" render.
-  (when (str/starts-with? output ansi/clearTerminal)
-    (subs output (count ansi/clearTerminal))))
+  (cond
+    (str/starts-with? output ansi/clearTerminal)
+    (subs output (count ansi/clearTerminal))
+
+    ; NOTE: Somewhere in ink 6 (presumably when it added support for
+    ; incremental rendering) it started clearing lines explicitly
+    ; instead of using clearTerminal...
+    (str/starts-with? output ansi/eraseLine)
+    (let [end (.indexOf output ansi/cursorLeft)]
+      (subs output (inc end)))))
 
 (defonce ^:private last-state (atom nil))
 
