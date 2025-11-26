@@ -1,17 +1,16 @@
 (ns saya.cli
-  (:require ; NOTE: Required here just to convince shadow to build them in dev
- ; Ideally we can strip these from prod builds...
+  (:require
+   ["ink" :as k]
    [clojure.core.match :as m]
-   ["ink" :as k] ; NOTE: Required here just to convince shadow to build them in dev
    [promesa.core :as p]
    [re-frame.core :as re-frame]
-   [reagent.core :as r]
    [saya.cli.args :as args]
    [saya.cli.fullscreen :refer [activate-alternate-screen]]
    [saya.env :as env]
    [saya.events :as events]
    [saya.modules.input.test-helpers]
    [saya.prelude]
+   [saya.reagent :as reagent]
    [saya.util.ink :as ink]
    [saya.util.ink-testing-utils]
    [saya.util.logging :as logging]
@@ -23,16 +22,11 @@
 (defn ^:dev/after-load mount-root []
   (re-frame/clear-subscription-cache!)
 
-  (let [app (r/as-element [views/main])]
-    ; NOTE: This hack is from gakki to fix hot reloads. They
-    ; *mostly* work without, but... still not totally consistent,
-    ; and this will only matter in dev anyway.
-    (when-let [^js ink @ink-instance]
-      (.clear ink)
-      (.unmount ink))
-
-    (reset! ink-instance (k/render app #js {:exitOnCtrlC false
-                                            :stdout (ink/stdout)}))))
+  (let [app (reagent/as-root [views/main])]
+    (if-some [ink @ink-instance]
+      (.rerender ^js ink app)
+      (reset! ink-instance (k/render app #js {:exitOnCtrlC false
+                                              :stdout (ink/stdout)})))))
 
 (defn- -main [args]
   (p/do
