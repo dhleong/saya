@@ -57,12 +57,15 @@
                                      "--window-size-provided"])
                                    {:stdio ["pipe" "pipe" "pipe"]
                                     :windowsHide true
-                                    :env {:TERM js/process.env.TERM
-                                          ; NOTE: Debugging logs show up out of band,
-                                          ; so let's just always do this
-                                          :DEBUG "*"
-                                          ; Forward this along for debugging:
-                                          :KODACHI_DUMP js/process.env.KODACHI_DUMP}})]
+                                    :env (cond->
+                                          {:TERM js/process.env.TERM
+                                            ; NOTE: Debugging logs show up out of band,
+                                            ; so let's just always do this
+                                           :DEBUG "*"}
+
+                                           ; Forward this along for debugging:
+                                           (seq js/process.env.KODACHI_DUMP)
+                                           (assoc :KODACHI_DUMP js/process.env.KODACHI_DUMP))})]
         (swap! instance
                (fn [^js old]
                  (when old
