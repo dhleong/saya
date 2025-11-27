@@ -24,11 +24,14 @@
     (js/Object.defineProperties
      (j/obj .-isTTY true
             .-setRawMode (fn [_] nil)
+            .-setEncoding (fn [_] nil)
             .-resume (fn [] nil)
             .-pause (fn [] nil)
             .-ref (fn [] nil)
             .-unref (fn [] nil)
             .-on (.bind (.-on events) events)
+            .-addListener (.bind (.-addListener events) events)
+            .-removeListener (.bind (.-removeListener events) events)
             .-off (.bind (.-off events) events)
             .-emit (.bind (.-emit events) events))
      #js {})))
