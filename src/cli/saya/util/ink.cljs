@@ -19,8 +19,9 @@
     :pipe/blink (ansi-cursor 5)
     :pipe (ansi-cursor 6)))
 
-(defn update-screen [{:keys [out last-lines cursor-shape?]
-                      :or {cursor-shape? true}
+(defn update-screen [{:keys [out last-lines cursor-shape? position-cursor?]
+                      :or {cursor-shape? true
+                           position-cursor? true}
                       :as state}
                      output]
   (let [lines (str/split-lines output)
@@ -51,7 +52,8 @@
 
     (if-let [{:keys [x y] :as position} (extract-cursor-position lines)]
       (do
-        (>evt [:saya.events/set-global-cursor position])
+        (when position-cursor?
+          (>evt [:saya.events/set-global-cursor position]))
         (swap! metrics assoc :moved-cursor [x y cursor-shape])
         (.write out (ansi/cursorTo x y))
         (when cursor-shape?
@@ -59,7 +61,8 @@
         (.write out ansi/cursorShow))
 
       (do
-        (>evt [:saya.events/set-global-cursor nil])
+        (when position-cursor?
+          (>evt [:saya.events/set-global-cursor nil]))
         (.write out ansi/cursorHide)))
 
     (-> state

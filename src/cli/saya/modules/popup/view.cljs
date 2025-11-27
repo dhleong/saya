@@ -29,7 +29,7 @@
         {:keys [height width]} (<sub [:dimens])
         below? (<= y 5)
         positioning (if below?
-                      {:top y}
+                      {:top (inc y)}
                       {:bottom (- height y)})
         box-width (:width box-dimens)]
 
