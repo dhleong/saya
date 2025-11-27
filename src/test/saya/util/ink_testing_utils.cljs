@@ -52,6 +52,7 @@
                                       {:always-render? true}
                                       ink-state stdout)
                              :stdin stdin
+                             :stderr (create-fake-stdout (atom "") width height)
                              :debug true
                              :extOnCtrlC false
                              :patchConsole false})]
