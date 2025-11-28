@@ -50,7 +50,8 @@
          ink-state (atom {:out stdout
                           :cursor-shape? false
                           :position-cursor? position-cursor?})
-         inst (k/render (reagent/as-root component)
+         root (reagent/as-root component)
+         inst (k/render root
                         #js {:stdout (ink/stdout
                                       {:always-render? true}
                                       ink-state stdout)
@@ -59,6 +60,8 @@
                              :debug true
                              :extOnCtrlC false
                              :patchConsole false})
+
+         _ (.rerender inst root)
 
          rendered (cond-> (strip-cursor (:last-output @ink-state))
                     (not ansi?) (strip-ansi))]
