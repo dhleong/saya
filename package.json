@@ -6,6 +6,9 @@
   "bin": {
     "saya": "resources/cli.js"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "type": "module",
   "scripts": {
     "dev": "shadow-cljs start && shadow-cljs watch :cli",
