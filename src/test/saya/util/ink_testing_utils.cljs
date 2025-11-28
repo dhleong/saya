@@ -58,9 +58,11 @@
                              :stderr (create-fake-stdout (atom "") width height)
                              :debug true
                              :extOnCtrlC false
-                             :patchConsole false})]
+                             :patchConsole false})
+
+         rendered (cond-> (strip-cursor (:last-output @ink-state))
+                    (not ansi?) (strip-ansi))]
      (doto inst
        (.unmount)
        (.cleanup))
-     (cond-> (strip-cursor (:last-output @ink-state))
-       (not ansi?) (strip-ansi)))))
+     rendered)))
