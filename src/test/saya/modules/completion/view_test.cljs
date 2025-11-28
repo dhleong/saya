@@ -22,6 +22,21 @@
                                                        "best"
                                                        "buffet"]}]))
 
+(deftest absolute-position-test
+  (testing "Verify absolute positioning works"
+    ; Really, this is a smoke test for CI
+    (rft/run-test-sync
+     (is (= "\n\n     burrito\n\n"
+            (render->string
+             {:width 20
+              :height 5
+              :ansi? false}
+             [fullscreen-box {}
+              [:> k/Box {:position :absolute
+                         :left 5
+                         :top 2}
+               [:> k/Text "burrito"]]]))))))
+
 (deftest completion-view-test
   (testing "Completion menu has filled background"
     (rft/run-test-sync
