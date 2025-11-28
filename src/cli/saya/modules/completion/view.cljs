@@ -5,9 +5,7 @@
    [saya.modules.popup.view :refer [popup-menu pum-line]]))
 
 (defn completion-line [{:keys [selected?]} & text]
-  ; TODO: Theming, I suppose?
-  (into [pum-line {:background-color :gray
-                   :inverse selected?}]
+  (into [pum-line {:selected? selected?}]
         text))
 
 (defn completion-menu []
@@ -20,5 +18,4 @@
        (for [c candidates]
          ^{:key c}
          [completion-line {:selected? (= c applied-candidate)}
-          ; NOTE: "Fake" padding so we have a nice bg
-          " " c " "])])))
+          c])])))

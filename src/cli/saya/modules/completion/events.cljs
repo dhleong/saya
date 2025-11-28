@@ -42,3 +42,11 @@
                                                 (if (= v bufnr)
                                                   nil
                                                   v)))))
+
+(comment
+  (re-frame.core/dispatch [::start {:bufnr 0 :word-to-complete "th"}])
+  (re-frame.core/dispatch [::set-bufnr 0])
+  (re-frame.core/dispatch [::on-candidates
+                           {:bufnr 0
+                            :candidates ["thespian"
+                                         "the"]}]))
