@@ -48,7 +48,8 @@
                 (>evt [::input/on-key key]))
     :else nil))
 
-(defn input-window [{:keys [initial-value on-persist-value on-submit
+(defn input-window [{:keys [initial-value initial-cursor
+                            on-persist-value on-submit
                             on-prepare-buffer before bufnr
                             completion]}]
   {:pre [(not (and on-persist-value on-prepare-buffer))]}
@@ -87,6 +88,7 @@
       [:> k/Box
        [:> k/Text before
         [text-input {:value input
+                     :initial-cursor initial-cursor
                      :on-change on-change
                      :on-key on-key
                      :cursor :pipe

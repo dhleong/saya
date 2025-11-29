@@ -34,20 +34,22 @@
                    text]])})
 
 (defn- input-window [connr]
-  [input-window/input-window
-   {:bufnr [:conn/input connr]
-    :initial-value (<sub [::subs/input-text connr])
-    :completion (->ConnectionCompletionSource connr)
-    :on-persist-value #(>evt [::window-events/set-input-text {:connr connr
-                                                              :text %}])
-    :on-submit (fn [text]
-                 ; NOTE: Ensure input is cleared; on-persist-value *may not*
-                 ; be called from the cmdline window. This is kinda hacks,
-                 ; but fixing properly in input-window feels... annoying
-                 (>evt [::window-events/set-input-text {:connr connr
-                                                        :text ""}])
-                 (>evt [:connection/send {:connr connr
-                                          :text text}]))}])
+  (let [bufnr [:conn/input connr]]
+    [input-window/input-window
+     {:bufnr bufnr
+      :initial-value (<sub [::subs/input-text connr])
+      :initial-cursor (:col (<sub [::buffer-subs/buffer-cursor bufnr]))
+      :completion (->ConnectionCompletionSource connr)
+      :on-persist-value #(>evt [::window-events/set-input-text {:connr connr
+                                                                :text %}])
+      :on-submit (fn [text]
+                   ; NOTE: Ensure input is cleared; on-persist-value *may not*
+                   ; be called from the cmdline window. This is kinda hacks,
+                   ; but fixing properly in input-window feels... annoying
+                   (>evt [::window-events/set-input-text {:connr connr
+                                                          :text ""}])
+                   (>evt [:connection/send {:connr connr
+                                            :text text}]))}]))
 
 (defn- buffer-line [{:keys [cursor-col input-line? suffix-text]
                      {:keys [line col]} :line}
@@ -116,7 +118,7 @@
                                                     :winnr id}])]
         (let [focused? (<sub [::subs/focused? id])
               {cursor-row :row cursor-col :col} (when focused?
-                                                  (<sub [::buffer-subs/buffer-cursor bufnr]))
+                                                  (<sub [::buffer-subs/current-buffer-cursor bufnr]))
               input-focused? (<sub [::subs/input-focused? id])
               input-connr (<sub [::buffer-subs/->connr bufnr])
               last-row (:row (last lines))
