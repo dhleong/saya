@@ -53,4 +53,5 @@
                     :ns-regexp "((^saya.ci)|(-test$))"
                     :output-dir "target/ci"
                     :js-options {:js-provider :import}
-                    :build-hooks [(saya.hooks.ci/generate-tests-registry)]}}}
+                    :build-hooks [(saya.hooks.ci/generate-tests-registry)]
+                    :closure-defines {saya.config/testing? true}}}}
