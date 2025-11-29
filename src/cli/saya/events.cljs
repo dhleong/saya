@@ -76,7 +76,7 @@
 (reg-event-fx
  :connection/send
  [with-buffer-context unwrap]
- (fn [{:keys [db] :as cofx} {:keys [connr text]}]
+ (fn [{:keys [db] :as cofx} {:keys [connr text persist?]}]
    (merge
     (let [bufnr (get-in db [:connections connr :bufnr])
           winnr (:current-winnr db)]
@@ -86,7 +86,8 @@
         (keymaps/perform cofx scroll-to-bottom)))
 
     {::kodachi-fx/send! {:connection-id connr
-                         :text text}})))
+                         :text text
+                         :persist? persist?}})))
 
 (reg-event-fx
  :connection/set-window-size

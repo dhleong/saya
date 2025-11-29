@@ -36,10 +36,11 @@
 
 (reg-fx
  ::send!
- (fn [{:keys [connection-id text]}]
+ (fn [{:keys [connection-id text persist?]}]
    (api/request! {:type :Send
                   :connection_id connection-id
-                  :text text})))
+                  :text text
+                  :persist persist?})))
 
 (reg-fx
  ::set-window-size!

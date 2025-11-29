@@ -92,8 +92,13 @@
   (apply echo-core/echo messages))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
-(defn send [conn s]
-  (let [text (cond
-               (string? s) s
-               (coll? s) (str/join "\r\n" s))]
-    (>evt [:connection/send {:connr (->connr conn) :text text}])))
+(defn send
+  ([conn s] (send conn s {}))
+  ([conn s {:keys [persist?]
+            :or {persist? false}}]
+   (let [text (cond
+                (string? s) s
+                (coll? s) (str/join "\r\n" s))]
+     (>evt [:connection/send {:connr (->connr conn)
+                              :text text
+                              :persist? persist?}]))))
