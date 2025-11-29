@@ -5,6 +5,7 @@
    [applied-science.js-interop :as j]
    [archetype.util :refer [>evt]]
    [promesa.core :as p]
+   [saya.config :as config]
    [saya.modules.kodachi.events :as events]
    [saya.modules.logging.core :refer [log]]
    [saya.modules.scripting.core :refer [echo]]))
@@ -140,7 +141,10 @@
       (.write (serialize-message message))
       (.write "\n"))
 
-    (throw (ex-info "Attempting to send! when uninitialized" {}))))
+    (when-not config/testing?
+      ; In a unit test, we probably aren't intentionally trying to
+      ; communicate with a kodachi instance; just ignore.
+      (throw (ex-info "Attempting to send! when uninitialized" {})))))
 
 (defn- generate-next-request-id []
   (let [^js proc @instance]

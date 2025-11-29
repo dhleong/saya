@@ -21,9 +21,15 @@
  :-> :connection-id)
 
 (reg-sub
- ::buffer-cursor
+ ::current-buffer-cursor
  :<- [:buffers]
  :<- [:current-bufnr]
  (fn [[buffers current-bufnr] [_ buffer-id]]
    (when (= current-bufnr buffer-id)
      (:cursor (get buffers buffer-id)))))
+
+(reg-sub
+ ::buffer-cursor
+ :<- [:buffers]
+ (fn [buffers [_ buffer-id]]
+   (:cursor (get buffers buffer-id))))

@@ -50,10 +50,13 @@
 
     :else (on-key key)))
 
-(defn text-input [{:keys [value _ghost _completion-candidates _completion-word
-                          _on-change _on-key _on-submit] :as params
-                   cursor-shape :cursor}]
-  (r/with-let [state-ref (r/atom {:cursor 0})]
+(defn text-input [{:keys [value initial-cursor
+                          _ghost _completion-candidates _completion-word
+                          _on-change _on-key _on-submit]
+                   :or {initial-cursor 0}
+                   cursor-shape :cursor
+                   :as params}]
+  (r/with-let [state-ref (r/atom {:cursor initial-cursor})]
     (use-keys :text-input (partial on-key params state-ref value))
 
     (let [[before after] (split-text-by-state @state-ref value)]
