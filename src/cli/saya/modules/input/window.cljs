@@ -60,6 +60,8 @@
                        (when completion
                          (refresh-completion completion bufnr v cursor completion-opts))
                        (set-input! v)
+                       (when on-persist-value
+                         (on-persist-value v))
                        (reset! input-ref v))
                      #js [])
           on-submit (fn [v]
