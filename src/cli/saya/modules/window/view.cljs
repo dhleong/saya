@@ -5,7 +5,6 @@
    ["strip-ansi" :default strip-ansi]
    [applied-science.js-interop :as j]
    [archetype.util :refer [<sub >evt]]
-   [clojure.string :as str]
    [saya.config :as config]
    [saya.modules.buffers.subs :as buffer-subs]
    [saya.modules.connection.completion :refer [->ConnectionCompletionSource]]

@@ -136,7 +136,6 @@
     (->BufferLine (conj (.-parts this) (clean-part o)) (atom nil)))
 
   ICounted
-  #_{:clj-kondo/ignore [:unresolved-protocol-method]}
   (-count [this]
     (count (.-parts this)))
 
