@@ -37,7 +37,7 @@
                 (log "Invalid in command-line window; <CR> executes, CTRL-C quits"))
     [:ctrl/c] (let [input @input-ref]
                 ; NOTE: ctrl-c once to clear, again to exit
-                (on-change "")
+                (on-change "" 0)
                 (when-not (seq input)
                   (>evt [::input/on-key key])))
 
@@ -49,7 +49,8 @@
     :else nil))
 
 (defn input-window [{:keys [initial-value initial-cursor
-                            on-persist-value on-submit
+                            on-persist-cursor on-persist-value
+                            on-submit
                             on-prepare-buffer before bufnr
                             completion]}]
   {:pre [(not (and on-persist-value on-prepare-buffer))]}
@@ -62,10 +63,12 @@
                        (set-input! v)
                        (when on-persist-value
                          (on-persist-value v))
+                       (when on-persist-cursor
+                         (on-persist-cursor cursor))
                        (reset! input-ref v))
                      #js [])
           on-submit (fn [v]
-                      (on-change "")
+                      (on-change "" 0)
                       (on-submit v))
 
           on-key (safely on-key {:bufnr bufnr
@@ -98,5 +101,5 @@
                      :completion-candidates (<sub [::completion-subs/candidates])
                      :ghost (<sub [::completion-subs/ghost])
                      :on-submit (fn [v]
-                                  (on-change v)
+                                  (on-change v 0)
                                   (on-submit v))}]]])))

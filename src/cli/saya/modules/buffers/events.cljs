@@ -1,7 +1,7 @@
 (ns saya.modules.buffers.events
   (:require
    [re-frame.core :refer [->interceptor assoc-coeffect assoc-effect
-                          get-coeffect get-effect reg-event-db unwrap]]
+                          get-coeffect get-effect reg-event-db trim-v unwrap]]
    [saya.modules.buffers.line :refer [ansi-continuation buffer-line]]))
 
 (defn- build-allocator [db-objs-key db-next-id-key]
@@ -149,6 +149,12 @@
  [buffer-path]
  (fn [buffer _]
    (clear-partial-line buffer)))
+
+(reg-event-db
+ ::set-cursor
+ [unwrap buffer-path]
+ (fn [buffer {:keys [cursor]}]
+   (assoc buffer :cursor cursor)))
 
 (comment
   (re-frame.core/dispatch [::clear-partial-line {:id 0}])

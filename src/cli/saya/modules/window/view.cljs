@@ -6,6 +6,7 @@
    [applied-science.js-interop :as j]
    [archetype.util :refer [<sub >evt]]
    [saya.config :as config]
+   [saya.modules.buffers.events :as buffer-events]
    [saya.modules.buffers.subs :as buffer-subs]
    [saya.modules.connection.completion :refer [->ConnectionCompletionSource]]
    [saya.modules.input.window :as input-window]
@@ -44,12 +45,19 @@
       :completion (->ConnectionCompletionSource connr)
       :on-persist-value #(>evt [::window-events/set-input-text {:connr connr
                                                                 :text %}])
+      :on-persist-cursor (fn [col]
+                           (>evt [::buffer-events/set-cursor
+                                  {:id bufnr
+                                   :cursor {:row 0 :col col}}]))
       :on-submit (fn [text]
                    ; NOTE: Ensure input is cleared; on-persist-value *may not*
                    ; be called from the cmdline window. This is kinda hacks,
                    ; but fixing properly in input-window feels... annoying
                    (>evt [::window-events/set-input-text {:connr connr
                                                           :text ""}])
+                   (>evt [::buffer-events/set-cursor
+                          {:id bufnr
+                           :cursor {:row 0 :col 0}}])
                    (>evt [:connection/send {:connr connr
                                             :text text}]))}]))
 

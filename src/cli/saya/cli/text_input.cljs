@@ -1,6 +1,7 @@
 (ns saya.cli.text-input
   (:require
    ["ink" :as k]
+   ["react" :as React]
    [clojure.core.match :refer [match]]
    [clojure.string :as str]
    [reagent.core :as r]
@@ -14,41 +15,43 @@
                        on-change on-key on-submit]
                 :as params}
                state-ref value key]
-  (match [key]
-    [:return] (on-submit value)
-    [:delete] (let [[_ new-state] (swap-vals! state-ref update :cursor dec-to-zero)
-                    [before after] (split-text-by-state new-state value)
-                    new-value (str before (subs after 1))]
-                (on-change new-value (:cursor new-state)))
+  (letfn [(notify-state [state]
+            (on-change value (:cursor state)))]
+    (match [key]
+      [:return] (on-submit value)
+      [:delete] (let [[_ new-state] (swap-vals! state-ref update :cursor dec-to-zero)
+                      [before after] (split-text-by-state new-state value)
+                      new-value (str before (subs after 1))]
+                  (on-change new-value (:cursor new-state)))
 
-    [:ctrl/a] (swap! state-ref assoc :cursor 0)
-    [:ctrl/e] (swap! state-ref assoc :cursor (count value))
+      [:ctrl/a] (notify-state (swap! state-ref assoc :cursor 0))
+      [:ctrl/e] (notify-state (swap! state-ref assoc :cursor (count value)))
 
-    [:left] (swap! state-ref update :cursor dec-to-zero)
-    [:right] (swap! state-ref update :cursor inc-to-max (count value))
+      [:left] (notify-state (swap! state-ref update :cursor dec-to-zero))
+      [:right] (notify-state (swap! state-ref update :cursor inc-to-max (count value)))
 
-    ; TODO: Reuse logic for "delete back word" from regular mappings
-    [:meta/delete] (let [{:keys [cursor]} @state-ref
-                         last-word-start (or (str/last-index-of value " " cursor) 0)]
-                     (swap! state-ref assoc :cursor last-word-start)
-                     (on-change (str (subs value 0 last-word-start)
-                                     (subs value cursor))
-                                last-word-start))
+      ; TODO: Reuse logic for "delete back word" from regular mappings
+      [:meta/delete] (let [{:keys [cursor]} @state-ref
+                           last-word-start (or (str/last-index-of value " " cursor) 0)]
+                       (swap! state-ref assoc :cursor last-word-start)
+                       (on-change (str (subs value 0 last-word-start)
+                                       (subs value cursor))
+                                  last-word-start))
 
-    [:tab] (cycle-completion-candidates params state-ref (fnil inc -1) value)
-    [:shift/tab] (cycle-completion-candidates
-                  params state-ref
-                  (fnil dec (count completion-candidates))
-                  value)
+      [:tab] (cycle-completion-candidates params state-ref (fnil inc -1) value)
+      [:shift/tab] (cycle-completion-candidates
+                    params state-ref
+                    (fnil dec (count completion-candidates))
+                    value)
 
-    [(key :guard string?)] (let [[old-state {:keys [cursor]}] (swap-vals! state-ref
-                                                                          update
-                                                                          :cursor + (count key))
-                                 [before after] (split-text-by-state old-state value)
-                                 new-value (str before key after)]
-                             (on-change new-value cursor))
+      [(key :guard string?)] (let [[old-state {:keys [cursor]}] (swap-vals! state-ref
+                                                                            update
+                                                                            :cursor + (count key))
+                                   [before after] (split-text-by-state old-state value)
+                                   new-value (str before key after)]
+                               (on-change new-value cursor))
 
-    :else (on-key key)))
+      :else (on-key key))))
 
 (defn text-input [{:keys [value initial-cursor
                           _ghost _completion-candidates _completion-word
@@ -58,6 +61,14 @@
                    :as params}]
   (r/with-let [state-ref (r/atom {:cursor initial-cursor})]
     (use-keys :text-input (partial on-key params state-ref value))
+
+    (React/useEffect
+     (fn adjust-cursor []
+       (when (> (:cursor @state-ref)
+                (count value))
+         (swap! state-ref assoc :cursor (count value)))
+       js/undefined)
+     #js [value])
 
     (let [[before after] (split-text-by-state @state-ref value)]
       [:> k/Text
