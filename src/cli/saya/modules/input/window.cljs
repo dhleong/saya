@@ -69,6 +69,9 @@
                      #js [])
           on-submit (fn [v]
                       (on-change "" 0)
+                      (when bufnr
+                        (>evt [::events/add-history {:bufnr bufnr
+                                                     :entry v}]))
                       (on-submit v))
 
           on-key (safely on-key {:bufnr bufnr

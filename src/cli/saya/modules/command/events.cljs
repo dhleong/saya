@@ -7,5 +7,11 @@
  ::prepare-buffer
  [trim-v]
  (fn [db [pending-input-line]]
-    ; TODO: cmdline history
-   (assoc-in db [:buffers :cmd] {:lines [(buffer-line pending-input-line)]})))
+   (assoc-in
+    db
+    [:buffers :cmd]
+    {:lines (-> (get-in db [:histories :cmd])
+                (->> (map buffer-line))
+                (reverse)
+                (vec)
+                (conj (buffer-line pending-input-line)))})))
