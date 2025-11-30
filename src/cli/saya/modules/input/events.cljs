@@ -7,15 +7,20 @@
  ::set-cmdline-bufnr
  [unwrap]
  (fn [db {:keys [bufnr on-submit]}]
-   (-> db
-       (assoc :mode :normal) ; maybe cmdline?
-       (merge {:mode :normal
-               :current-winnr :cmdline
-               :last-winnr (:current-winnr db)})
-       (assoc-in [:buffers bufnr :cursor] {:row 0 :col 0}) ; FIXME: is this okay?
-       (assoc-in [:windows :cmdline] {:id :cmdline
-                                      :on-submit on-submit
-                                      :bufnr bufnr}))))
+   (let [buffer (get-in db [:buffers bufnr])]
+     (-> db
+         (assoc :mode :normal) ; maybe cmdline?
+         (merge {:mode :normal
+                 :current-winnr :cmdline
+                 :last-winnr (:current-winnr db)})
+         (assoc-in [:buffers bufnr :cursor] {:row (-> (:lines buffer)
+                                                      (count)
+                                                      (dec)
+                                                      (max 0))
+                                             :col 0})
+         (assoc-in [:windows :cmdline] {:id :cmdline
+                                        :on-submit on-submit
+                                        :bufnr bufnr})))))
 
 (defn add-history-entry [history new-entry]
   (->> history
