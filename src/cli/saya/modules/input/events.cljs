@@ -17,7 +17,7 @@
                                                       (count)
                                                       (dec)
                                                       (max 0))
-                                             :col 0})
+                                             :col (get-in buffer [:cursor :col] 0)})
          (assoc-in [:windows :cmdline] {:id :cmdline
                                         :on-submit on-submit
                                         :bufnr bufnr})))))

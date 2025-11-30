@@ -49,6 +49,9 @@
                            (>evt [::buffer-events/set-cursor
                                   {:id bufnr
                                    :cursor {:row 0 :col col}}]))
+      :on-prepare-buffer #(>evt [::window-events/prepare-input-cmdline-buffer
+                                 {:bufnr bufnr
+                                  :current %}])
       :on-submit (fn [text]
                    ; NOTE: Ensure input is cleared; on-persist-value *may not*
                    ; be called from the cmdline window. This is kinda hacks,

@@ -33,3 +33,14 @@
              (->> text
                   (str/split-lines)
                   (mapv buffer-line)))))
+
+(reg-event-db
+ ::prepare-input-cmdline-buffer
+ [unwrap]
+ (fn [db {:keys [bufnr current]}]
+   (let [history (get-in db [:histories bufnr])]
+     (assoc-in db [:buffers bufnr :lines]
+               (-> history
+                   (->> (map buffer-line))
+                   (vec)
+                   (conj (buffer-line current)))))))
