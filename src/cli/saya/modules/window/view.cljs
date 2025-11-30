@@ -2,8 +2,11 @@
   (:require
    ["ink" :as k]
    ["react" :as React]
+   ["strip-ansi" :default strip-ansi]
    [applied-science.js-interop :as j]
    [archetype.util :refer [<sub >evt]]
+   [clojure.string :as str]
+   [saya.config :as config]
    [saya.modules.buffers.subs :as buffer-subs]
    [saya.modules.connection.completion :refer [->ConnectionCompletionSource]]
    [saya.modules.input.window :as input-window]
@@ -83,9 +86,10 @@
              [cursor cursor-type])
            (if (vector? part)
              (into [(system-messages (first part))] (rest part))
-             [:> k/Text part])])
+             [:> k/Text (cond-> part
+                          config/no-ansi? (strip-ansi))])])
 
-         ; cursor at eol
+        ; cursor at eol
         (when (= cursor-col (count line))
           [cursor cursor-type])
 

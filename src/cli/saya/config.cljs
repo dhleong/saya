@@ -6,3 +6,7 @@
 (goog-define testing? false)
 
 (def echo-prompt-window-ms 250)
+
+; Potentially useful for debugging rendering output
+(def no-ansi? false)
+

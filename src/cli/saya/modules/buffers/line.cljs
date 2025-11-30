@@ -2,8 +2,12 @@
   (:require
    ["ansi-parser" :default AnsiParser]
    [applied-science.js-interop :as j]
+   [clojure.string :as str]
    [saya.modules.ansi.split :as split]
    [saya.modules.ansi.wrap :refer [wrap-ansi]]))
+
+(defn- strip-unprintable [s]
+  (str/replace s "\u0000" ""))
 
 (defn- ->ansi-chars [parts]
   (->> parts
@@ -89,6 +93,16 @@
       (when (seq ansi)
         ansi))))
 
+(defn- clean-part [o]
+  (cond
+    (string? o) {:ansi (strip-unprintable o)}
+
+    (and (map? o)
+         (:ansi o))
+    (update o :ansi strip-unprintable)
+
+    :else o))
+
 (defprotocol IBufferLine
   (->ansi [this])
   (ansi-chars [this])
@@ -119,9 +133,10 @@
 
   ICollection
   (-conj [this o]
-    (->BufferLine (conj (.-parts this) o) (atom nil)))
+    (->BufferLine (conj (.-parts this) (clean-part o)) (atom nil)))
 
   ICounted
+  #_{:clj-kondo/ignore [:unresolved-protocol-method]}
   (-count [this]
     (count (.-parts this)))
 
@@ -133,7 +148,8 @@
   IBufferLine
   (->ansi [_]
     (or (:ansi @state)
-        (:ansi (swap! state assoc :ansi (apply str (map :ansi parts))))))
+        (:ansi (swap! state assoc :ansi (->> (map :ansi parts)
+                                             (apply str))))))
 
   (ansi-chars [_]
     (or (:chars @state)
@@ -180,9 +196,7 @@
   ([initial-part]
    (if (some? initial-part)
      (->BufferLine
-      [(if (string? initial-part)
-         {:ansi initial-part}
-         initial-part)]
+      [(clean-part initial-part)]
       (atom nil))
      EMPTY)))
 

@@ -71,3 +71,12 @@
           (buffer-line
            "[38;5;006mOpen and close[0m"))))))
 
+(deftest unprintable-chars-test
+  (testing "Don't allow unprintable chars in constructor"
+    (is (= "burrito"
+           (str (buffer-line "burrito\u0000")))))
+
+  (testing "Don't allow unprintable chars from conj"
+    (is (= "burrito"
+           (str (conj (buffer-line "burr")
+                      {:ansi "ito\u0000"}))))))
