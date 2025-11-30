@@ -104,10 +104,13 @@
      children)))
 
 (defn- input-placeholder [input-connr]
-  (when-some [text (<sub [::subs/input-text input-connr])]
-    [:> k/Text {:dim-color true
-                :wrap :truncate-end}
-     text]))
+  (let [current-window (<sub [:current-window])]
+    (when-not (and (= :cmdline (:id current-window))
+                   (= [:conn/input input-connr] (:bufnr current-window)))
+      (when-some [text (<sub [::subs/input-text input-connr])]
+        [:> k/Text {:dim-color true
+                    :wrap :truncate-end}
+         text]))))
 
 (defn- conn-single-prompt [input-connr]
   (when-some [single-prompt (<sub [::subs/single-prompt input-connr])]
