@@ -21,10 +21,11 @@
 (defn build-context [{:keys [bufnr connr winnr] :as cofx}]
   {:buffer (get-in cofx [:db :buffers bufnr])
    :window (get-in cofx [:db :windows winnr])
-   :editable (some->
-              (get-in cofx [:db :buffers [:conn/input connr]])
-              ; yuck?
-              (assoc :id [:conn/input connr]))
+   :editable (when-not (= bufnr [:conn/input connr])
+               (some->
+                (get-in cofx [:db :buffers [:conn/input connr]])
+                ; yuck?
+                (assoc :id [:conn/input connr])))
    :pending-operator (get-in cofx [:db :pending-operator])})
 
 (defn perform [{:keys [bufnr winnr] :as cofx} f]
