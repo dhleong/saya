@@ -18,19 +18,24 @@
 
 (defn- blocking-window []
   (let [lines (<sub [:echo-lines])]
-    [:> k/Box {:position :absolute
-               :flex-direction :column
-               :width :100%
-               :left 0
-               :right 0
-               :bottom 0}
+    [:> k/Box (merge
+               {:position :absolute
+                :flex-direction :column
+                :width :100%
+                :left 0
+                :right 0
+                :bottom 0}
+               (case (:type (first lines))
+                 :exception {:background-color :red}
+                 {:background-color :transparent}))
      (for [{:keys [key] :as line} lines]
        ^{:key key}
        [echo-line line])
 
      ; TODO: Color scheme?
-     [:> k/Text {:color "blue"}
-      "Press ENTER to continue"]
+     [:> k/Box {:background-color :transparent}
+      [:> k/Text {:color "blue"}
+       "Press ENTER to continue"]]
 
      (use-keys
       (fn echo-acker [key]
