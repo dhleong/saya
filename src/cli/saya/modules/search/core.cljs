@@ -1,15 +1,18 @@
 (ns saya.modules.search.core
   (:require
+   ["strip-ansi" :default strip-ansi]
    [clojure.string :as str]
    [saya.modules.buffers.line :refer [->ansi]]))
 
 (defn in-string [s direction query]
-  (when-some [idx (case direction
-                    :newer (str/index-of s query)
-                    :older (str/last-index-of s query))]
-    ; TODO: find all results in line + search across ansi
-    [{:at {:col idx}
-      :length (count query)}]))
+  ; TODO: Can we avoid the garbage of stripping ansi? Is it worth it?
+  (let [s (strip-ansi s)]
+    (when-some [idx (case direction
+                      :newer (str/index-of s query)
+                      :older (str/last-index-of s query))]
+      ; TODO: find all results in line + search across ansi
+      [{:at {:col idx}
+        :length (count query)}])))
 
 (defn in-buffer [buffer direction query]
   ; TODO: "start at" cursor
