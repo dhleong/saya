@@ -131,7 +131,8 @@
             :cofx (assoc cofx :bufnr [:conn/input connr]))
 
            ; For now...
-           {:fx [(echo-fx :error "Invalid in connection buffer")]})
+           (when-not (#{:escape :ctrl/c} key)
+             {:fx [(echo-fx :error "Invalid in connection buffer")]}))
          (update :db (fnil assoc db) :mode :normal))
 
      :else nil

@@ -123,3 +123,11 @@
    (when (and (= 1 (count prompts))
               (= 1 (count (get prompts 0))))
      (get-in prompts [0 0]))))
+
+(reg-sub
+ ::conn-pending-operator?
+ :<- [:mode]
+ :<- [:current-buffer]
+ (fn [[mode buffer]]
+   (and (= :operator-pending mode)
+        (some? (:connection-id buffer)))))

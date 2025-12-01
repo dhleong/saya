@@ -64,14 +64,17 @@
                    (>evt [:connection/send {:connr connr
                                             :text text}]))}]))
 
-(defn- buffer-line [{:keys [cursor-col input-line? suffix-text]
-                     {:keys [line col]} :line}
-                    & children]
+(defn- modeful-cursor []
   (let [cursor-type (case (<sub [:mode])
                       :insert :pipe
                       :operator-pending :underscore
-                      :block)
-        ; We should at least render a blank column, in case
+                      :block)]
+    [cursor cursor-type]))
+
+(defn- buffer-line [{:keys [cursor-col input-line? suffix-text]
+                     {:keys [line col]} :line}
+                    & children]
+  (let [; We should at least render a blank column, in case
         ; we have a cursor to render there
         line (or (seq line)
                  [""])]
@@ -93,7 +96,7 @@
           ^{:key i}
           [:<>
            (when (= cursor-col (+ col i))
-             [cursor cursor-type])
+             [modeful-cursor])
            (if (vector? part)
              (into [(system-messages (first part))] (rest part))
              [:> k/Text (cond-> part
@@ -101,18 +104,26 @@
 
         ; cursor at eol
         (when (= cursor-col (count line))
-          [cursor cursor-type])
+          [modeful-cursor])
 
         suffix-text]]]
      children)))
 
 (defn- input-placeholder [input-connr]
-  (let [current-window (<sub [:current-window])]
+  (let [current-window (<sub [:current-window])
+        conn-pending-operator? (<sub [::subs/conn-pending-operator?])
+        current-buffer (<sub [:current-buffer])]
     (when-not (and (= :cmdline (:id current-window))
                    (= [:conn/input input-connr] (:bufnr current-window)))
       (when-some [text (<sub [::subs/input-text input-connr])]
         [:> k/Text {:dim-color true
                     :wrap :truncate-end}
+
+         (when (and conn-pending-operator?
+                    (= input-connr
+                       (:connection-id current-buffer)))
+           [modeful-cursor])
+
          text]))))
 
 (defn- conn-single-prompt [input-connr]
@@ -134,6 +145,8 @@
       (when-let [lines (<sub [::subs/visible-lines {:bufnr bufnr
                                                     :winnr id}])]
         (let [focused? (<sub [::subs/focused? id])
+              conn-pending-operator? (when focused?
+                                       (<sub [::subs/conn-pending-operator?]))
               {cursor-row :row cursor-col :col} (when focused?
                                                   (<sub [::buffer-subs/current-buffer-cursor bufnr]))
               input-focused? (<sub [::subs/input-focused? id])
@@ -158,6 +171,7 @@
                   :input-line? input-line?
                   :cursor-col (when (and (not inputting?)
                                          (= cursor-row row)
+                                         (not conn-pending-operator?)
                                          (or last-of-row?
                                              (<= col cursor-col
                                                  (dec (+ col (count line))))))
