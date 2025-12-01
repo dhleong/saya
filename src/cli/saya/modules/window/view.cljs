@@ -78,7 +78,7 @@
              (>= col (:col (first highlights))))
     (some
      (fn [{:keys [at length]}]
-       (<= (:col at) col (+ (:col at) length)))
+       (<= (:col at) col (dec (+ (:col at) length))))
      highlights)))
 
 (defn- buffer-line [{:keys [cursor-col input-line? suffix-text highlights]
