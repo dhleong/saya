@@ -21,6 +21,26 @@
                       :newer
                       "al pastor"))))
 
+  (testing "Multiple Results in a line"
+    (is (= [{:at {:col 0}
+             :length 2}
+            {:at {:col 2}
+             :length 2}
+            {:at {:col 4}
+             :length 2}]
+           (in-string "alalal"
+                      :newer
+                      "al")))
+    (is (= [{:at {:col 4}
+             :length 2}
+            {:at {:col 2}
+             :length 2}
+            {:at {:col 0}
+             :length 2}]
+           (in-string "alalal"
+                      :older
+                      "al"))))
+
   (testing "Ansi search"
     (is (= [{:at {:col 0}
              :length 9}]
