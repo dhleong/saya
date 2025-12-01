@@ -124,7 +124,8 @@
 
 (defn- enqueue-operator [operator]
   (fn operator-keymap [{:keys [buffer] :as context}]
-    (if (buffers/readonly? buffer)
+    (if (and (buffers/readonly? buffer)
+             (nil? (:editable context)))
       {:error "Read-only buffer"}
 
       (assoc context

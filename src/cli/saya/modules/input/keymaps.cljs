@@ -18,9 +18,10 @@
      (starts-with? v keymap-buffer))
    (keys keymaps)))
 
-(defn build-context [{:keys [bufnr winnr] :as cofx}]
+(defn build-context [{:keys [bufnr connr winnr] :as cofx}]
   {:buffer (get-in cofx [:db :buffers bufnr])
    :window (get-in cofx [:db :windows winnr])
+   :editable (get-in cofx [:db :buffers [:conn/input connr]])
    :pending-operator (get-in cofx [:db :pending-operator])})
 
 (defn perform [{:keys [bufnr winnr] :as cofx} f]

@@ -4,6 +4,7 @@
    [re-frame.core :refer [reg-event-fx trim-v]]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
+   [saya.modules.echo.core :refer [echo-fx]]
    [saya.modules.echo.events :as echo-events]
    [saya.modules.input.fx :as fx]
    [saya.modules.input.helpers :refer [update-cursor]]
@@ -32,8 +33,9 @@
  [with-buffer-context]
  (fn [{:keys [db bufnr]}]
    ; TODO: Restore non-cmd input window?
-   {:db (when (= :cmd bufnr)
-          (assoc db :mode :command))
+   {:db (if (= :cmd bufnr)
+          (assoc db :mode :command)
+          db)
     :dispatch [:command/quit]}))
 
 (defn- exit-insert-mode [{:keys [db] :as cofx}]
@@ -53,6 +55,7 @@
                      :readonly? (or (some? connr)
                                     (buffers/readonly?
                                      (get-in db [:buffers bufnr])))
+                     :connr? (some? connr)
                      :submit? (some? (get-in db [:windows winnr :on-submit]))}]
      [:normal ":" _] {:db (assoc db :mode :command)
                       :fx [[:dispatch [::echo-events/ack-echo]]]}
@@ -118,6 +121,18 @@
          :key key
          :cofx cofx))
       (update :db (fnil assoc db) :mode :normal))
+
+     [:operator-pending key {:connr? true}]
+     (-> (if (= key (:char (meta (:pending-operator db))))
+           (keymaps/maybe-perform-with-keymap-buffer
+            :mode :operator-pending
+            :keymaps op/full-line-keymap
+            :key :full-line
+            :cofx (assoc cofx :bufnr [:conn/input connr]))
+
+           ; For now...
+           {:fx [(echo-fx :error "Invalid in connection buffer")]})
+         (update :db (fnil assoc db) :mode :normal))
 
      :else nil
      #_{:fx [[:log ["unhandled: " mode key]]]})))
