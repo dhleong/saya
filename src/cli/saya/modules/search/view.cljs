@@ -17,9 +17,11 @@
                                      (<sub [::subs/input-text]))
                     :bufnr :search
                     :on-prepare-buffer #(>evt [::events/prepare-buffer %])
-                    :on-persist-value (fn [v {:keys [for-submit?]}]
+                    :on-persist-value (fn [v {:keys [for-cancel? for-submit?]}]
                                         (when-not for-submit?
-                                          (>evt [::events/update-incremental v])))
+                                          (>evt [::events/update-incremental v]))
+                                        (when for-cancel?
+                                          (>evt [::events/cancel])))
                     :on-submit #(>evt [::events/submit %])
                     :before (case direction
                               :older "?"

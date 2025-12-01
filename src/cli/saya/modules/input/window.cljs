@@ -37,14 +37,14 @@
                 (log "Invalid in command-line window; <CR> executes, CTRL-C quits"))
     [:ctrl/c] (let [input @input-ref]
                 ; NOTE: ctrl-c once to clear, again to exit
-                (on-change "" 0)
+                (on-change "" 0 nil {:for-cancel? true})
                 (when-not (seq input)
                   (>evt [::input/on-key key])))
 
     ; See input.core
     [:escape] (let [to-persist @input-ref]
                 (when on-persist-value
-                  (on-persist-value to-persist))
+                  (on-persist-value to-persist {:for-cancel? true}))
                 (>evt [::input/on-key key]))
     :else nil))
 

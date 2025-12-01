@@ -39,13 +39,24 @@
 
             ; Capture original scroll position, if we don't already have it, so
             ; we can go back if cancel'd
-            (not (get-in db [:search :original-window-state winnr] window))
-            (update :search merge {:original-window {winnr window}
+            (not (get-in db [:search :original-window winnr]))
+            (update :search merge {:original-window {winnr (select-keys window [:anchor-offset
+                                                                                :anchor-row])}
                                    :original-cursor {bufnr (:cursor buffer)}})
 
             (and (some? (:window updated))
                  (not= window (:window updated)))
             (assoc-in [:windows winnr] (:window updated)))})))
+
+(reg-event-fx
+ ::cancel
+ [with-buffer-context]
+ (fn [{:keys [db winnr]}]
+   (let [original (get-in db [:search :original-window winnr])]
+     {:db (update-in db [:windows winnr] (fn [window]
+                                           (cond-> window
+                                             :always (merge original)
+                                             (nil? (:anchor-row original)) (dissoc :anchor-row))))})))
 
 (reg-event-fx
  ::submit
