@@ -5,3 +5,12 @@
 (reg-sub
  ::input-text
  :-> (constantly ""))
+
+(reg-sub
+ ::search
+ :-> :search)
+
+(reg-sub
+ ::direction
+ :<- [::search]
+ :-> :direction)

@@ -56,22 +56,24 @@
   (r/with-let [input-ref (atom (or initial-value ""))]
     (let [[input set-input!] (React/useState @input-ref)
           on-change (React/useCallback
-                     (fn [v cursor completion-opts]
+                     (fn [v cursor completion-opts change-opts]
                        (when completion
                          (refresh-completion completion bufnr v cursor completion-opts))
                        (set-input! v)
                        (when on-persist-value
-                         (on-persist-value v))
+                         (on-persist-value v change-opts))
                        (when on-persist-cursor
-                         (on-persist-cursor cursor))
+                         (on-persist-cursor cursor change-opts))
                        (reset! input-ref v))
-                     #js [])
-          on-submit (fn [v]
-                      (on-change "" 0)
-                      (when bufnr
-                        (>evt [::events/add-history {:bufnr bufnr
-                                                     :entry v}]))
-                      (on-submit v))
+                     #js [on-persist-value on-persist-cursor])
+          on-submit (React/useCallback
+                     (fn [v]
+                       (on-change "" 0 nil {:for-submit? true})
+                       (when bufnr
+                         (>evt [::events/add-history {:bufnr bufnr
+                                                      :entry v}]))
+                       (on-submit v))
+                     #js [bufnr on-change on-submit])
 
           on-key (safely on-key {:bufnr bufnr
                                  :winnr (<sub [:current-winnr])
@@ -98,6 +100,4 @@
                      :completion-word (<sub [::completion-subs/word-to-complete])
                      :completion-candidates (<sub [::completion-subs/candidates])
                      :ghost (<sub [::completion-subs/ghost])
-                     :on-submit (fn [v]
-                                  (on-change v 0)
-                                  (on-submit v))}]]])))
+                     :on-submit on-submit}]]])))

@@ -60,7 +60,14 @@
      [:normal ":" _] {:db (assoc db :mode :command)
                       :fx [[:dispatch [::echo-events/ack-echo]]]}
 
-     [:normal "/" _] {:db (assoc db :mode :search)
+     [:normal "/" _] {:db (-> db
+                              (assoc :mode :search)
+                              (assoc :search {:direction (if connr :older :newer)}))
+                      :fx [[:dispatch [::echo-events/ack-echo]]]}
+
+     [:normal "?" _] {:db (-> db
+                              (assoc :mode :search)
+                              (assoc :search {:direction (if connr :newer :older)}))
                       :fx [[:dispatch [::echo-events/ack-echo]]]}
 
      [:normal :return {:submit? true}] {:dispatch [::submit-cmdline]}
