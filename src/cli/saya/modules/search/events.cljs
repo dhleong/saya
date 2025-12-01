@@ -59,6 +59,6 @@
               (update :buffers dissoc :search)
               (cond->
                (some? result)
-                (-> (assoc-in [:buffer bufnr :cursor] (:at result)))))
+                (-> (assoc-in [:buffers bufnr :cursor] (:at result)))))
       :fx [(when-not (seq results)
              (echo-fx :error "Pattern not found:" query))]})))
