@@ -53,7 +53,6 @@
                             on-submit
                             on-prepare-buffer before bufnr
                             completion]}]
-  {:pre [(not (and on-persist-value on-prepare-buffer))]}
   (r/with-let [input-ref (atom (or initial-value ""))]
     (let [[input set-input!] (React/useState @input-ref)
           on-change (React/useCallback
@@ -69,6 +68,9 @@
                      #js [])
           on-submit (fn [v]
                       (on-change "" 0)
+                      (when bufnr
+                        (>evt [::events/add-history {:bufnr bufnr
+                                                     :entry v}]))
                       (on-submit v))
 
           on-key (safely on-key {:bufnr bufnr
@@ -79,16 +81,12 @@
                                  :on-change on-change
                                  :on-submit on-submit})]
       (React/useEffect
-       (fn []
+       (fn on-mount []
          (>evt [::completion-events/set-bufnr bufnr])
 
          (fn on-dismount []
-           (>evt [::completion-events/unset-bufnr bufnr])
-           (when on-persist-value
-             (let [v @input-ref]
-               (when-not (= v initial-value)
-                 (on-persist-value v))))))
-       #js [])
+           (>evt [::completion-events/unset-bufnr bufnr])))
+       #js [bufnr])
 
       [:> k/Box
        [:> k/Text before

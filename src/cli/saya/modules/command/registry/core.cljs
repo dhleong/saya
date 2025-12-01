@@ -11,6 +11,10 @@
  (fn [_ _]
    {:dispatch [::echo-events/reveal-latest]}))
 
+(defn- filter-buffer-to-current-line [buffer]
+  (let [current-linenr (get-in buffer [:cursor :row])]
+    (assoc buffer :lines [(nth (:lines buffer) current-linenr)])))
+
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (reg-event-fx
  :command/quit
@@ -20,7 +24,10 @@
      (= :cmdline (:current-winnr db))
      {:db (-> db
               (assoc :current-winnr (:last-winnr db))
-              (dissoc :last-winnr))}
+              (dissoc :last-winnr)
+              (update-in
+               [:buffers (get-in db [:windows :cmdline :bufnr])]
+               filter-buffer-to-current-line))}
 
      ; TODO: Actually this should *just* close the current window,
      ; if there are multiple

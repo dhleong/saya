@@ -8,5 +8,11 @@
   (when (= :cmdline (:id (<sub [:current-window])))
     [:> k/Box {:height 5
                :flex-direction :column
+               :border-style :round
+               :border-top true
+               :border-top-dim-color true
+               :border-left false
+               :border-right false
+               :border-bottom false
                :width :100%}
      [window-view :cmdline]]))

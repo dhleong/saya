@@ -10,3 +10,4 @@
 ; Potentially useful for debugging rendering output
 (def no-ansi? false)
 
+(def history-length 50)

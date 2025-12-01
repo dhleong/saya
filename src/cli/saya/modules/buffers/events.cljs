@@ -1,7 +1,7 @@
 (ns saya.modules.buffers.events
   (:require
    [re-frame.core :refer [->interceptor assoc-coeffect assoc-effect
-                          get-coeffect get-effect reg-event-db trim-v unwrap]]
+                          get-coeffect get-effect reg-event-db unwrap]]
    [saya.modules.buffers.line :refer [ansi-continuation buffer-line]]))
 
 (defn- build-allocator [db-objs-key db-next-id-key]
