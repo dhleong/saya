@@ -10,6 +10,7 @@
    [saya.modules.buffers.subs :as buffer-subs]
    [saya.modules.connection.completion :refer [->ConnectionCompletionSource]]
    [saya.modules.input.window :as input-window]
+   [saya.modules.search.subs :as search-subs]
    [saya.modules.ui.cursor :refer [cursor]]
    [saya.modules.ui.placeholders :as placeholders]
    [saya.modules.window.events :as window-events]
@@ -71,7 +72,16 @@
                       :block)]
     [cursor cursor-type]))
 
-(defn- buffer-line [{:keys [cursor-col input-line? suffix-text]
+(defn- highlighted? [highlights col]
+  ; Start with a quick reject so we don't check every match for every col
+  (when (and (seq highlights)
+             (>= col (:col (first highlights))))
+    (some
+     (fn [{:keys [at length]}]
+       (<= (:col at) col (+ (:col at) length)))
+     highlights)))
+
+(defn- buffer-line [{:keys [cursor-col input-line? suffix-text highlights]
                      {:keys [line col]} :line}
                     & children]
   (let [; We should at least render a blank column, in case
@@ -86,27 +96,33 @@
       [:> k/Box {:height 1
                  :flex-shrink 0
                  :flex-direction :column
+                 :position :relative
                  ; :width (cond
                  ;          (and cursor-col input-line?) 48
                  ;          (not input-line?) :100%)
                  :width (when-not input-line?
                           :100%)}
+
        [:> k/Text {:wrap :truncate-end}
         (for [[i part] (map-indexed vector line)]
-          ^{:key i}
-          [:<>
-           (when (= cursor-col (+ col i))
-             [modeful-cursor])
-           (if (vector? part)
-             (into [(system-messages (first part))] (rest part))
-             [:> k/Text (cond-> part
-                          config/no-ansi? (strip-ansi))])])
+          (let [abs-col (+ col i)]
+            ^{:key i}
+            [:<>
+             (when (= cursor-col abs-col)
+               [modeful-cursor])
+             (if (vector? part)
+               (into [(system-messages (first part))] (rest part))
+               [:> k/Text (when (highlighted? highlights abs-col)
+                            {:background-color :yellow})
+                (cond-> part
+                  config/no-ansi? (strip-ansi))])]))
 
         ; cursor at eol
         (when (= cursor-col (count line))
           [modeful-cursor])
 
         suffix-text]]]
+
      children)))
 
 (defn- input-placeholder [input-connr]
@@ -152,7 +168,10 @@
               input-focused? (<sub [::subs/input-focused? id])
               input-connr (<sub [::buffer-subs/->connr bufnr])
               last-row (:row (last lines))
-              scrolled? (<sub [::subs/scrolled? id])]
+              scrolled? (<sub [::subs/scrolled? id])
+              search-results (<sub [::search-subs/results-by-line {:bufnr bufnr
+                                                                   :start (:row (first lines))
+                                                                   :end last-row}])]
           [:> k/Box {:flex-direction :column
                      :height :100%
                      :width :100%}
@@ -176,6 +195,8 @@
                                              (<= col cursor-col
                                                  (dec (+ col (count line))))))
                                 cursor-col)
+
+                  :highlights (get search-results row)
 
                   ; NOTE: It'd sure be nice if we could just pass this as a
                   ; child *but* for some reason when the cursor is on the line,
