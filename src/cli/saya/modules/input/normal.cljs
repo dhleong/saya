@@ -20,20 +20,38 @@
   (fn [ctx]
     (assoc ctx :mode new-mode)))
 
+(defn- with-editable [f]
+  (letfn [(swap-keys [v a b]
+            (-> v
+                (assoc a (b v))
+                (assoc b (a v))))]
+    (fn [ctx]
+      (cond-> ctx
+        (:editable ctx)
+        (swap-keys :buffer :editable)
+
+        :always
+        (f)
+
+        ; Swap back
+        (:editable ctx)
+        (swap-keys :buffer :editable)))))
+
 (def ^:private mode-change-keymaps
   {["i"] (mode<- :insert)
    ["I"] (comp
           (mode<- :insert)
-          to-start-of-line)
+          (with-editable to-start-of-line))
 
    ["a"] (comp
-          (fn [{:keys [buffer] :as ctx}]
-            (cond-> ctx
-              (> (current-buffer-line-last-col buffer) 0)
-              (update-in [:buffer :cursor :col] inc)))
+          (with-editable
+            (fn [{:keys [buffer] :as ctx}]
+              (cond-> ctx
+                (> (current-buffer-line-last-col buffer) 0)
+                (update-in [:buffer :cursor :col] inc))))
           (mode<- :insert))
    ["A"] (comp
-          to-end-of-line
+          (with-editable to-end-of-line)
           (mode<- :insert))})
 
 ; ======= Movement keymaps =================================

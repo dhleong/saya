@@ -21,7 +21,9 @@
 (defn build-context [{:keys [bufnr connr winnr] :as cofx}]
   {:buffer (get-in cofx [:db :buffers bufnr])
    :window (get-in cofx [:db :windows winnr])
-   :editable (get-in cofx [:db :buffers [:conn/input connr]])
+   :editable (-> (get-in cofx [:db :buffers [:conn/input connr]])
+                 ; yuck?
+                 (assoc :id [:conn/input connr]))
    :pending-operator (get-in cofx [:db :pending-operator])})
 
 (defn perform [{:keys [bufnr winnr] :as cofx} f]
@@ -37,7 +39,11 @@
                  (assoc-in [:windows winnr] (:window context'))
                  (dissoc :keymap-buffer :pending-operator)
                  ; TODO: Store yanked in a register, if set
-                 (merge (select-keys context' [:mode :pending-operator])))
+                 (merge (select-keys context' [:mode :pending-operator]))
+                 (cond->
+                  (:editable context')
+                   (assoc-in [:buffers (:id (:editable context'))]
+                             (:editable context'))))
          :fx [(when-let [e (:error context')]
                 (echo-fx :exception "ERROR:" e))
 
