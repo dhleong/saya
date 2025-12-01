@@ -60,6 +60,9 @@
      [:normal ":" _] {:db (assoc db :mode :command)
                       :fx [[:dispatch [::echo-events/ack-echo]]]}
 
+     [:normal "/" _] {:db (assoc db :mode :search)
+                      :fx [[:dispatch [::echo-events/ack-echo]]]}
+
      [:normal :return {:submit? true}] {:dispatch [::submit-cmdline]}
      [:insert :return {:submit? true}] {:dispatch [::submit-cmdline]}
      [:normal :ctrl/c {:submit? true}] {:dispatch [::cancel-cmdline]}
@@ -81,6 +84,15 @@
                                    ; Always clear:
                                    (assoc :mode :normal)
                                    (update :buffers dissoc :cmd))}
+
+     [:search :escape _] {:db (cond-> db
+                                :always (assoc :mode :normal)
+                                 ; Only clear if we're not in the cmdline window
+                                (not= :search bufnr) (update :buffers dissoc :search))}
+     [:search :ctrl/c _] {:db (-> db
+                                   ; Always clear:
+                                  (assoc :mode :normal)
+                                  (update :buffers dissoc :search))}
 
      [:insert :escape _] {:db (exit-insert-mode cofx)}
      [:insert :ctrl/c _] {:db (-> cofx

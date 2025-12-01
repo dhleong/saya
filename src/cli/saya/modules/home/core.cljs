@@ -7,6 +7,7 @@
    [saya.modules.input.cmdline :refer [cmdline-window]]
    [saya.modules.kodachi.subs :as kodachi]
    [saya.modules.logging.view :refer [logging-view]]
+   [saya.modules.search.view :refer [search-mode-view]]
    [saya.modules.ui.error-boundary :refer [error-boundary]]
    [saya.modules.window.view :refer [window-view]]))
 
@@ -33,6 +34,7 @@
   (let [mode (<sub [:mode])]
     (case mode
       :command [command-line-mode-view]
+      :search [search-mode-view]
 
       ; Default:
       [echo-window])))

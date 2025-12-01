@@ -74,7 +74,8 @@
  :<- [:current-winnr]
  :<- [:current-buffer]
  (fn [[mode current-winnr current-buffer] [_ id]]
-   (and (not= :command mode)
+   ; TODO: Pull this out somewhere common?
+   (and (not (#{:search :command} mode))
         (= current-winnr id)
 
         ; In insert mode for a connection buffer, we
