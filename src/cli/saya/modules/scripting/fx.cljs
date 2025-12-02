@@ -19,6 +19,8 @@
    (let [expanded-path (paths/resolve-user script-path)]
      (log "[script:load] " script-path)
      (-> (env/load-script expanded-path)
+         (p/then (fn [_]
+                   (echo "Loaded" expanded-path)))
          (p/catch (fn [e]
                     (log "[script:load] ERROR: " e)
                     (echo :error "Error detected while processing" expanded-path "\n" e)))))))
