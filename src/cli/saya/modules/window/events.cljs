@@ -43,6 +43,7 @@
    (let [history (get-in db [:histories bufnr])]
      (assoc-in db [:buffers bufnr :lines]
                (-> history
+                   (reverse)
                    (->> (map buffer-line))
                    (vec)
                    (conj (buffer-line current)))))))
