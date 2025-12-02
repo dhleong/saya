@@ -12,7 +12,7 @@
     sequence
     candidate)))
 
-(defn possible? [_db keymaps keymap-buffer]
+(defn possible? [keymaps keymap-buffer]
   (some
    (fn [v]
      (starts-with? v keymap-buffer))
@@ -70,12 +70,13 @@
     (let [new-buffer ((fnil conj []) keymap-buffer key)
           {:keys [db bufnr]} cofx
           user-maps (get-in db [:buffers bufnr :keymaps mode])
-          keymap (get (merge keymaps user-maps) new-buffer)]
+          combined-maps (merge keymaps user-maps)
+          keymap (get combined-maps new-buffer)]
       (cond
         keymap
         (perform cofx keymap)
 
-        (possible? db keymaps new-buffer)
+        (possible? combined-maps new-buffer)
         {:db (assoc db :keymap-buffer new-buffer)}
 
         :else
