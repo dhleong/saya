@@ -12,7 +12,8 @@
    [saya.modules.input.motions.word :refer [big-word-boundary?
                                             end-of-word-movement
                                             small-word-boundary? word-movement]]
-   [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
+   [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]
+   [saya.modules.search.core :as search]))
 
 ; ======= Mode-change keymaps ==============================
 
@@ -72,6 +73,20 @@
      (assoc-in ctx [:buffer :cursor] {:col 0
                                       :row 0}))))
 
+(defn next-search-result [get-direction fallback-direction]
+  (comp
+   adjust-scroll-to-cursor
+   (fn next-search-result [{:keys [buffer search] :as ctx}]
+     (if-some [query (:query search)]
+       (if-some [results (seq
+                          (search/in-buffer
+                           buffer
+                           (get-direction (:direction search fallback-direction))
+                           query))]
+         (assoc-in ctx [:buffer :cursor] (:at (first results)))
+         {:error (str "Pattern not found: " query)})
+       {:error "No previous search query"}))))
+
 (def movement-keymaps
   {["0"] #'to-start-of-line
    ["$"] #'to-end-of-line
@@ -95,7 +110,15 @@
    ["e"] (end-of-word-movement inc small-word-boundary?)
    ["E"] (end-of-word-movement inc big-word-boundary?)
    ["g" "e"] (end-of-word-movement dec small-word-boundary?)
-   ["g" "E"] (end-of-word-movement dec big-word-boundary?)})
+   ["g" "E"] (end-of-word-movement dec big-word-boundary?)
+
+   ; Search
+   ["n"] (next-search-result identity :newer)
+   ["N"] (next-search-result (fn [direction]
+                               (case direction
+                                 :newer :older
+                                 :older :newer))
+                             :older)})
 
 ; ======= Operator keymaps =================================
 
