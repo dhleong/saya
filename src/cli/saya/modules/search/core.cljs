@@ -42,8 +42,9 @@
 
 (defn in-buffer [buffer direction query]
   (let [lines-count (count (:lines buffer))
+        cursor (:cursor buffer)
         cursor-row (min lines-count
-                        (:row (:cursor buffer) 0))
+                        (:row cursor 0))
 
         ; NOTE: Doing reverse directly on :lines and constructing the
         ; line number in this way is more efficient since vec is reversible,
@@ -63,7 +64,10 @@
                           :older 0)
                         (case direction
                           :newer lines-count
-                          :older cursor-row))]
+                          :older cursor-row))
+        drop-while-cursor-compare (case direction
+                                    :newer <=
+                                    :older >=)]
     (->> (cond-> relevant-lines
            (= :older direction) (reverse))
 
@@ -72,4 +76,11 @@
                    (-> (->ansi line)
                        (in-string direction query)
                        (->> (map (fn [match]
-                                   (assoc-in match [:at :row] linenr))))))))))
+                                   (assoc-in match [:at :row] linenr)))))))
+         (drop-while #(or (= (:at %)
+                             cursor)
+                          (and (= (:row (:at %))
+                                  (:row cursor))
+                               (drop-while-cursor-compare
+                                (:col (:at %))
+                                (:col cursor))))))))

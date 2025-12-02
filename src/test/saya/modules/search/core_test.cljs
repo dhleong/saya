@@ -82,6 +82,22 @@
                      (buffer-line "your burrito")]
              :cursor {:row 1}}
             :older
+            "burrito")))
+
+    ; start on a match
+    (is (= [{:at {:col 0
+                  :row 1}
+             :length 7}
+            {:at {:col 0
+                  :row 0}
+             :length 7}]
+           (in-buffer
+            {:lines [(buffer-line "burrito")
+                     (buffer-line "burrito")
+                     (buffer-line "burrito")]
+             :cursor {:row 2
+                      :col 0}}
+            :older
             "burrito"))))
 
   (testing "Start at the cursor, newer"
@@ -97,4 +113,32 @@
                      (buffer-line "your burrito")]
              :cursor {:row 1}}
             :newer
-            "burrito")))))
+            "burrito")))
+
+    (is (= [{:at {:col 0
+                  :row 1}
+             :length 7}
+            {:at {:col 0
+                  :row 2}
+             :length 7}]
+           (in-buffer
+            {:lines [(buffer-line "burrito")
+                     (buffer-line "burrito")
+                     (buffer-line "burrito")]
+             :cursor {:row 0
+                      :col 0}}
+            :newer
+            "burrito"))
+        "starting on a match")
+
+    (is (= [{:at {:col 0
+                  :row 1}
+             :length 7}]
+           (in-buffer
+            {:lines [(buffer-line "burrito burrito")
+                     (buffer-line "burrito")]
+             :cursor {:row 0
+                      :col 8}}
+            :newer
+            "burrito"))
+        "starting on the last of multiple matches in a line")))
