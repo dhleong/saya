@@ -95,13 +95,15 @@
         anchor-row (or anchor-row
                        (last-buffer-row buffer))]
     (cond
-      (and (>= row (last-buffer-row buffer))
+      (and window
+           (>= row (last-buffer-row buffer))
            (nil-or-zero? anchor-offset))
       (update ctx :window dissoc :anchor-row)
 
       ; Derive anchor-row/offset
       ; TODO: Improve within-row offset handling
-      (< row anchor-row)
+      (and window
+           (< row anchor-row))
       (let [from-cursor (derive-anchor-from-top-cursor
                          (:lines buffer)
                          width
@@ -120,7 +122,8 @@
           (update ctx :window merge from-cursor)
           ctx))
 
-      (> row anchor-row)
+      (and window
+           (> row anchor-row))
       (assoc-in ctx [:window :anchor-row] row)
 
       ; Nothing to fix:

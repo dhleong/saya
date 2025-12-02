@@ -26,7 +26,9 @@
                 (get-in cofx [:db :buffers [:conn/input connr]])
                 ; yuck?
                 (assoc :id [:conn/input connr])))
-   :pending-operator (get-in cofx [:db :pending-operator])})
+   :pending-operator (get-in cofx [:db :pending-operator])
+   :search (select-keys (get-in cofx [:db :search])
+                        [:direction :query])})
 
 (defn perform [{:keys [bufnr winnr] :as cofx} f]
   (try

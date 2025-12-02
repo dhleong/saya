@@ -9,9 +9,9 @@
    [saya.modules.completion.events :as completion-events]
    [saya.modules.completion.helpers :refer [refresh-completion]]
    [saya.modules.completion.subs :as completion-subs]
+   [saya.modules.echo.core :refer [echo]]
    [saya.modules.input.core :as input]
-   [saya.modules.input.events :as events]
-   [saya.modules.logging.core :refer [log]]))
+   [saya.modules.input.events :as events]))
 
 (defn- safely [f & args]
   (let [f (partial f args)]
@@ -32,19 +32,17 @@
                   (>evt [::events/set-cmdline-bufnr {:bufnr bufnr
                                                      :on-submit on-submit}]))
 
-                ; TODO: echo; also, need to somehow show this *above*
-                ; the cmd line
-                (log "Invalid in command-line window; <CR> executes, CTRL-C quits"))
+                (echo :error "Invalid in command-line window; <CR> executes, CTRL-C quits"))
     [:ctrl/c] (let [input @input-ref]
                 ; NOTE: ctrl-c once to clear, again to exit
-                (on-change "" 0)
+                (on-change "" 0 nil {:for-cancel? true})
                 (when-not (seq input)
                   (>evt [::input/on-key key])))
 
     ; See input.core
     [:escape] (let [to-persist @input-ref]
                 (when on-persist-value
-                  (on-persist-value to-persist))
+                  (on-persist-value to-persist {:for-cancel? true}))
                 (>evt [::input/on-key key]))
     :else nil))
 
@@ -56,22 +54,24 @@
   (r/with-let [input-ref (atom (or initial-value ""))]
     (let [[input set-input!] (React/useState @input-ref)
           on-change (React/useCallback
-                     (fn [v cursor completion-opts]
+                     (fn [v cursor completion-opts change-opts]
                        (when completion
                          (refresh-completion completion bufnr v cursor completion-opts))
                        (set-input! v)
                        (when on-persist-value
-                         (on-persist-value v))
+                         (on-persist-value v change-opts))
                        (when on-persist-cursor
-                         (on-persist-cursor cursor))
+                         (on-persist-cursor cursor change-opts))
                        (reset! input-ref v))
-                     #js [])
-          on-submit (fn [v]
-                      (on-change "" 0)
-                      (when bufnr
-                        (>evt [::events/add-history {:bufnr bufnr
-                                                     :entry v}]))
-                      (on-submit v))
+                     #js [on-persist-value on-persist-cursor])
+          on-submit (React/useCallback
+                     (fn [v]
+                       (on-change "" 0 nil {:for-submit? true})
+                       (when bufnr
+                         (>evt [::events/add-history {:bufnr bufnr
+                                                      :entry v}]))
+                       (on-submit v))
+                     #js [bufnr on-change on-submit])
 
           on-key (safely on-key {:bufnr bufnr
                                  :winnr (<sub [:current-winnr])
@@ -98,6 +98,4 @@
                      :completion-word (<sub [::completion-subs/word-to-complete])
                      :completion-candidates (<sub [::completion-subs/candidates])
                      :ghost (<sub [::completion-subs/ghost])
-                     :on-submit (fn [v]
-                                  (on-change v 0)
-                                  (on-submit v))}]]])))
+                     :on-submit on-submit}]]])))

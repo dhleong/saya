@@ -10,6 +10,7 @@
    [saya.modules.input.helpers :refer [update-cursor]]
    [saya.modules.input.insert :as insert]
    [saya.modules.input.keymaps :as keymaps]
+   [saya.modules.input.modes :refer [bufnr->mode]]
    [saya.modules.input.normal :as normal]
    [saya.modules.input.op :as op]))
 
@@ -32,9 +33,8 @@
  ::cancel-cmdline
  [with-buffer-context]
  (fn [{:keys [db bufnr]}]
-   ; TODO: Restore non-cmd input window?
-   {:db (if (= :cmd bufnr)
-          (assoc db :mode :command)
+   {:db (if-some [mode (bufnr->mode bufnr)]
+          (assoc db :mode mode)
           db)
     :dispatch [:command/quit]}))
 
@@ -60,6 +60,16 @@
      [:normal ":" _] {:db (assoc db :mode :command)
                       :fx [[:dispatch [::echo-events/ack-echo]]]}
 
+     [:normal "/" _] {:db (-> db
+                              (assoc :mode :search)
+                              (assoc :search {:direction (if connr :older :newer)}))
+                      :fx [[:dispatch [::echo-events/ack-echo]]]}
+
+     [:normal "?" _] {:db (-> db
+                              (assoc :mode :search)
+                              (assoc :search {:direction (if connr :newer :older)}))
+                      :fx [[:dispatch [::echo-events/ack-echo]]]}
+
      [:normal :return {:submit? true}] {:dispatch [::submit-cmdline]}
      [:insert :return {:submit? true}] {:dispatch [::submit-cmdline]}
      [:normal :ctrl/c {:submit? true}] {:dispatch [::cancel-cmdline]}
@@ -81,6 +91,15 @@
                                    ; Always clear:
                                    (assoc :mode :normal)
                                    (update :buffers dissoc :cmd))}
+
+     [:search :escape _] {:db (cond-> db
+                                :always (assoc :mode :normal)
+                                 ; Only clear if we're not in the cmdline window
+                                (not= :search bufnr) (update :buffers dissoc :search))}
+     [:search :ctrl/c _] {:db (-> db
+                                   ; Always clear:
+                                  (assoc :mode :normal)
+                                  (update :buffers dissoc :search))}
 
      [:insert :escape _] {:db (exit-insert-mode cofx)}
      [:insert :ctrl/c _] {:db (-> cofx

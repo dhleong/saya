@@ -147,7 +147,7 @@
   IBufferLine
   (->ansi [_]
     (or (:ansi @state)
-        (:ansi (swap! state assoc :ansi (->> (map :ansi parts)
+        (:ansi (swap! state assoc :ansi (->> (keep :ansi parts)
                                              (apply str))))))
 
   (ansi-chars [_]
