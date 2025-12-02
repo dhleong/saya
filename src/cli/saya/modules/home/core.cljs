@@ -32,12 +32,14 @@
        (nil :ready) nil)]))
 
 (defn- status-area []
-  (let [mode (<sub [:mode])]
+  (let [mode (<sub [:mode])
+        has-echo? (seq (<sub [:echo-lines]))]
     [:<>
      (case mode
        :command [command-line-mode-view]
        :search [search-mode-view]
-       [placeholders/line])
+       (when-not has-echo?
+         [placeholders/line]))
      [echo-window]]))
 
 (defn home-view []
