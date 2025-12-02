@@ -12,10 +12,12 @@
    {:dispatch [::echo-events/reveal-latest]}))
 
 (defn- filter-buffer-to-current-line [buffer]
-  (let [current-linenr (get-in buffer [:cursor :row])]
+  (if-let [current-linenr (get-in buffer [:cursor :row])]
     (-> buffer
         (assoc :lines [(nth (:lines buffer) current-linenr)])
-        (assoc-in [:cursor :row] 0))))
+        (assoc-in [:cursor :row] 0))
+
+    buffer))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (reg-event-fx
