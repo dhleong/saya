@@ -3,7 +3,8 @@
    [clojure.string :as str]
    [re-frame.core :refer [reg-sub subscribe]]
    [saya.modules.buffers.line :refer [wrapped-lines]]
-   [saya.modules.buffers.subs :as buffer-subs]))
+   [saya.modules.buffers.subs :as buffer-subs]
+   [saya.modules.input.modes :as modes]))
 
 (reg-sub
  ::by-id
@@ -74,8 +75,7 @@
  :<- [:current-winnr]
  :<- [:current-buffer]
  (fn [[mode current-winnr current-buffer] [_ id]]
-   ; TODO: Pull this out somewhere common?
-   (and (not (#{:search :command} mode))
+   (and (not (modes/command-like? mode))
         (= current-winnr id)
 
         ; In insert mode for a connection buffer, we

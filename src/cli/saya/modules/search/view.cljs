@@ -13,7 +13,6 @@
      ; we're returning from cmdline window via ctrl/c, BUT if we're *entering*
      ; command mode *from* cmdline, we need a blank buffer
      [input-window {:initial-value (when-not (= :search (<sub [:current-bufnr]))
-                                     ; TODO: 
                                      (<sub [::subs/input-text]))
                     :bufnr :search
                     :on-prepare-buffer #(>evt [::events/prepare-buffer %])

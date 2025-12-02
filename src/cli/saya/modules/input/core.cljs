@@ -10,6 +10,7 @@
    [saya.modules.input.helpers :refer [update-cursor]]
    [saya.modules.input.insert :as insert]
    [saya.modules.input.keymaps :as keymaps]
+   [saya.modules.input.modes :refer [bufnr->mode]]
    [saya.modules.input.normal :as normal]
    [saya.modules.input.op :as op]))
 
@@ -32,9 +33,8 @@
  ::cancel-cmdline
  [with-buffer-context]
  (fn [{:keys [db bufnr]}]
-   ; TODO: Restore non-cmd input window?
-   {:db (if (= :cmd bufnr)
-          (assoc db :mode :command)
+   {:db (if-some [mode (bufnr->mode bufnr)]
+          (assoc db :mode mode)
           db)
     :dispatch [:command/quit]}))
 
