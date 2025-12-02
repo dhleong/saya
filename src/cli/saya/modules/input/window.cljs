@@ -9,9 +9,9 @@
    [saya.modules.completion.events :as completion-events]
    [saya.modules.completion.helpers :refer [refresh-completion]]
    [saya.modules.completion.subs :as completion-subs]
+   [saya.modules.echo.core :refer [echo]]
    [saya.modules.input.core :as input]
-   [saya.modules.input.events :as events]
-   [saya.modules.logging.core :refer [log]]))
+   [saya.modules.input.events :as events]))
 
 (defn- safely [f & args]
   (let [f (partial f args)]
@@ -32,9 +32,7 @@
                   (>evt [::events/set-cmdline-bufnr {:bufnr bufnr
                                                      :on-submit on-submit}]))
 
-                ; TODO: echo; also, need to somehow show this *above*
-                ; the cmd line
-                (log "Invalid in command-line window; <CR> executes, CTRL-C quits"))
+                (echo :error "Invalid in command-line window; <CR> executes, CTRL-C quits"))
     [:ctrl/c] (let [input @input-ref]
                 ; NOTE: ctrl-c once to clear, again to exit
                 (on-change "" 0 nil {:for-cancel? true})

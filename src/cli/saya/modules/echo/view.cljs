@@ -5,7 +5,7 @@
    [saya.cli.input :refer [use-keys]]
    [saya.modules.echo.events :as events]
    [saya.modules.input.core :as input]
-   [saya.modules.ui.placeholders :as placeholders]))
+   [saya.modules.input.modes :as modes]))
 
 (defn- echo-line [{:keys [type message]}]
   [:> k/Text (case type
@@ -44,10 +44,20 @@
           (>evt [::input/on-key key]))))]))
 
 (defn echo-window []
-  (let [lines (<sub [:echo-lines])]
-    (case (count lines)
-      0 [placeholders/line]
-      1 [echo-line (first lines)]
-      [:<>
-       [placeholders/line]
-       [blocking-window]])))
+  (let [lines (<sub [:echo-lines])
+        mode (<sub [:mode])]
+    (cond
+      (empty? lines)
+      nil
+
+      (or (> (count lines) 1)
+          ; If in a command-like mode, we need to use the blocking window
+          ; to see the echo, even if it's a single line---and we definitely
+          ; want to see error echoes
+          (and (modes/command-like? mode)
+               (some #(= :error (:type %))
+                     lines)))
+      [blocking-window]
+
+      :else
+      [echo-line (first lines)])))

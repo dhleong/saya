@@ -9,7 +9,8 @@
    [saya.modules.logging.view :refer [logging-view]]
    [saya.modules.search.view :refer [search-mode-view]]
    [saya.modules.ui.error-boundary :refer [error-boundary]]
-   [saya.modules.window.view :refer [window-view]]))
+   [saya.modules.window.view :refer [window-view]]
+   [saya.modules.ui.placeholders :as placeholders]))
 
 (defn- home-content []
   (if-let [current-winnr (<sub [:current-winnr])]
@@ -32,12 +33,12 @@
 
 (defn- status-area []
   (let [mode (<sub [:mode])]
-    (case mode
-      :command [command-line-mode-view]
-      :search [search-mode-view]
-
-      ; Default:
-      [echo-window])))
+    [:<>
+     (case mode
+       :command [command-line-mode-view]
+       :search [search-mode-view]
+       [placeholders/line])
+     [echo-window]]))
 
 (defn home-view []
   [:> k/Box {:flex-direction :column
