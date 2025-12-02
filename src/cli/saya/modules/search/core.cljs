@@ -41,13 +41,35 @@
    query))
 
 (defn in-buffer [buffer direction query]
-  ; TODO: "start at" cursor
-  (let [results (->> (:lines buffer)
-                     (map-indexed vector)
-                     (mapcat (fn [[linenr line]]
-                               (-> (->ansi line)
-                                   (in-string direction query)
-                                   (->> (map (fn [match]
-                                               (assoc-in match [:at :row] linenr))))))))]
-    (cond-> results
-      (= :older direction) (reverse))))
+  (let [lines-count (count (:lines buffer))
+        cursor-row (min lines-count
+                        (:row (:cursor buffer) 0))
+
+        ; NOTE: Doing reverse directly on :lines and constructing the
+        ; line number in this way is more efficient since vec is reversible,
+        ; so we don't have to materialize a whole collection directly
+        vector-with-offset (case direction
+                             :newer (fn [i line]
+                                      [(+ cursor-row i) line])
+                             :older (fn [i line]
+                                      [(- cursor-row 1 i) line]))
+
+        ; Filter the lines searched to the most relevant ones, very effeciently.
+        ; If we want to support looping around, we could join two subvecs together
+        relevant-lines (subvec
+                        (:lines buffer)
+                        (case direction
+                          :newer cursor-row
+                          :older 0)
+                        (case direction
+                          :newer lines-count
+                          :older cursor-row))]
+    (->> (cond-> relevant-lines
+           (= :older direction) (reverse))
+
+         (map-indexed vector-with-offset)
+         (mapcat (fn [[linenr line]]
+                   (-> (->ansi line)
+                       (in-string direction query)
+                       (->> (map (fn [match]
+                                   (assoc-in match [:at :row] linenr))))))))))

@@ -1,6 +1,8 @@
 (ns saya.modules.search.core-test
-  (:require [cljs.test :refer-macros [deftest is testing]]
-            [saya.modules.search.core :refer [in-string]]))
+  (:require
+   [cljs.test :refer-macros [deftest is testing]]
+   [saya.modules.buffers.line :refer [buffer-line]]
+   [saya.modules.search.core :refer [in-buffer in-string]]))
 
 (deftest search-in-string-test
   (testing "Handle negative case"
@@ -55,3 +57,44 @@
                       :newer
                       "al pastor")))))
 
+(deftest search-in-buffer-test
+  (testing "Order reverse search results correctly"
+    (is (= [{:at {:col 5
+                  :row 1}
+             :length 7}
+            {:at {:col 3
+                  :row 0}
+             :length 7}]
+           (in-buffer
+            {:lines [(buffer-line "my burrito")
+                     (buffer-line "your burrito")]
+             :cursor {:row 2}}
+            :older
+            "burrito"))))
+
+  (testing "Start at the cursor, older"
+    (is (= [{:at {:col 3
+                  :row 0}
+             :length 7}]
+           (in-buffer
+            {:lines [(buffer-line "my burrito")
+                     (buffer-line "our burrito")
+                     (buffer-line "your burrito")]
+             :cursor {:row 1}}
+            :older
+            "burrito"))))
+
+  (testing "Start at the cursor, newer"
+    (is (= [{:at {:col 4
+                  :row 1}
+             :length 7}
+            {:at {:col 5
+                  :row 2}
+             :length 7}]
+           (in-buffer
+            {:lines [(buffer-line "my burrito")
+                     (buffer-line "our burrito")
+                     (buffer-line "your burrito")]
+             :cursor {:row 1}}
+            :newer
+            "burrito")))))
