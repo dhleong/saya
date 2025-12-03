@@ -21,7 +21,10 @@
   (fn [ctx]
     (assoc ctx :mode new-mode)))
 
-(defn- with-editable [f]
+(defn with-editable
+  "Return a fn that does what f does, but prefers to
+  use the :editable buffer from the context, if any"
+  [f]
   (letfn [(swap-keys [v a b]
             (-> v
                 (assoc a (b v))

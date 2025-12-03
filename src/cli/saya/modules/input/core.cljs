@@ -4,7 +4,6 @@
    [re-frame.core :refer [reg-event-fx trim-v]]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
-   [saya.modules.echo.core :refer [echo-fx]]
    [saya.modules.echo.events :as echo-events]
    [saya.modules.input.fx :as fx]
    [saya.modules.input.helpers :refer [update-cursor]]
@@ -40,12 +39,28 @@
     :dispatch [:command/quit]}))
 
 (defn- exit-insert-mode [{:keys [db] :as cofx}]
-  (-> (keymaps/perform cofx (update-cursor :col dec))
+  (-> (keymaps/perform cofx (normal/with-editable
+                              (update-cursor :col dec)))
       :db
       (or db)
       (assoc :mode (if (:connr cofx)
                      :prompt
                      :normal))))
+
+(defn- perform-operator-pending [& {:keys [cofx db key return-mode]}]
+  (-> (if (= key (:char (meta (:pending-operator db))))
+        (keymaps/maybe-perform-with-keymap-buffer
+         :mode :operator-pending
+         :keymaps op/full-line-keymap
+         :key :full-line
+         :cofx cofx)
+
+        (keymaps/maybe-perform-with-keymap-buffer
+         :mode :operator-pending
+         :keymaps op/keymaps
+         :key key
+         :cofx cofx))
+      (update :db (fnil assoc db) :mode return-mode)))
 
 (reg-event-fx
  ::on-key
@@ -129,43 +144,30 @@
 
      [:operator-pending key {:bufnr? true
                              :readonly? false}]
-     (->
-      (if (= key (:char (meta (:pending-operator db))))
-        (keymaps/maybe-perform-with-keymap-buffer
-         :mode :operator-pending
-         :keymaps op/full-line-keymap
-         :key :full-line
-         :cofx cofx)
-
-        (keymaps/maybe-perform-with-keymap-buffer
-         :mode :operator-pending
-         :keymaps op/keymaps
-         :key key
-         :cofx cofx))
-      (update :db (fnil assoc db) :mode :normal))
+     (perform-operator-pending
+      :cofx cofx
+      :db db
+      :key key
+      :return-mode :normal)
 
      [:operator-pending key {:connr? true}]
-     (-> (if (= key (:char (meta (:pending-operator db))))
-           (keymaps/maybe-perform-with-keymap-buffer
-            :mode :operator-pending
-            :keymaps op/full-line-keymap
-            :key :full-line
-            :cofx (assoc cofx :bufnr [:conn/input connr]))
-
-           ; For now...
-           (when-not (#{:escape :ctrl/c} key)
-             {:fx [(echo-fx :error "Invalid in connection buffer")]}))
-         (update :db (fnil assoc db) :mode :normal))
+     (perform-operator-pending
+      :cofx (assoc cofx :bufnr [:conn/input connr])
+      :db db
+      :key key
+      :return-mode :prompt)
 
      [:prompt :escape _] {:db (assoc db :mode :normal)}
      [:prompt :ctrl/c _] {:db (assoc db :mode :normal)}
 
-     [:prompt key {:bufnr? true}]
+     ; TODO: We'll need to ensure that :prompt mode doesn't persist
+     ; when leaving a connr buffer...
+     [:prompt key {:connr? true}]
      (keymaps/maybe-perform-with-keymap-buffer
       :mode :prompt
       :keymaps prompt/keymaps
       :keymap-buffer keymap-buffer
-      :cofx cofx
+      :cofx (assoc cofx :bufnr [:conn/input connr])
       :key key)
 
      :else nil
