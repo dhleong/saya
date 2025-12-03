@@ -15,18 +15,21 @@
       ; Initial state
       (and (seq after)
            (= :older direction))
-      (assoc-in ctx [:buffer :lines 0]
-                (buffer-line (first after)))
+      (-> ctx
+          (assoc-in [:buffer :lines 0]
+                    (buffer-line (first after)))
+          (assoc-in [:buffer ::original-input] (:lines buffer)))
 
       (and (seq before)
            (= :newer direction))
       (assoc-in ctx [:buffer :lines 0]
                 (buffer-line (peek before)))
 
-      ; TODO: We should be able to store the original input value,
-      ; and restore it here.
-      (= :newer direction)
-      (assoc-in ctx [:buffer :lines 0] (buffer-line))
+      (and (= :newer direction)
+           (::original-input buffer))
+      (-> ctx
+          (assoc-in [:buffer :lines] (::original-input buffer))
+          (update :buffer dissoc ::original-input))
 
       ; Just stay where we are, I guess
       :else ctx)))
