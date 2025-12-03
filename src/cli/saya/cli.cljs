@@ -1,6 +1,7 @@
 (ns saya.cli
   (:require
    ["ink" :as k]
+   [applied-science.js-interop :as j]
    [clojure.core.match :as m]
    [promesa.core :as p]
    [re-frame.core :as re-frame]
@@ -12,12 +13,12 @@
    [saya.prelude]
    [saya.reagent :as reagent]
    [saya.util.ink :as ink]
-   [saya.util.ink-testing-utils]
+   [saya.util.ink-testing-utils] ; NOTE: Required here just to convince shadow to build them in dev
    [saya.util.logging :as logging]
-   [saya.views :as views] ; NOTE: Required here just to convince shadow to build them in dev
-   ))
+   [saya.views :as views]))
 
 (defonce ^:private ink-instance (atom nil))
+(defonce ^:private stdout js/process.stdout)
 
 (defn ^:dev/after-load mount-root []
   (re-frame/clear-subscription-cache!)
@@ -26,11 +27,14 @@
     (if-some [ink @ink-instance]
       (.rerender ^js ink app)
       (reset! ink-instance (k/render app #js {:exitOnCtrlC false
-                                              :stdout (ink/stdout)})))))
+                                              :patchConsole false
+                                              :stdout (ink/stdout
+                                                       {} stdout)})))))
 
 (defn- -main [args]
   (p/do
     (activate-alternate-screen
+     :stdout stdout
      :on-deactivate #(when-some [^js ink @ink-instance]
                        (ink/unmount ink)))
 
@@ -55,5 +59,5 @@
   (-> (p/let [args (args/parse-cli-args js/process.argv)]
         (-main args))
       (p/catch (fn [e]
-                 (println "saya: FATAL ERROR: " e "\n" (.-stack e))
+                 (println "saya: FATAL ERROR: " e "\n" (j/get e :stack "(no stack)"))
                  (js/process.exit 1)))))

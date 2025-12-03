@@ -35,18 +35,19 @@
 (def ^:private ansi-enter-alternate-screen "\u001b[?1049h")
 (def ^:private ansi-leave-alternate-screen "\u001b[?1049l")
 
-(defn activate-alternate-screen [& {:keys [on-deactivate]}]
+(defn activate-alternate-screen [& {:keys [on-deactivate stdout]
+                                    :or {stdout js/process.stdout}}]
   ; NOTE: Somewhat hacky way to use the alternate screen:
   (let [active? (atom false)
         write (fn write [s]
                 (p/create
                  (fn [resolve reject]
-                   (js/process.stdout.write
-                    s
-                    (fn [err]
-                      (if err
-                        (reject err)
-                        (resolve)))))))
+                   (.write stdout
+                           s
+                           (fn [err]
+                             (if err
+                               (reject err)
+                               (resolve)))))))
         activate! (fn activate []
                     (when (compare-and-set! active? false true)
                       (write ansi-enter-alternate-screen)))
