@@ -12,7 +12,8 @@
    [saya.modules.input.keymaps :as keymaps]
    [saya.modules.input.modes :refer [bufnr->mode]]
    [saya.modules.input.normal :as normal]
-   [saya.modules.input.op :as op]))
+   [saya.modules.input.op :as op]
+   [saya.modules.input.prompt :as prompt]))
 
 (defn- get-current-cmdline [db bufnr]
   (let [{:keys [lines cursor]} (get-in db [:buffers bufnr])
@@ -42,7 +43,9 @@
   (-> (keymaps/perform cofx (update-cursor :col dec))
       :db
       (or db)
-      (assoc :mode :normal)))
+      (assoc :mode (if (:connr cofx)
+                     :prompt
+                     :normal))))
 
 (reg-event-fx
  ::on-key
@@ -153,6 +156,17 @@
            (when-not (#{:escape :ctrl/c} key)
              {:fx [(echo-fx :error "Invalid in connection buffer")]}))
          (update :db (fnil assoc db) :mode :normal))
+
+     [:prompt :escape _] {:db (assoc db :mode :normal)}
+     [:prompt :ctrl/c _] {:db (assoc db :mode :normal)}
+
+     [:prompt key {:bufnr? true}]
+     (keymaps/maybe-perform-with-keymap-buffer
+      :mode :prompt
+      :keymaps prompt/keymaps
+      :keymap-buffer keymap-buffer
+      :cofx cofx
+      :key key)
 
      :else nil
      #_{:fx [[:log ["unhandled: " mode key]]]})))
