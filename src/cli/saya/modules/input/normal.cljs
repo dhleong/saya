@@ -17,7 +17,7 @@
 
 ; ======= Mode-change keymaps ==============================
 
-(defn- mode<- [new-mode]
+(defn mode<- [new-mode]
   (fn [ctx]
     (assoc ctx :mode new-mode)))
 
