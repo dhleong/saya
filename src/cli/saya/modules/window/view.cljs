@@ -135,7 +135,10 @@
     (when-not (and (= :cmdline (:id current-window))
                    (= [:conn/input input-connr] (:bufnr current-window)))
       (cond
-        (= :prompt mode)
+        (or (= :prompt mode)
+            (and conn-pending-operator?
+                 (= input-connr
+                    (:connection-id current-buffer))))
         (let [input-buffer (<sub [::buffer-subs/by-id [:conn/input input-connr]])
               [before after] (split-text-by-state
                               input-buffer
@@ -149,12 +152,6 @@
         (seq input-text)
         [:> k/Text {:dim-color true
                     :wrap :truncate-end}
-
-         (when (and conn-pending-operator?
-                    (= input-connr
-                       (:connection-id current-buffer)))
-           [modeful-cursor])
-
          input-text]))))
 
 (defn- conn-single-prompt [input-connr]
