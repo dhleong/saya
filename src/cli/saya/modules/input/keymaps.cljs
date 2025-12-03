@@ -28,7 +28,8 @@
                 (assoc :id [:conn/input connr])))
    :pending-operator (get-in cofx [:db :pending-operator])
    :search (select-keys (get-in cofx [:db :search])
-                        [:direction :query])})
+                        [:direction :query])
+   :histories (get-in cofx [:db :histories])})
 
 (defn perform [{:keys [bufnr winnr] :as cofx} f]
   (try
