@@ -61,12 +61,14 @@
          :key key
          :cofx cofx))
 
-      ; If we haven't explicitly set left :pending-operator mode, do so:
-      (update :db (fnil update db) :mode
-              (fn [proposed-mode]
-                (if (= :operator-pending proposed-mode)
-                  return-mode
-                  proposed-mode)))))
+      ; If we haven't explicitly set left :pending-operator mode,
+      ; and there's no pending keymap-buffer, do so:
+      (update :db
+              (fn [{:keys [mode keymap-buffer] :as db'}]
+                (cond-> (or db' db)
+                  (and (= :operator-pending mode)
+                       (nil? keymap-buffer))
+                  (assoc :mode return-mode))))))
 
 (defn handle-on-key [{{:keys [mode keymap-buffer] :as db} :db
                       :keys [bufnr connr winnr]
