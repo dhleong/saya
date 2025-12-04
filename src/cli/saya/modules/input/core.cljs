@@ -60,117 +60,126 @@
          :keymaps op/keymaps
          :key key
          :cofx cofx))
-      (update :db (fnil assoc db) :mode return-mode)))
+
+      ; If we haven't explicitly set left :pending-operator mode, do so:
+      (update :db (fnil update db) :mode
+              (fn [proposed-mode]
+                (if (= :operator-pending proposed-mode)
+                  return-mode
+                  proposed-mode)))))
+
+(defn handle-on-key [{{:keys [mode keymap-buffer] :as db} :db
+                      :keys [bufnr connr winnr]
+                      :as cofx}
+                     [key]]
+
+  (match [mode key {:bufnr? (some? bufnr)
+                    :readonly? (or (some? connr)
+                                   (buffers/readonly?
+                                    (get-in db [:buffers bufnr])))
+                    :connr? (some? connr)
+                    :submit? (some? (get-in db [:windows winnr :on-submit]))}]
+    [:normal ":" _] {:db (assoc db :mode :command)
+                     :fx [[:dispatch [::echo-events/ack-echo]]]}
+
+    [:normal "/" _] {:db (-> db
+                             (assoc :mode :search)
+                             (assoc :search {:direction (if connr :older :newer)}))
+                     :fx [[:dispatch [::echo-events/ack-echo]]]}
+
+    [:normal "?" _] {:db (-> db
+                             (assoc :mode :search)
+                             (assoc :search {:direction (if connr :newer :older)}))
+                     :fx [[:dispatch [::echo-events/ack-echo]]]}
+
+    [:normal :return {:submit? true}] {:dispatch [::submit-cmdline]}
+    [:insert :return {:submit? true}] {:dispatch [::submit-cmdline]}
+    [:normal :ctrl/c {:submit? true}] {:dispatch [::cancel-cmdline]}
+    [:insert :ctrl/c {:submit? true}] {:dispatch [::cancel-cmdline]}
+
+    [:normal key {:bufnr? true}]
+    (keymaps/maybe-perform-with-keymap-buffer
+     :mode :normal
+     :keymaps normal/keymaps
+     :keymap-buffer keymap-buffer
+     :cofx cofx
+     :key key)
+
+    [:command :escape _] {:db (cond-> db
+                                :always (assoc :mode :normal)
+                                ; Only clear if we're not in the cmdline window
+                                (not= :cmd bufnr) (update :buffers dissoc :cmd))}
+    [:command :ctrl/c _] {:db (-> db
+                                  ; Always clear:
+                                  (assoc :mode :normal)
+                                  (update :buffers dissoc :cmd))}
+
+    [:search :escape _] {:db (cond-> db
+                               :always (assoc :mode :normal)
+                               ; Only clear if we're not in the cmdline window
+                               (not= :search bufnr) (update :buffers dissoc :search))}
+    [:search :ctrl/c _] {:db (-> db
+                                 ; Always clear:
+                                 (assoc :mode :normal)
+                                 (update :buffers dissoc :search))}
+
+    [:insert :escape _] {:db (exit-insert-mode cofx)}
+    [:insert :ctrl/c _] {:db (-> cofx
+                                 (exit-insert-mode)
+                                 (update :buffers dissoc [:conn/input connr]))}
+    [:insert key {:bufnr? true
+                  :readonly? false}]
+    (keymaps/maybe-perform-with-keymap-buffer
+     :mode :insert
+     :keymaps insert/keymaps
+     :keymap-buffer keymap-buffer
+     :key key
+     :cofx cofx
+     :with-unhandled (fn [cofx]
+                       (if (string? key)
+                         (try
+                           (keymaps/perform
+                            cofx
+                            #(insert/insert-at-cursor % key))
+                           (catch :default e
+                             (assoc cofx :fx [[:log ["error: " e]]])))
+
+                         cofx)))
+
+    [:operator-pending key {:bufnr? true
+                            :readonly? false}]
+    (perform-operator-pending
+     :cofx cofx
+     :db db
+     :key key
+     :return-mode :normal)
+
+    [:operator-pending key {:connr? true}]
+    (perform-operator-pending
+     :cofx (assoc cofx :bufnr [:conn/input connr]
+                  :normal-bufnr bufnr)
+     :db db
+     :key key
+     :return-mode :prompt)
+
+    [:prompt :escape _] {:db (assoc db :mode :normal)}
+    [:prompt :ctrl/c _] {:db (assoc db :mode :normal)}
+
+    ; TODO: We'll need to ensure that :prompt mode doesn't persist
+    ; when leaving a connr buffer...
+    [:prompt key {:connr? true}]
+    (keymaps/maybe-perform-with-keymap-buffer
+     :mode :prompt
+     :keymaps prompt/keymaps
+     :keymap-buffer keymap-buffer
+     :cofx (assoc cofx :bufnr [:conn/input connr]
+                  :normal-bufnr bufnr)
+     :key key)
+
+    :else nil
+    #_{:fx [[:log ["unhandled: " mode key]]]}))
 
 (reg-event-fx
  ::on-key
  [with-buffer-context trim-v]
- (fn [{{:keys [mode keymap-buffer] :as db} :db
-       :keys [bufnr connr winnr]
-       :as cofx}
-      [key]]
-   (match [mode key {:bufnr? (some? bufnr)
-                     :readonly? (or (some? connr)
-                                    (buffers/readonly?
-                                     (get-in db [:buffers bufnr])))
-                     :connr? (some? connr)
-                     :submit? (some? (get-in db [:windows winnr :on-submit]))}]
-     [:normal ":" _] {:db (assoc db :mode :command)
-                      :fx [[:dispatch [::echo-events/ack-echo]]]}
-
-     [:normal "/" _] {:db (-> db
-                              (assoc :mode :search)
-                              (assoc :search {:direction (if connr :older :newer)}))
-                      :fx [[:dispatch [::echo-events/ack-echo]]]}
-
-     [:normal "?" _] {:db (-> db
-                              (assoc :mode :search)
-                              (assoc :search {:direction (if connr :newer :older)}))
-                      :fx [[:dispatch [::echo-events/ack-echo]]]}
-
-     [:normal :return {:submit? true}] {:dispatch [::submit-cmdline]}
-     [:insert :return {:submit? true}] {:dispatch [::submit-cmdline]}
-     [:normal :ctrl/c {:submit? true}] {:dispatch [::cancel-cmdline]}
-     [:insert :ctrl/c {:submit? true}] {:dispatch [::cancel-cmdline]}
-
-     [:normal key {:bufnr? true}]
-     (keymaps/maybe-perform-with-keymap-buffer
-      :mode :normal
-      :keymaps normal/keymaps
-      :keymap-buffer keymap-buffer
-      :cofx cofx
-      :key key)
-
-     [:command :escape _] {:db (cond-> db
-                                 :always (assoc :mode :normal)
-                                 ; Only clear if we're not in the cmdline window
-                                 (not= :cmd bufnr) (update :buffers dissoc :cmd))}
-     [:command :ctrl/c _] {:db (-> db
-                                   ; Always clear:
-                                   (assoc :mode :normal)
-                                   (update :buffers dissoc :cmd))}
-
-     [:search :escape _] {:db (cond-> db
-                                :always (assoc :mode :normal)
-                                 ; Only clear if we're not in the cmdline window
-                                (not= :search bufnr) (update :buffers dissoc :search))}
-     [:search :ctrl/c _] {:db (-> db
-                                   ; Always clear:
-                                  (assoc :mode :normal)
-                                  (update :buffers dissoc :search))}
-
-     [:insert :escape _] {:db (exit-insert-mode cofx)}
-     [:insert :ctrl/c _] {:db (-> cofx
-                                  (exit-insert-mode)
-                                  (update :buffers dissoc [:conn/input connr]))}
-     [:insert key {:bufnr? true
-                   :readonly? false}]
-     (keymaps/maybe-perform-with-keymap-buffer
-      :mode :insert
-      :keymaps insert/keymaps
-      :keymap-buffer keymap-buffer
-      :key key
-      :cofx cofx
-      :with-unhandled (fn [cofx]
-                        (if (string? key)
-                          (try
-                            (keymaps/perform
-                             cofx
-                             #(insert/insert-at-cursor % key))
-                            (catch :default e
-                              (assoc cofx :fx [[:log ["error: " e]]])))
-
-                          cofx)))
-
-     [:operator-pending key {:bufnr? true
-                             :readonly? false}]
-     (perform-operator-pending
-      :cofx cofx
-      :db db
-      :key key
-      :return-mode :normal)
-
-     [:operator-pending key {:connr? true}]
-     (perform-operator-pending
-      :cofx (assoc cofx :bufnr [:conn/input connr]
-                   :normal-bufnr bufnr)
-      :db db
-      :key key
-      :return-mode :prompt)
-
-     [:prompt :escape _] {:db (assoc db :mode :normal)}
-     [:prompt :ctrl/c _] {:db (assoc db :mode :normal)}
-
-     ; TODO: We'll need to ensure that :prompt mode doesn't persist
-     ; when leaving a connr buffer...
-     [:prompt key {:connr? true}]
-     (keymaps/maybe-perform-with-keymap-buffer
-      :mode :prompt
-      :keymaps prompt/keymaps
-      :keymap-buffer keymap-buffer
-      :cofx (assoc cofx :bufnr [:conn/input connr]
-                   :normal-bufnr bufnr)
-      :key key)
-
-     :else nil
-     #_{:fx [[:log ["unhandled: " mode key]]]})))
+ handle-on-key)

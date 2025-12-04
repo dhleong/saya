@@ -6,6 +6,7 @@
    [saya.db :refer [default-db]]
    [saya.modules.buffers.events :as buffer-events]
    [saya.modules.buffers.line :refer [buffer-line]]
+   [saya.modules.input.core :refer [handle-on-key]]
    [saya.modules.input.insert :refer [line->string]]
    [saya.modules.window.subs :refer [visible-lines]]))
 
@@ -95,3 +96,15 @@
                  (vis' ctx')
                  "\n Expected:\n"
                  (vis' (update ctx :window merge window-expect))))))))
+
+(defn make-keymap-cofx [buffer]
+  {:db {:buffers {0 (str->buffer buffer)}
+        :windows {0 {:bufnr 0}}
+        :mode :normal}
+   :bufnr 0
+   :winnr 0})
+
+(defn perform-cofx-key [cofx key]
+  (-> cofx
+      (handle-on-key [key])
+      (merge (select-keys cofx [:bufnr :winnr]))))

@@ -135,6 +135,8 @@
   [(min start end)
    (max start end)])
 
+;; Delete
+
 (defn- delete-lines [{:keys [lines] :as buffer} start end]
   (let [[start end] (align-start-end start end)
         yanked (subvec lines start (inc end))]
@@ -172,6 +174,15 @@
     :else
     {:error "TODO: support char-wise cross-line deletes"}))
 
+;; Change
+
+(defn change-operator {:char "c"} [context flags]
+  (-> context
+      (delete-operator flags)
+      (assoc :mode :insert)))
+
+;; Integration
+
 (defn- enqueue-operator [operator]
   (fn operator-keymap [{:keys [buffer] :as context}]
     (if (and (buffers/readonly? buffer)
@@ -183,7 +194,8 @@
              :pending-operator operator))))
 
 (def operator-keymaps
-  {["d"] (enqueue-operator #'delete-operator)})
+  {["c"] (enqueue-operator #'change-operator)
+   ["d"] (enqueue-operator #'delete-operator)})
 
 ; ======= Scroll keymaps ===================================
 
