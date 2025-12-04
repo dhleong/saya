@@ -77,8 +77,9 @@
                                            :or {with-unhandled identity}}]
   (binding [*mode* mode]
     (let [new-buffer ((fnil conj []) keymap-buffer key)
-          {:keys [db bufnr]} cofx
-          user-maps (get-in db [:buffers bufnr :keymaps mode])
+          {:keys [db bufnr normal-bufnr]} cofx
+          user-maps (or (get-in db [:buffers bufnr :keymaps mode])
+                        (get-in db [:buffers normal-bufnr :keymaps mode]))
           combined-maps (merge keymaps user-maps)
           keymap (get combined-maps new-buffer)]
       (cond
