@@ -4,6 +4,7 @@
    [re-frame.core :refer [reg-event-fx trim-v]]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
+   [saya.modules.connection.events :as conn-events]
    [saya.modules.echo.events :as echo-events]
    [saya.modules.input.fx :as fx]
    [saya.modules.input.helpers :refer [update-cursor]]
@@ -169,7 +170,8 @@
 
     [:prompt :escape _] {:db (assoc db :mode :normal)}
     [:prompt :ctrl/c _] {:db (assoc db :mode :normal)}
-    ; TODO: Support submitting from :prompt mode
+    [:prompt :return _] {:fx [[:dispatch [::conn-events/submit-input-buffer
+                                          {:connr connr}]]]}
 
     ; TODO: We'll need to ensure that :prompt mode doesn't persist
     ; when leaving a connr buffer...

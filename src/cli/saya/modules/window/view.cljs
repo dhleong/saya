@@ -10,6 +10,7 @@
    [saya.modules.buffers.events :as buffer-events]
    [saya.modules.buffers.subs :as buffer-subs]
    [saya.modules.connection.completion :refer [->ConnectionCompletionSource]]
+   [saya.modules.connection.events :as conn-events]
    [saya.modules.input.window :as input-window]
    [saya.modules.search.subs :as search-subs]
    [saya.modules.ui.cursor :refer [cursor]]
@@ -55,16 +56,9 @@
                                  {:bufnr bufnr
                                   :current %}])
       :on-submit (fn [text]
-                   ; NOTE: Ensure input is cleared; on-persist-value *may not*
-                   ; be called from the cmdline window. This is kinda hacks,
-                   ; but fixing properly in input-window feels... annoying
-                   (>evt [::window-events/set-input-text {:connr connr
-                                                          :text ""}])
-                   (>evt [::buffer-events/set-cursor
-                          {:id bufnr
-                           :cursor {:row 0 :col 0}}])
-                   (>evt [:connection/send {:connr connr
-                                            :text text}]))}]))
+                   (>evt [::conn-events/submit-input-buffer
+                          {:connr connr
+                           :text text}]))}]))
 
 (defn- modeful-cursor []
   (let [cursor-type (case (<sub [:mode])
