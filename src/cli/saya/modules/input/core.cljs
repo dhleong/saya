@@ -48,16 +48,20 @@
                      :normal))))
 
 (defn- perform-operator-pending [& {:keys [cofx db key return-mode]}]
-  (-> (if (= key (:char (meta (:pending-operator db))))
+  (-> (if (and
+           (empty? (:keymap-buffer db)) ; Sanity check, really
+           (= key (:char (meta (:pending-operator db)))))
         (keymaps/maybe-perform-with-keymap-buffer
          :mode :operator-pending
          :keymaps op/full-line-keymap
+         :keymap-buffer (:keymap-buffer db)
          :key :full-line
          :cofx cofx)
 
         (keymaps/maybe-perform-with-keymap-buffer
          :mode :operator-pending
          :keymaps op/keymaps
+         :keymap-buffer (:keymap-buffer db)
          :key key
          :cofx cofx))
 
