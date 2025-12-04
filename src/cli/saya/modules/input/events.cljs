@@ -1,5 +1,6 @@
 (ns saya.modules.input.events
   (:require
+   [clojure.string :as str]
    [re-frame.core :refer [reg-event-db unwrap]]
    [saya.config :as config]))
 
@@ -32,4 +33,6 @@
  ::add-history
  [unwrap]
  (fn [db {:keys [bufnr entry]}]
-   (update-in db [:histories bufnr] add-history-entry entry)))
+   (cond-> db
+     (seq (str/trim entry))
+     (update-in [:histories bufnr] add-history-entry entry))))
