@@ -51,8 +51,24 @@
              (get-cofx-buffer (perform-cofx-key cofx "w")))))))
 
 (deftest outer-word-test
-  (testing "Delete outer word"
+  (testing "Delete outer word, preferring trailing whitespace"
     (with-keymap-compare-buffer op/outer-word
       "For the h|onor of Grayskull!"
       "For the |of Grayskull!"
+      :pending-operator #'delete-operator))
+
+  (testing "Delete outer word, taking leading whitespace if no trailing"
+    (with-keymap-compare-buffer op/outer-word
+      "For the honor of |Grayskull"
+      "For the honor o|f"
+      :pending-operator #'delete-operator))
+
+  (testing "Delete outer word on boundaries"
+    (with-keymap-compare-buffer op/outer-word
+      "For the |honor of Grayskull"
+      "For the |of Grayskull"
+      :pending-operator #'delete-operator)
+    (with-keymap-compare-buffer op/outer-word
+      "For the hono|r of Grayskull"
+      "For the |of Grayskull"
       :pending-operator #'delete-operator)))

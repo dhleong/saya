@@ -1,9 +1,10 @@
 (ns saya.modules.input.op
   (:require
+   [clojure.string :as str]
    [saya.modules.input.helpers :refer [adjust-scroll-to-cursor clamp-cursor
                                        clamp-scroll]]
-   [saya.modules.input.motions.find :refer [perform-until-ch]]
-   [saya.modules.input.motions.word :refer [small-word-boundary? word-movement]]
+   [saya.modules.input.motions.find :refer [perform-find-ch perform-until-ch]]
+   [saya.modules.input.motions.word :refer [small-word-boundary?]]
    [saya.modules.input.normal :as normal]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
 
@@ -52,6 +53,9 @@
 
 ; ======= Word text objects ================================
 
+(defn- ->cursor [ctx]
+  (get-in ctx [:buffer :cursor]))
+
 (def inner-word
   (let [->start #(perform-until-ch % dec small-word-boundary?)
         ->end #(perform-until-ch % inc small-word-boundary?)]
@@ -59,24 +63,38 @@
      (fn [context]
        {:start (-> context
                    (->start)
-                   (get-in [:buffer :cursor]))
+                   (->cursor))
         :end (-> context
                  (->end)
-                 (get-in [:buffer :cursor]))
+                 (->cursor))
         :inclusive? true}))))
 
 ; FIXME: The :start for this ought to not move when starting on a
 ; boundary...
 
+(defn- consume-whitespace [ctx increment]
+  (-> ctx
+      ; Find whitespace
+      (perform-find-ch increment str/blank?)
+      ; Consume it
+      (perform-until-ch increment (complement str/blank?))))
+
 (def outer-word
   (range-getter->motion
-   (fn [context]
-     {:start (-> context
-                 ((word-movement dec small-word-boundary?))
-                 (get-in [:buffer :cursor]))
-      :end (-> context
-               ((word-movement inc small-word-boundary?))
-               (get-in [:buffer :cursor]))})))
+   (fn [ctx]
+     (let [inner-end (->cursor (perform-until-ch ctx inc small-word-boundary?))
+           word-end (->cursor (consume-whitespace ctx inc))
+           ->start (if (= inner-end word-end)
+                     ; If there was trailing whitespace, word-end should be >
+                     ; inner-end. Here, it's = so there must not be---so, let's
+                     ; consume leading whitespace instead
+                     #(consume-whitespace % dec)
+                     #(perform-until-ch % dec small-word-boundary?))]
+       {:start (-> ctx
+                   (->start)
+                   (->cursor))
+        :end word-end
+        :inclusive? true}))))
 
 (def word-object-keymaps
   {["i" "w"] inner-word

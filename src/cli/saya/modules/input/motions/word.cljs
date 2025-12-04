@@ -12,7 +12,7 @@
 
 (def big-word-boundary? str/blank?)
 
-(defn word-movement [increment boundary? & {:keys [move-from-initial-boundary?]}]
+(defn word-movement [increment boundary?]
   (comp
    clamp-scroll
    adjust-scroll-to-cursor
@@ -43,7 +43,7 @@
                  (not (boundary? (buffers/char-at (:buffer ctx))))
                  (perform-until-ch increment boundary?)))))))))
 
-(defn end-of-word-movement [increment boundary? & {:keys [move-from-initial-boundary?]}]
+(defn end-of-word-movement [increment boundary?]
   (with-meta->> {:inclusive? true}
     (comp
      clamp-scroll
