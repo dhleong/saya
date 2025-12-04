@@ -7,7 +7,7 @@
    [reagent.core :as r]
    [saya.cli.input :refer [use-keys]]
    [saya.cli.text-input.completion :refer [cycle-completion-candidates]]
-   [saya.cli.text-input.helpers :refer [dec-to-zero inc-to-max
+   [saya.cli.text-input.helpers :refer [dec-to-zero inc-to-max key->insertable
                                         split-text-by-state]]
    [saya.modules.ui.cursor :refer [cursor]]))
 
@@ -44,12 +44,14 @@
                     (fnil dec (count completion-candidates))
                     value)
 
-      [(key :guard string?)] (let [[old-state {:keys [cursor]}] (swap-vals! state-ref
-                                                                            update
-                                                                            :cursor + (count key))
-                                   [before after] (split-text-by-state old-state value)
-                                   new-value (str before key after)]
-                               (on-change new-value cursor))
+      [(:or :space
+            (key :guard string?))] (let [key (key->insertable key)
+                                         [old-state {:keys [cursor]}] (swap-vals! state-ref
+                                                                                  update
+                                                                                  :cursor + (count key))
+                                         [before after] (split-text-by-state old-state value)
+                                         new-value (str before key after)]
+                                     (on-change new-value cursor))
 
       :else (on-key key))))
 

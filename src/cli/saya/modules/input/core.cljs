@@ -2,6 +2,7 @@
   (:require
    [clojure.core.match :refer [match]]
    [re-frame.core :refer [reg-event-fx trim-v]]
+   [saya.cli.text-input.helpers :refer [key->insertable]]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
    [saya.modules.connection.events :as conn-events]
@@ -142,15 +143,16 @@
      :key key
      :cofx cofx
      :with-unhandled (fn [cofx]
-                       (if (string? key)
-                         (try
-                           (keymaps/perform
-                            cofx
-                            #(insert/insert-at-cursor % key))
-                           (catch :default e
-                             (assoc cofx :fx [[:log ["error: " e]]])))
+                       (let [key (key->insertable key)]
+                         (if (string? key)
+                           (try
+                             (keymaps/perform
+                              cofx
+                              #(insert/insert-at-cursor % key))
+                             (catch :default e
+                               (assoc cofx :fx [[:log ["error: " e]]])))
 
-                         cofx)))
+                           cofx))))
 
     [:operator-pending key {:bufnr? true
                             :readonly? false}]

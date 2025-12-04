@@ -6,6 +6,9 @@
   [:upArrow :downArrow :leftArrow :rightArrow
    :pageDown :pageUp :return :escape :tab :backspace :delete])
 
+(def ^:private input-renamed
+  {" " :space})
+
 (def ^:private keyword-renames
   {:upArrow :up
    :downArrow :down
@@ -33,7 +36,8 @@
   (def ^:private last-params [input k])
 
   (let [kw (some #(when (j/get k %) %) keyword-dispatchables)
-        kw (get keyword-renames kw kw)]
+        kw (get keyword-renames kw kw)
+        input (get input-renamed input input)]
     (or (when (and kw
                    (j/get k :shift)
                    (not (always-shift? kw)))

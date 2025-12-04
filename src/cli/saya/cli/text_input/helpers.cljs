@@ -14,3 +14,8 @@
     [(subs value 0 idx)
      (subs value idx)]))
 
+(defn key->insertable [key]
+  (case key
+    :space " "
+    (when (string? key)
+      key)))
