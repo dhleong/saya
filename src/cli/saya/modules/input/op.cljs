@@ -4,7 +4,8 @@
    [saya.modules.input.helpers :refer [adjust-scroll-to-cursor clamp-cursor
                                        clamp-scroll]]
    [saya.modules.input.motions.find :refer [perform-find-ch perform-until-ch]]
-   [saya.modules.input.motions.word :refer [small-word-boundary?]]
+   [saya.modules.input.motions.word :refer [big-word-boundary?
+                                            small-word-boundary?]]
    [saya.modules.input.normal :as normal]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
 
@@ -56,9 +57,9 @@
 (defn- ->cursor [ctx]
   (get-in ctx [:buffer :cursor]))
 
-(def inner-word
-  (let [->start #(perform-until-ch % dec small-word-boundary?)
-        ->end #(perform-until-ch % inc small-word-boundary?)]
+(defn inner-word [boundary?]
+  (let [->start #(perform-until-ch % dec boundary?)
+        ->end #(perform-until-ch % inc boundary?)]
     (range-getter->motion
      (fn [context]
        {:start (-> context
@@ -79,17 +80,17 @@
       ; Consume it
       (perform-until-ch increment (complement str/blank?))))
 
-(def outer-word
+(defn outer-word [boundary?]
   (range-getter->motion
    (fn [ctx]
-     (let [inner-end (->cursor (perform-until-ch ctx inc small-word-boundary?))
+     (let [inner-end (->cursor (perform-until-ch ctx inc boundary?))
            word-end (->cursor (consume-whitespace ctx inc))
            ->start (if (= inner-end word-end)
                      ; If there was trailing whitespace, word-end should be >
                      ; inner-end. Here, it's = so there must not be---so, let's
                      ; consume leading whitespace instead
                      #(consume-whitespace % dec)
-                     #(perform-until-ch % dec small-word-boundary?))]
+                     #(perform-until-ch % dec boundary?))]
        {:start (-> ctx
                    (->start)
                    (->cursor))
@@ -97,8 +98,10 @@
         :inclusive? true}))))
 
 (def word-object-keymaps
-  {["i" "w"] inner-word
-   ["a" "w"] outer-word})
+  {["i" "w"] (inner-word small-word-boundary?)
+   ["i" "W"] (inner-word big-word-boundary?)
+   ["a" "w"] (outer-word small-word-boundary?)
+   ["a" "W"] (outer-word big-word-boundary?)})
 
 ; ======= Public interface =================================
 

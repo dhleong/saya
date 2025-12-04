@@ -1,6 +1,7 @@
 (ns saya.modules.input.op-test
   (:require
    [cljs.test :refer-macros [deftest testing is]]
+   [saya.modules.input.motions.word :refer [small-word-boundary?]]
    [saya.modules.input.normal :refer [delete-operator]]
    [saya.modules.input.op :as op]
    [saya.modules.input.test-helpers :refer [get-cofx-buffer make-keymap-cofx
@@ -24,18 +25,18 @@
 
 (deftest inner-word-test
   (testing "Delete inner word"
-    (with-keymap-compare-buffer op/inner-word
+    (with-keymap-compare-buffer (op/inner-word small-word-boundary?)
       "For the h|onor of Grayskull!"
       "For the | of Grayskull!"
       :pending-operator #'delete-operator))
 
   (testing "Delete inner word at boundaries"
-    (with-keymap-compare-buffer op/inner-word
+    (with-keymap-compare-buffer (op/inner-word small-word-boundary?)
       "For the |honor of Grayskull!"
       "For the | of Grayskull!"
       :pending-operator #'delete-operator)
 
-    (with-keymap-compare-buffer op/inner-word
+    (with-keymap-compare-buffer (op/inner-word small-word-boundary?)
       "For the hono|r of Grayskull!"
       "For the | of Grayskull!"
       :pending-operator #'delete-operator))
@@ -52,23 +53,23 @@
 
 (deftest outer-word-test
   (testing "Delete outer word, preferring trailing whitespace"
-    (with-keymap-compare-buffer op/outer-word
+    (with-keymap-compare-buffer (op/outer-word small-word-boundary?)
       "For the h|onor of Grayskull!"
       "For the |of Grayskull!"
       :pending-operator #'delete-operator))
 
   (testing "Delete outer word, taking leading whitespace if no trailing"
-    (with-keymap-compare-buffer op/outer-word
+    (with-keymap-compare-buffer (op/outer-word small-word-boundary?)
       "For the honor of |Grayskull"
       "For the honor o|f"
       :pending-operator #'delete-operator))
 
   (testing "Delete outer word on boundaries"
-    (with-keymap-compare-buffer op/outer-word
+    (with-keymap-compare-buffer (op/outer-word small-word-boundary?)
       "For the |honor of Grayskull"
       "For the |of Grayskull"
       :pending-operator #'delete-operator)
-    (with-keymap-compare-buffer op/outer-word
+    (with-keymap-compare-buffer (op/outer-word small-word-boundary?)
       "For the hono|r of Grayskull"
       "For the |of Grayskull"
       :pending-operator #'delete-operator)))
