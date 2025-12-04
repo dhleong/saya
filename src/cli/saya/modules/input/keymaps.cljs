@@ -20,6 +20,7 @@
 
 (defn build-context [{:keys [bufnr connr winnr] :as cofx}]
   {:buffer (get-in cofx [:db :buffers bufnr])
+   :normal-buffer (get-in cofx [:db :buffers (:normal-bufnr cofx)])
    :window (get-in cofx [:db :windows winnr])
    :editable (when-not (= bufnr [:conn/input connr])
                (some->
@@ -28,7 +29,8 @@
                 (assoc :id [:conn/input connr])))
    :pending-operator (get-in cofx [:db :pending-operator])
    :search (select-keys (get-in cofx [:db :search])
-                        [:direction :query])})
+                        [:direction :query])
+   :histories (get-in cofx [:db :histories])})
 
 (defn perform [{:keys [bufnr winnr] :as cofx} f]
   (try
@@ -47,7 +49,11 @@
                  (cond->
                   (:editable context')
                    (assoc-in [:buffers (:id (:editable context'))]
-                             (:editable context'))))
+                             (:editable context'))
+
+                   (:normal-buffer context')
+                   (assoc-in [:buffers (:id (:normal-buffer context'))]
+                             (:normal-buffer context'))))
          :fx [(when-let [e (:error context')]
                 (echo-fx :exception "ERROR:" e))
 

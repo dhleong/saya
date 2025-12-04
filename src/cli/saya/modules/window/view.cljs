@@ -5,6 +5,7 @@
    ["strip-ansi" :default strip-ansi]
    [applied-science.js-interop :as j]
    [archetype.util :refer [<sub >evt]]
+   [saya.cli.text-input.helpers :refer [split-text-by-state]]
    [saya.config :as config]
    [saya.modules.buffers.events :as buffer-events]
    [saya.modules.buffers.subs :as buffer-subs]
@@ -128,19 +129,30 @@
 (defn- input-placeholder [input-connr]
   (let [current-window (<sub [:current-window])
         conn-pending-operator? (<sub [::subs/conn-pending-operator?])
-        current-buffer (<sub [:current-buffer])]
+        current-buffer (<sub [:current-buffer])
+        input-text (<sub [::subs/input-text input-connr])
+        mode (<sub [:mode])]
     (when-not (and (= :cmdline (:id current-window))
                    (= [:conn/input input-connr] (:bufnr current-window)))
-      (when-some [text (<sub [::subs/input-text input-connr])]
+      (cond
+        (or (= :prompt mode)
+            (and conn-pending-operator?
+                 (= input-connr
+                    (:connection-id current-buffer))))
+        (let [input-buffer (<sub [::buffer-subs/by-id [:conn/input input-connr]])
+              [before after] (split-text-by-state
+                              input-buffer
+                              input-text)]
+          [:> k/Text
+           before
+           [modeful-cursor]
+           after])
+
+        ; Normal mode placeholder
+        (seq input-text)
         [:> k/Text {:dim-color true
                     :wrap :truncate-end}
-
-         (when (and conn-pending-operator?
-                    (= input-connr
-                       (:connection-id current-buffer)))
-           [modeful-cursor])
-
-         text]))))
+         input-text]))))
 
 (defn- conn-single-prompt [input-connr]
   (when-some [single-prompt (<sub [::subs/single-prompt input-connr])]

@@ -24,8 +24,10 @@
  ::current-buffer-cursor
  :<- [:buffers]
  :<- [:current-bufnr]
- (fn [[buffers current-bufnr] [_ buffer-id]]
-   (when (= current-bufnr buffer-id)
+ :<- [:mode]
+ (fn [[buffers current-bufnr mode] [_ buffer-id]]
+   (when (and (= current-bufnr buffer-id)
+              (not= :prompt mode))
      (:cursor (get buffers buffer-id)))))
 
 (reg-sub
