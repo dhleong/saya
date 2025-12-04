@@ -6,13 +6,15 @@
   (keyword send))
 
 (deftest format-user-keymaps-test
-  (testing "Handle single string modes in various places"
-    (is (= {:normal {["H"] :adora}}
+  (testing "Default to both :normal and :prompt modes"
+    (is (= {:normal {["H"] :adora}
+            :prompt {["H"] :adora}}
            (format-user-keymaps
             0
             test->f
-            [["H" {:send "adora"}]])))
+            [["H" {:send "adora"}]]))))
 
+  (testing "Handle single string modes in various places"
     ; :modes metadata
     (is (= {:insert {["H"] :adora}}
            (format-user-keymaps

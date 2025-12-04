@@ -29,7 +29,7 @@
                   (get opts :mode)
                   (when (:insert opts)
                     :insert)
-                  "n")
+                  "np")
 
         lhs (->keys lhs)
 
@@ -52,6 +52,7 @@
                 (string? modes)
                 (map #(case %
                         "n" :normal
+                        "p" :prompt
                         "i" :insert
                         (throw
                          (ex-info (str "Invalid mode `" % "`")
