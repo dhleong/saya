@@ -21,25 +21,31 @@
   (fn [ctx]
     (assoc ctx :mode new-mode)))
 
-(defn with-editable
+(defn with-named-buffer
   "Return a fn that does what f does, but prefers to
-  use the :editable buffer from the context, if any"
-  [f]
+  use the named buffer from the context, if any"
+  [buffer-name f]
   (letfn [(swap-keys [v a b]
             (-> v
                 (assoc a (b v))
                 (assoc b (a v))))]
     (fn [ctx]
       (cond-> ctx
-        (:editable ctx)
-        (swap-keys :buffer :editable)
+        (buffer-name ctx)
+        (swap-keys :buffer buffer-name)
 
         :always
         (f)
 
         ; Swap back
-        (:editable ctx)
-        (swap-keys :buffer :editable)))))
+        (buffer-name ctx)
+        (swap-keys :buffer buffer-name)))))
+
+(def with-editable
+  ^{:doc
+    "Return a fn that does what f does, but prefers to
+    use the :editable buffer from the context, if any"}
+  (partial with-named-buffer :editable))
 
 (def ^:private mode-change-keymaps
   {["i"] (mode<- :insert)

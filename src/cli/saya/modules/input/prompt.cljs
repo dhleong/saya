@@ -1,5 +1,6 @@
 (ns saya.modules.input.prompt
   (:require
+   [medley.core :refer [map-vals]]
    [saya.modules.buffers.line :refer [buffer-line]]
    [saya.modules.input.helpers :refer [clamp-cursor update-cursor]]
    [saya.modules.input.normal :as normal :refer [mode<-]]
@@ -42,15 +43,31 @@
           clamp-cursor
           (partial scroll-input-history :newer))})
 
-; TODO: Need to swap the "current" buffer back before these work:
+(defn- in-normal-mode [f]
+  (comp
+   (normal/with-named-buffer
+     :normal-buffer
+     f)
+   (mode<- :normal)))
+
 (def mode-change-keymaps
-  ; TODO: any scroll functions should probably revert back to :normal
-  {[:ctrl/k] (comp
-              (update-cursor :row dec)
-              (mode<- :normal))
-   [:ctrl/j] (comp
-              (update-cursor :row inc)
-              (mode<- :normal))})
+  (merge
+   {[:ctrl/k] (in-normal-mode
+               (update-cursor :row dec))
+    [:ctrl/j] (in-normal-mode
+               (update-cursor :row inc))}
+
+    ; Any scroll functions should probably revert back to :normal
+   (map-vals
+    in-normal-mode
+    (select-keys
+     normal/movement-keymaps
+     [["g" "g"]
+      ["G"]]))
+
+   (map-vals
+    in-normal-mode
+    normal/scroll-keymaps)))
 
 (def keymaps
   (merge

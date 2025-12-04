@@ -152,7 +152,8 @@
 
      [:operator-pending key {:connr? true}]
      (perform-operator-pending
-      :cofx (assoc cofx :bufnr [:conn/input connr])
+      :cofx (assoc cofx :bufnr [:conn/input connr]
+                   :normal-bufnr bufnr)
       :db db
       :key key
       :return-mode :prompt)
@@ -167,7 +168,8 @@
       :mode :prompt
       :keymaps prompt/keymaps
       :keymap-buffer keymap-buffer
-      :cofx (assoc cofx :bufnr [:conn/input connr])
+      :cofx (assoc cofx :bufnr [:conn/input connr]
+                   :normal-bufnr bufnr)
       :key key)
 
      :else nil
