@@ -5,12 +5,15 @@
    [saya.modules.input.helpers :refer [*mode*]]))
 
 (defn- starts-with? [sequence candidate]
-  (every?
-   true?
-   (map
-    =
-    sequence
-    candidate)))
+  (and
+   (>= (count sequence)
+       (count candidate))
+   (every?
+    true?
+    (map
+     =
+     sequence
+     candidate))))
 
 (defn possible? [keymaps keymap-buffer]
   (some
