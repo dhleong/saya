@@ -2,8 +2,8 @@
   (:require
    [saya.modules.input.helpers :refer [adjust-scroll-to-cursor clamp-cursor
                                        clamp-scroll]]
-   [saya.modules.input.motions.word :refer [end-of-word-movement
-                                            small-word-boundary? word-movement]]
+   [saya.modules.input.motions.find :refer [perform-until-ch]]
+   [saya.modules.input.motions.word :refer [small-word-boundary? word-movement]]
    [saya.modules.input.normal :as normal]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
 
@@ -52,19 +52,21 @@
 
 ; ======= Word text objects ================================
 
-; FIXME: The :start for these ought to not move when starting on a
-; boundary...
-
 (def inner-word
-  (range-getter->motion
-   (fn [context]
-     {:start (-> context
-                 ((word-movement dec small-word-boundary?))
+  (let [->start #(perform-until-ch % dec small-word-boundary?)
+        ->end #(perform-until-ch % inc small-word-boundary?)]
+    (range-getter->motion
+     (fn [context]
+       {:start (-> context
+                   (->start)
+                   (get-in [:buffer :cursor]))
+        :end (-> context
+                 (->end)
                  (get-in [:buffer :cursor]))
-      :end (-> context
-               ((end-of-word-movement inc small-word-boundary?))
-               (get-in [:buffer :cursor]))
-      :inclusive? true})))
+        :inclusive? true}))))
+
+; FIXME: The :start for this ought to not move when starting on a
+; boundary...
 
 (def outer-word
   (range-getter->motion

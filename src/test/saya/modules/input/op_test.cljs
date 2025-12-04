@@ -29,6 +29,17 @@
       "For the | of Grayskull!"
       :pending-operator #'delete-operator))
 
+  (testing "Delete inner word at boundaries"
+    (with-keymap-compare-buffer op/inner-word
+      "For the |honor of Grayskull!"
+      "For the | of Grayskull!"
+      :pending-operator #'delete-operator)
+
+    (with-keymap-compare-buffer op/inner-word
+      "For the hono|r of Grayskull!"
+      "For the | of Grayskull!"
+      :pending-operator #'delete-operator))
+
   (testing "Inner-word integration"
     (let [cofx (-> (make-keymap-cofx "For the h|onor of Grayskull!")
                    (perform-cofx-key "d")
