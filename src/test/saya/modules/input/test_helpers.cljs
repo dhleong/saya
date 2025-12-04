@@ -47,7 +47,7 @@
   (let [[before after] (split-text-by-state {:cursor cursor} s)]
     (str before "|" after)))
 
-(defn buffer->str [{:keys [lines cursor]}]
+(defn buffer->vec [{:keys [lines cursor]}]
   (->> lines
        (map-indexed (fn [i line]
                       (cond-> (line->string line)
@@ -77,10 +77,10 @@
                     (println "ERROR performing " f ": " e)
                     (println (.-stack e))
                     (throw e)))
-        expected (buffer->str (get-buffer (make-context :buffer buffer-after)))
-        actual (buffer->str (get-buffer ctx'))]
+        expected (buffer->vec (get-buffer (make-context :buffer buffer-after)))
+        actual (buffer->vec (get-buffer ctx'))]
     (is (= expected actual)
-        (str "From " (buffer->str (get-buffer ctx)) "\n"))
+        (str "From " (buffer->vec (get-buffer ctx)) "\n"))
 
     (when window-expect
       (is (= window-expect (-> (get-in ctx' [:window])
@@ -109,3 +109,8 @@
   (-> cofx
       (handle-on-key [key])
       (merge (select-keys cofx [:bufnr :winnr]))))
+
+(defn get-cofx-buffer [cofx]
+  (->> (get-in cofx [:db :buffers 0])
+       (buffer->vec)
+       (str/join "\n")))

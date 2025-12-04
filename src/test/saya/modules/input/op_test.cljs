@@ -3,7 +3,8 @@
    [cljs.test :refer-macros [deftest testing is]]
    [saya.modules.input.normal :refer [delete-operator]]
    [saya.modules.input.op :as op]
-   [saya.modules.input.test-helpers :refer [make-keymap-cofx perform-cofx-key
+   [saya.modules.input.test-helpers :refer [get-cofx-buffer make-keymap-cofx
+                                            perform-cofx-key
                                             with-keymap-compare-buffer]]))
 
 (deftest delete-operator-op-test
@@ -29,13 +30,14 @@
       :pending-operator #'delete-operator))
 
   (testing "Inner-word integration"
-    (is (= {:mode :operator-pending
-            :keymap-buffer ["i"]}
-           (-> (make-keymap-cofx "for |the honor")
-               (perform-cofx-key "d")
-               (perform-cofx-key "i")
-               :db
-               (select-keys [:mode :keymap-buffer]))))))
+    (let [cofx (-> (make-keymap-cofx "For the h|onor of Grayskull!")
+                   (perform-cofx-key "d")
+                   (perform-cofx-key "i"))]
+      (is (= {:mode :operator-pending
+              :keymap-buffer ["i"]}
+             (select-keys (:db cofx) [:mode :keymap-buffer])))
+      (is (= "For the | of Grayskull!"
+             (get-cofx-buffer (perform-cofx-key cofx "w")))))))
 
 (deftest outer-word-test
   (testing "Delete outer word"

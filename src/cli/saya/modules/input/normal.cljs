@@ -150,7 +150,6 @@
   (let [[start end] (align-start-end start end)
         end (cond-> end
               inclusive? (inc))]
-    (println start end inclusive?)
     ; TODO: It'd be nice not to have to convert the line to a string multiple times...
     (-> buffer
         (update-buffer-line-string
