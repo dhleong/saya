@@ -72,25 +72,24 @@
                       :keys [bufnr connr winnr]
                       :as cofx}
                      [key]]
-
   (match [mode key {:bufnr? (some? bufnr)
                     :readonly? (or (some? connr)
                                    (buffers/readonly?
                                     (get-in db [:buffers bufnr])))
                     :connr? (some? connr)
                     :submit? (some? (get-in db [:windows winnr :on-submit]))}]
-    [:normal ":" _] {:db (assoc db :mode :command)
-                     :fx [[:dispatch [::echo-events/ack-echo]]]}
+    [(:or :normal :prompt) ":" _] {:db (assoc db :mode :command)
+                                   :fx [[:dispatch [::echo-events/ack-echo]]]}
 
-    [:normal "/" _] {:db (-> db
-                             (assoc :mode :search)
-                             (assoc :search {:direction (if connr :older :newer)}))
-                     :fx [[:dispatch [::echo-events/ack-echo]]]}
+    [(:or :normal :prompt) "/" _] {:db (-> db
+                                           (assoc :mode :search)
+                                           (assoc :search {:direction (if connr :older :newer)}))
+                                   :fx [[:dispatch [::echo-events/ack-echo]]]}
 
-    [:normal "?" _] {:db (-> db
-                             (assoc :mode :search)
-                             (assoc :search {:direction (if connr :newer :older)}))
-                     :fx [[:dispatch [::echo-events/ack-echo]]]}
+    [(:or :normal :prompt) "?" _] {:db (-> db
+                                           (assoc :mode :search)
+                                           (assoc :search {:direction (if connr :newer :older)}))
+                                   :fx [[:dispatch [::echo-events/ack-echo]]]}
 
     [:normal :return {:submit? true}] {:dispatch [::submit-cmdline]}
     [:insert :return {:submit? true}] {:dispatch [::submit-cmdline]}
@@ -164,6 +163,7 @@
 
     [:prompt :escape _] {:db (assoc db :mode :normal)}
     [:prompt :ctrl/c _] {:db (assoc db :mode :normal)}
+    ; TODO: Support submitting from :prompt mode
 
     ; TODO: We'll need to ensure that :prompt mode doesn't persist
     ; when leaving a connr buffer...
