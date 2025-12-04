@@ -1,6 +1,7 @@
 (ns saya.modules.buffers.util
   (:require
-   [saya.modules.buffers.line :refer [length]]))
+   ["strip-ansi" :default strip-ansi]
+   [saya.modules.buffers.line :refer [ansi-chars length]]))
 
 (defn readonly? [buffer]
   (or (:connection-id buffer)
@@ -16,9 +17,9 @@
   ([{:keys [cursor] :as buffer}] (char-at buffer cursor))
   ([{:keys [lines]} {:keys [row col]}]
    (when (<= 0 row (dec (count lines)))
-     (let [line (str (nth lines row))]
+     (let [line (ansi-chars (nth lines row))]
        (when (<= 0 col (dec (count line)))
-         (.charAt line col))))))
+         (strip-ansi (nth line col)))))))
 
 (defn clamp-cursor
   ([cursor [min-cursor max-cursor]] (clamp-cursor cursor min-cursor max-cursor))

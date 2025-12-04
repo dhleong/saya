@@ -29,6 +29,11 @@
       "For the honor
        |of Grayskull!"))
 
+  (testing "Small word movement with ansi"
+    (with-keymap-compare-buffer (word-movement inc small-word-boundary?)
+      "|\u001b[32mFor the honor of Grayskull!"
+      "\u001b[32mFor |the honor of Grayskull!"))
+
   (testing "Small word movement backward"
     (with-keymap-compare-buffer (word-movement dec small-word-boundary?)
       "For the honor of Grayskul|l"

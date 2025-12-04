@@ -1,5 +1,6 @@
 (ns saya.modules.input.test-helpers
   (:require
+   ["strip-ansi" :default strip-ansi]
    [clojure.string :as str]
    [clojure.test :refer [is]]
    [saya.cli.text-input.helpers :refer [split-text-by-state]]
@@ -20,7 +21,7 @@
                        (re-find #"^[ ]+" line))
             line (cond-> line
                    (some? indent) (subs (count indent)))
-            cursor-col (str/index-of line "|")]
+            cursor-col (str/index-of (strip-ansi line) "|")]
         (recur (next raw-lines)
                indent
                (conj lines (str/replace line #"\|" ""))
