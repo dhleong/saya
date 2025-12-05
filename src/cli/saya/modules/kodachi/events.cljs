@@ -86,7 +86,7 @@
            :always
            (assoc-in [:connections connr :state] :connected)
 
-           (seq (js/process.env.REPLAY_DUMP))
+           (seq js/process.env.REPLAY_DUMP)
            (assoc-in [:tti :replay/connection :start] (js/performance.now)))
      :fx [[:dispatch
            [::buffer-events/new-line
