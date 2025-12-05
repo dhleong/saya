@@ -12,6 +12,7 @@
    [saya.modules.connection.completion :refer [->ConnectionCompletionSource]]
    [saya.modules.connection.events :as conn-events]
    [saya.modules.input.window :as input-window]
+   [saya.modules.perf.core :as perf]
    [saya.modules.search.subs :as search-subs]
    [saya.modules.ui.cursor :refer [cursor]]
    [saya.modules.ui.placeholders :as placeholders]
@@ -28,6 +29,8 @@
                  "Connected!"])
 
    :disconnected (fn disconnected [uri]
+                   (when (seq js/process.env.REPLAY_DUMP)
+                     (perf/use-tti-end-effect :replay/connection))
                    [:> k/Text {:italic true}
                     "Disconnected from " uri "."])
 

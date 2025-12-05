@@ -82,7 +82,12 @@
   ; here.
 
     {:type "Connected"}
-    {:db (assoc-in db [:connections connr :state] :connected)
+    {:db (cond-> db
+           :always
+           (assoc-in [:connections connr :state] :connected)
+
+           (seq (js/process.env.REPLAY_DUMP))
+           (assoc-in [:tti :replay/connection :start] (js/performance.now)))
      :fx [[:dispatch
            [::buffer-events/new-line
             {:id bufnr
