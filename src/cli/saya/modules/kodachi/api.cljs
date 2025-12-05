@@ -41,7 +41,7 @@
       (if-not (seq raw-message)
         (log "Received empty message from kodachi...")
         (echo :error "[kodachi] ERROR "
-              (ex-info "ERROR: Failed to parse"
+              (ex-info "Failed to parse"
                        {:raw-message raw-message
                         :cause e}))))))
 

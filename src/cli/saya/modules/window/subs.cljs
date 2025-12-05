@@ -4,7 +4,8 @@
    [re-frame.core :refer [reg-sub subscribe]]
    [saya.modules.buffers.line :refer [wrapped-lines]]
    [saya.modules.buffers.subs :as buffer-subs]
-   [saya.modules.input.modes :as modes]))
+   [saya.modules.input.modes :as modes]
+   [taoensso.tufte :as tufte]))
 
 (reg-sub
  ::by-id
@@ -62,7 +63,11 @@
     (subscribe [::buffer-subs/lines-by-id bufnr])])
  (fn [[window buffer buffer-lines]]
    (or (seq (when buffer-lines
-              (visible-lines window buffer-lines)))
+              (tufte/profile
+               {:id ::visible-lines}
+               (tufte/p
+                ::visible-lines
+                (visible-lines window buffer-lines)))))
 
        ; NOTE: Non-connection buffers need some blank "starter" line
        ; for editing purposes

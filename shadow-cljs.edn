@@ -35,7 +35,8 @@
                 [day8.re-frame/re-frame-10x "1.9.9"]
                 [day8.re-frame/test "0.1.5"]
                 [day8.re-frame/tracing "0.6.2"]
-                [org.clojure/test.check "1.1.1"]]
+                [org.clojure/test.check "1.1.1"]
+                [com.taoensso/tufte "3.0.0"]]
 
  :builds {:cli {:target :esm
                 :output-dir "resources/"

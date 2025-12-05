@@ -4,7 +4,21 @@
    [applied-science.js-interop :as j]
    [clojure.string :as str]
    [saya.modules.ansi.split :as split]
-   [saya.modules.ansi.wrap :refer [wrap-ansi]]))
+   [saya.modules.ansi.wrap :refer [wrap-ansi]]
+   [taoensso.tufte :as tufte]))
+
+(defprotocol IBufferLine
+  (->ansi [this])
+  (ansi-chars [this])
+  (length
+    [this]
+    "Visual length of this line in chars")
+  (wrapped-lines [this width])
+  (ansi-continuation
+    [this]
+    "The final ansi code state at the end of this line"))
+
+(declare ->BufferLine BufferLine)
 
 (defn- strip-unprintable [s]
   (str/replace s "\u0000" ""))
@@ -87,6 +101,27 @@
                      :line line}))))
         [])))
 
+(defn- perform-line-wrap [^BufferLine buffer-line width]
+  (tufte/p
+   ::perform-line-wrap
+   (->wrapped-lines (.-parts buffer-line) width)
+   #_[{:line (into (wrap-ansi (->ansi buffer-line) width)
+                   (keep :system (.-parts buffer-line)))
+       :col 0}]))
+
+(defonce width-recalcs (atom 0))
+
+(defn- cached-wrapped-lines [buffer-line width]
+  (let [[for-width cached] (:wrapped @(.-state buffer-line))]
+    (or (when (= for-width width)
+          cached)
+        (when for-width
+          (swap! width-recalcs inc)
+          nil)
+        (-> (swap! (.-state buffer-line) assoc :wrapped [width (perform-line-wrap buffer-line width)])
+            (:wrapped)
+            (second)))))
+
 (defn- ->ansi-continuation [ansi]
   (when-let [parts (seq (.parse AnsiParser (str ansi " ")))]
     (let [ansi (j/get (nth parts (dec (count parts))) :style)]
@@ -102,19 +137,6 @@
     (update o :ansi strip-unprintable)
 
     :else o))
-
-(defprotocol IBufferLine
-  (->ansi [this])
-  (ansi-chars [this])
-  (length
-    [this]
-    "Visual length of this line in chars")
-  (wrapped-lines [this width])
-  (ansi-continuation
-    [this]
-    "The final ansi code state at the end of this line"))
-
-(declare ->BufferLine)
 
 (deftype BufferLine [parts state]
   Object
@@ -157,15 +179,12 @@
   (length [this]
     (count (ansi-chars this)))
 
-  (wrapped-lines [_ width]
+  (wrapped-lines [this width]
     ; TODO: This should probably be some kind of LRU cache when we support
     ; splitting windows...
-    (let [[for-width cached] (:wrapped @state)]
-      (or (when (= for-width width)
-            cached)
-          (-> (swap! state assoc :wrapped [width (->wrapped-lines parts width)])
-              (:wrapped)
-              (second)))))
+    (tufte/p
+     ::cached-wrapped-lines
+     (cached-wrapped-lines this width)))
 
   (ansi-continuation [this]
     ; NOTE: We don't cache this because we *shouldn't* need it
