@@ -1,7 +1,8 @@
 (ns saya.modules.input.core-test
   (:require
    [cljs.test :refer-macros [deftest is testing]]
-   [saya.modules.input.test-helpers :refer [make-keymap-cofx perform-cofx-key]]))
+   [saya.modules.input.test-helpers :refer [get-cofx-buffer make-keymap-cofx
+                                            perform-cofx-key]]))
 
 (deftest delete-operator-test
   (testing "Delete operator lands in :normal mode"
@@ -10,7 +11,14 @@
                (perform-cofx-key "d")
                (perform-cofx-key "w")
                :db
-               (select-keys [:mode]))))))
+               (select-keys [:mode])))))
+
+  (testing "Delete operator is clamped correctly"
+    (is (= "for the hon|o"
+           (-> (make-keymap-cofx "for the hono|r")
+               (perform-cofx-key "d")
+               (perform-cofx-key "l")
+               (get-cofx-buffer))))))
 
 (deftest change-operator-test
   (testing "Change operator lands in :insert mode"

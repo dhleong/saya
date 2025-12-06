@@ -226,4 +226,13 @@
     (with-keys-compare-buffer ["C"]
       "Talkin |away"
       "Talkin |"
-      :mode-expect :insert)))
+      :mode-expect :insert))
+
+  (testing "Delete char forward"
+    (with-keys-compare-buffer ["x"]
+      "Talkin awa|y"
+      "Talkin aw|a"))
+  (testing "Delete char backward"
+    (with-keys-compare-buffer ["X"]
+      "Talkin awa|y"
+      "Talkin aw|y")))

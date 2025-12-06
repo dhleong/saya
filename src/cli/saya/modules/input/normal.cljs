@@ -213,7 +213,14 @@
           #'to-end-of-line)
    ["D"] (create-edit-with-operator
           #'delete-operator
-          #'to-end-of-line)})
+          #'to-end-of-line)
+
+   ["x"] (create-edit-with-operator
+          #'delete-operator
+          (update-cursor :col inc))
+   ["X"] (create-edit-with-operator
+          #'delete-operator
+          (update-cursor :col dec))})
 
 ; ======= Scroll keymaps ===================================
 

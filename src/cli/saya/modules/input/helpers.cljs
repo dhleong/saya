@@ -198,7 +198,11 @@
   "Given a movement function and context, compute an 'operation' that can be
   passed to an operator function"
   [f ctx]
-  (let [ctx' (f ctx)
+  ; HACK: We pretend to be in :insert mode while evaluating the motion to allow
+  ; the cursor to extend to the col *after* the last col in the line
+  ; (see clamp-cursor). Surely there's a better way to handle this...
+  (let [ctx' (binding [*mode* :insert]
+               (f ctx))
         start (get-in ctx [:buffer :cursor])
         end (get-in ctx' [:buffer :cursor])]
     (merge
