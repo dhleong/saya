@@ -2,8 +2,13 @@
   (:require
    [cljs.test :refer-macros [deftest testing]]
    [saya.modules.input.helpers :refer [update-cursor]]
-   [saya.modules.input.normal :refer [delete-operator update-scroll]]
+   [saya.modules.input.normal :as normal :refer [delete-operator update-scroll]]
    [saya.modules.input.test-helpers :refer [with-keymap-compare-buffer]]))
+
+(defn with-keys-compare-buffer [keys before after & args]
+  (let [f (get normal/keymaps keys)]
+    (assert f (str "Unbound keymap keys: " keys))
+    (apply with-keymap-compare-buffer f before after args)))
 
 (deftest delete-operator-test
   (testing "Linewise delete"
@@ -57,7 +62,7 @@
                                                      :end {:row 0 :col 27}
                                                      :inclusive? true})
       "For the honor of Grayskull|!"
-      "For the honor of Grayskull|")))
+      "For the honor of Grayskul|l")))
 
 (deftest scroll-test
   (testing "Scroll up single lines"
@@ -209,3 +214,16 @@
       :window {:height 3 :width 10
                :anchor-row 3 :anchor-offset 1}
       :window-expect {:anchor-row 2 :anchor-offset 0})))
+
+(deftest edit-keymaps-test
+  (testing "Delete to eol"
+    (with-keys-compare-buffer ["D"]
+      "Talkin |away"
+      "Talkin| "
+      :mode-expect :normal))
+
+  (testing "Change to eol"
+    (with-keys-compare-buffer ["C"]
+      "Talkin |away"
+      "Talkin |"
+      :mode-expect :insert)))

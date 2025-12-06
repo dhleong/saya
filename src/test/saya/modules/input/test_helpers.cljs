@@ -8,6 +8,7 @@
    [saya.modules.buffers.events :as buffer-events]
    [saya.modules.buffers.line :refer [buffer-line]]
    [saya.modules.input.core :refer [handle-on-key]]
+   [saya.modules.input.helpers :refer [*mode*]]
    [saya.modules.input.insert :refer [line->string]]
    [saya.modules.window.subs :refer [visible-lines]]))
 
@@ -49,10 +50,12 @@
 
 (defn buffer->vec [{:keys [lines cursor]}]
   (->> lines
-       (map-indexed (fn [i line]
-                      (cond-> (line->string line)
-                        (= i (:row cursor))
-                        (insert-cursor cursor))))
+       (keep-indexed (fn [i line]
+                       (let [s (line->string line)]
+                         (when (seq s)
+                           (cond-> s
+                             (= i (:row cursor))
+                             (insert-cursor cursor))))))
        (into [])))
 
 (defn make-context [& {:keys [buffer window]}]
@@ -61,22 +64,26 @@
                (-> (buffer-events/create-blank default-db)
                    (second)
                    :buffer))
-   :window (merge {:height 2 :width 20} window)})
+   :window (merge {:height 2 :width 20} window)
+   :mode :normal})
 
 (defn get-buffer [ctx]
   (-> (get-in ctx [:buffer])
       (select-keys [:lines :cursor])))
 
 (defn with-keymap-compare-buffer
-  [f buffer-before buffer-after & {:keys [window window-expect pending-operator]}]
+  [f buffer-before buffer-after & {:keys [window window-expect pending-operator
+                                          mode-expect]}]
   (let [ctx (-> (make-context :buffer buffer-before
                               :window window)
                 (assoc :pending-operator pending-operator))
-        ctx' (try (f ctx)
+        ctx' (try (binding [*mode* (:mode ctx)]
+                    (f ctx))
                   (catch :default e
                     (println "ERROR performing " f ": " e)
                     (println (.-stack e))
                     (throw e)))
+
         expected (buffer->vec (get-buffer (make-context :buffer buffer-after)))
         actual (buffer->vec (get-buffer ctx'))]
     (is (= expected actual)
@@ -96,7 +103,11 @@
                  "\n -> \n"
                  (vis' ctx')
                  "\n Expected:\n"
-                 (vis' (update ctx :window merge window-expect))))))))
+                 (vis' (update ctx :window merge window-expect))))))
+
+    (when mode-expect
+      (is (= mode-expect
+             (:mode ctx' (:mode ctx)))))))
 
 (defn make-keymap-cofx [buffer]
   {:db {:buffers {0 (str->buffer buffer)}

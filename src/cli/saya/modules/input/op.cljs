@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as str]
    [saya.modules.input.helpers :refer [adjust-scroll-to-cursor clamp-cursor
-                                       clamp-scroll]]
+                                       clamp-scroll movement->operation]]
    [saya.modules.input.motions.find :refer [perform-find-ch perform-until-ch]]
    [saya.modules.input.motions.word :refer [big-word-boundary?
                                             small-word-boundary?]]
@@ -30,21 +30,9 @@
 
 ; ======= Movement -> motions ==============================
 
-(defn- extract-flags [f]
-  (meta f))
-
 (defn movement->motion [f]
   (range-getter->motion
-   (fn get-movement-range [context]
-     (let [context' (f context)
-           start (get-in context [:buffer :cursor])
-           end (get-in context' [:buffer :cursor])]
-       (merge
-        (extract-flags f)
-        {:start start
-         :end end
-         :linewise? (or (::linewise? context)
-                        (not= (:row start) (:row end)))})))))
+   (partial movement->operation f)))
 
 (def movement-keymaps
   (->> normal/movement-keymaps

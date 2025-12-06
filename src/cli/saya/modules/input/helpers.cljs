@@ -191,3 +191,19 @@
    (fn cursor-updator [ctx]
      (update-in ctx [:buffer :cursor col-or-row] f))))
 
+(defn- extract-flags [f]
+  (meta f))
+
+(defn movement->operation
+  "Given a movement function and context, compute an 'operation' that can be
+  passed to an operator function"
+  [f ctx]
+  (let [ctx' (f ctx)
+        start (get-in ctx [:buffer :cursor])
+        end (get-in ctx' [:buffer :cursor])]
+    (merge
+     (extract-flags f)
+     {:start start
+      :end end
+      :linewise? (or (::linewise? ctx)
+                     (not= (:row start) (:row end)))})))

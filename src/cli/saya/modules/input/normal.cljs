@@ -3,11 +3,12 @@
    [saya.cli.text-input.helpers :refer [dec-to-zero]]
    [saya.modules.buffers.line :refer [wrapped-lines]]
    [saya.modules.buffers.util :as buffers]
-   [saya.modules.input.helpers :refer [adjust-cursor-to-scroll
+   [saya.modules.input.helpers :refer [*mode* adjust-cursor-to-scroll
                                        adjust-scroll-to-cursor clamp-cursor
                                        clamp-scroll
                                        current-buffer-line-last-col
-                                       last-buffer-row update-cursor]]
+                                       last-buffer-row movement->operation
+                                       update-cursor]]
    [saya.modules.input.insert :refer [line->string update-buffer-line-string]]
    [saya.modules.input.motions.word :refer [big-word-boundary?
                                             end-of-word-movement
@@ -169,7 +170,10 @@
 
     ; Char-wise delete within a line
     (= (:row start) (:row end))
-    (update context :buffer delete-chars flags (:row start) (:col start) (:col end))
+    (binding [*mode* (:mode context *mode*)]
+      (-> context
+          (update :buffer delete-chars flags (:row start) (:col start) (:col end))
+          (clamp-cursor)))
 
     :else
     {:error "TODO: support char-wise cross-line deletes"}))
@@ -178,8 +182,8 @@
 
 (defn change-operator {:char "c"} [context flags]
   (-> context
-      (delete-operator flags)
-      (assoc :mode :insert)))
+      (assoc :mode :insert)
+      (delete-operator flags)))
 
 ;; Integration
 
@@ -196,6 +200,20 @@
 (def operator-keymaps
   {["c"] (enqueue-operator #'change-operator)
    ["d"] (enqueue-operator #'delete-operator)})
+
+; ======= Edit keymaps =====================================
+
+(defn- create-edit-with-operator [operator motion]
+  (fn perform-edit [ctx]
+    (operator ctx (movement->operation motion ctx))))
+
+(def edit-keymaps
+  {["C"] (create-edit-with-operator
+          #'change-operator
+          #'to-end-of-line)
+   ["D"] (create-edit-with-operator
+          #'delete-operator
+          #'to-end-of-line)})
 
 ; ======= Scroll keymaps ===================================
 
@@ -259,6 +277,7 @@
    mode-change-keymaps
    movement-keymaps
    operator-keymaps
+   edit-keymaps
    scroll-keymaps))
 
 #_{:clj-kondo/ignore [:unresolved-namespace]}
