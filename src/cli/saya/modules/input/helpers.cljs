@@ -177,7 +177,8 @@
         ; NOTE: We delay reading the current buffer line until
         ; after clamping the row above, since it may have changed!
         (as-> ctx
-          (let [max-cursor-col (current-buffer-line-last-col (:buffer ctx))]
+          (let [max-cursor-col (binding [*mode* (:mode ctx *mode*)]
+                                 (current-buffer-line-last-col (:buffer ctx)))]
             (update-in ctx [:buffer :cursor :col]
                        #(min max-cursor-col
                              (max 0 %))))))))
@@ -201,8 +202,7 @@
   ; HACK: We pretend to be in :insert mode while evaluating the motion to allow
   ; the cursor to extend to the col *after* the last col in the line
   ; (see clamp-cursor). Surely there's a better way to handle this...
-  (let [ctx' (binding [*mode* :insert]
-               (f ctx))
+  (let [ctx' (f (assoc ctx :mode :insert))
         start (get-in ctx [:buffer :cursor])
         end (get-in ctx' [:buffer :cursor])]
     (merge
