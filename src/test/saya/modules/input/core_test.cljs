@@ -27,5 +27,13 @@
                (perform-cofx-key "c")
                (perform-cofx-key "w")
                :db
-               (select-keys [:mode]))))))
+               (select-keys [:mode])))))
+
+  (testing "ciw at the end of the line doesn't clamp the cursor"
+    (is (= "for the |"
+           (-> (make-keymap-cofx "for the |honor")
+               (perform-cofx-key "c")
+               (perform-cofx-key "i")
+               (perform-cofx-key "w")
+               (get-cofx-buffer))))))
 

@@ -3,7 +3,7 @@
    [saya.cli.text-input.helpers :refer [dec-to-zero]]
    [saya.modules.buffers.line :refer [wrapped-lines]]
    [saya.modules.buffers.util :as buffers]
-   [saya.modules.input.helpers :refer [*mode* adjust-cursor-to-scroll
+   [saya.modules.input.helpers :refer [adjust-cursor-to-scroll
                                        adjust-scroll-to-cursor clamp-cursor
                                        clamp-scroll
                                        current-buffer-line-last-col
@@ -170,10 +170,9 @@
 
     ; Char-wise delete within a line
     (= (:row start) (:row end))
-    (binding [*mode* (:mode context *mode*)]
-      (-> context
-          (update :buffer delete-chars flags (:row start) (:col start) (:col end))
-          (clamp-cursor)))
+    (-> context
+        (update :buffer delete-chars flags (:row start) (:col start) (:col end))
+        (clamp-cursor))
 
     :else
     {:error "TODO: support char-wise cross-line deletes"}))
