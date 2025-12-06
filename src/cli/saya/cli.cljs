@@ -16,7 +16,6 @@
    [saya.util.ink-testing-utils] ; NOTE: Required here just to convince shadow to build them in dev
    [saya.util.logging :as logging]
    [saya.views :as views]
-   [taoensso.tufte :as tufte]
    [saya.modules.perf.core :as perf]))
 
 (defonce ^:private ink-instance (atom nil))
