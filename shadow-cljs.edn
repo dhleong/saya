@@ -48,7 +48,9 @@
                                 :init-fn saya.cli/init}}
                 :js-options {:js-provider :import
                              :keep-native-requires true
-                             :keep-as-require #{"ansi-escapes"}}}
+                             :keep-as-require #{"ansi-escapes"}}
+                :devtools
+                {:ignore-warnings true}}
 
           :ci-node {:target :esm-files
                     :ns-regexp "((^saya.ci)|(-test$))"
