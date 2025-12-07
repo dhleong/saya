@@ -49,6 +49,7 @@
       :initial-value (<sub [::subs/input-text connr])
       :initial-cursor (:col (<sub [::buffer-subs/buffer-cursor bufnr]))
       :completion (->ConnectionCompletionSource connr)
+      :add-to-history? false ; Handled by submit-input-buffer
       :on-persist-value #(>evt [::window-events/set-input-text {:connr connr
                                                                 :text %}])
       :on-persist-cursor (fn [col]

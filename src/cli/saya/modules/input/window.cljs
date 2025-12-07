@@ -50,7 +50,9 @@
                             on-persist-cursor on-persist-value
                             on-submit
                             on-prepare-buffer before bufnr
-                            completion]}]
+                            add-to-history?
+                            completion]
+                     :or {add-to-history? true}}]
   (r/with-let [input-ref (atom (or initial-value ""))]
     (let [[input set-input!] (React/useState @input-ref)
           on-change (React/useCallback
@@ -67,11 +69,11 @@
           on-submit (React/useCallback
                      (fn [v]
                        (on-change "" 0 nil {:for-submit? true})
-                       (when bufnr
+                       (when (and add-to-history? bufnr)
                          (>evt [::events/add-history {:bufnr bufnr
                                                       :entry v}]))
                        (on-submit v))
-                     #js [bufnr on-change on-submit])
+                     #js [bufnr add-to-history? on-change on-submit])
 
           on-key (safely on-key {:bufnr bufnr
                                  :winnr (<sub [:current-winnr])

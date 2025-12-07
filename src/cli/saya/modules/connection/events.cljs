@@ -3,6 +3,7 @@
    [clojure.string :as str]
    [re-frame.core :refer [reg-event-fx unwrap]]
    [saya.modules.buffers.events :as buffer-events]
+   [saya.modules.input.events :as input-events]
    [saya.modules.window.events :as window-events]))
 
 (reg-event-fx
@@ -24,6 +25,9 @@
               ; but fixing properly in input-window feels... annoying
               [::window-events/set-input-text {:connr connr
                                                :text ""}]]
+             [:dispatch
+              [::input-events/add-history {:bufnr bufnr
+                                           :entry text}]]
              [:dispatch
               [::buffer-events/set-cursor
                {:id bufnr
