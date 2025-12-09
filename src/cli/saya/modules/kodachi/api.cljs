@@ -1,5 +1,6 @@
 (ns saya.modules.kodachi.api
   (:require
+   ["lodash" :default lodash]
    ["node:child_process" :as process]
    ["split2" :default split2]
    [applied-science.js-interop :as j]
@@ -15,6 +16,17 @@
    "../kodachi/target/release/kodachi"])
 
 (defonce ^:private instance (atom nil))
+
+(defonce ^:private queue (atom nil))
+
+(defn- flush-queue! []
+  (let [[queued _] (reset-vals! queue nil)]
+    (when-some [queued (seq queued)]
+      (doseq [q queued]
+        (>evt [::events/on-message q])))))
+
+(def ^:private throttled-flush-queue!
+  ((.-throttle lodash) flush-queue! 18))
 
 (defn- spawn-proc [path args opts]
   (let [promise (p/deferred)
@@ -84,7 +96,17 @@
                           (.emit proc
                                  (str "response:" id)
                                  msg))
-                        (>evt [::events/on-message msg])))
+
+                        (when (and (seq js/process.env.REPLAY_DUMP)
+                                   (= "Connecting" (:type msg)))
+                          (>evt [::events/connecting
+                                 {:uri "replay"
+                                  :connection-id (:connection_id msg)}]))
+
+                        (swap! queue (fnil conj []) msg)
+                        (throttled-flush-queue!)
+
+                        #_(>evt [::events/on-message msg])))
           (.on "error" (fn [err]
                          (log "Error from kodachi:" err)
                          (>evt [::events/on-error err]))))

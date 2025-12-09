@@ -132,12 +132,7 @@
    (let [bufnr (get-in db [:connections connr :bufnr])]
      (cond
        (some? bufnr)
-       (process-message db connr bufnr params)
-
-       (and (seq js/process.env.REPLAY_DUMP)
-            (= "Connecting" (:type params)))
-       {:dispatch [::connecting {:uri "replay"
-                                 :connection-id connr}]}))))
+       (process-message db connr bufnr params)))))
 
 (reg-event-fx
  ::connect

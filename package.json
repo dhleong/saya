@@ -45,6 +45,7 @@
     "ink": "^6.5.1",
     "ink-spinner": "^5.0.0",
     "ink-use-stdout-dimensions": "^1.0.5",
+    "lodash": "^4.17.21",
     "react": "^19",
     "react-dom": "^19",
     "split2": "^4.2.0",
