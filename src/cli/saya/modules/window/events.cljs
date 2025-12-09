@@ -31,10 +31,13 @@
  [unwrap]
  (fn [db {:keys [connr text]}]
    ; NOTE: formatting string text like it's a buffer with :lines here:
-   (assoc-in db [:buffers [:conn/input connr] :lines]
-             (->> text
-                  (str/split-lines)
-                  (mapv buffer-line)))))
+   (let [bufnr [:conn/input connr]]
+     (-> db
+         (assoc-in [:buffers bufnr :id] bufnr)
+         (assoc-in [:buffers bufnr :lines]
+                   (->> text
+                        (str/split-lines)
+                        (mapv buffer-line)))))))
 
 (reg-event-db
  ::prepare-input-cmdline-buffer

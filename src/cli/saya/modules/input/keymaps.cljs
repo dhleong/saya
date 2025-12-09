@@ -26,10 +26,7 @@
    :normal-buffer (get-in cofx [:db :buffers (:normal-bufnr cofx)])
    :window (get-in cofx [:db :windows winnr])
    :editable (when-not (= bufnr [:conn/input connr])
-               (some->
-                (get-in cofx [:db :buffers [:conn/input connr]])
-                ; yuck?
-                (assoc :id [:conn/input connr])))
+               (get-in cofx [:db :buffers [:conn/input connr]]))
    :pending-operator (get-in cofx [:db :pending-operator])
    :search (select-keys (get-in cofx [:db :search])
                         [:direction :query])
