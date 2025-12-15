@@ -21,8 +21,8 @@
     "old:clojure": "clojure -Sdeps '{:deps {antq/antq {:mvn/version \"RELEASE\"}}}' -m antq.core",
     "old": "pnpm old:clojure; pnpm outdated",
     "clean": "rm -rf resources/public/js/* && rm -rf target",
-    "test:node:old": "shadow-cljs compile ci-node && node target/ci-node.js",
-    "test:node": "shadow-cljs compile ci-node && FORCE_COLOR=3 node target/ci/saya.ci.js",
+    "test:node:old": "shadow-cljs compile ci-esm && node target/cism/main.js",
+    "test:node": "shadow-cljs compile ci-esm && FORCE_COLOR=3 node target/cism/main.js",
     "test": "pnpm test:node"
   },
   "keywords": [

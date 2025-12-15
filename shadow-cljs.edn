@@ -52,9 +52,6 @@
                 :devtools
                 {:ignore-warnings true}}
 
-          :ci-node {:target :esm-files
-                    :ns-regexp "((^saya.ci)|(-test$))"
-                    :output-dir "target/ci"
-                    :js-options {:js-provider :import}
-                    :build-hooks [(saya.hooks.ci/generate-tests-registry)]
-                    :closure-defines {saya.config/testing? true}}}}
+          :ci-esm {:target :node-esm-test
+                   :output-dir "target/cism"
+                   :closure-defines {saya.config/testing? true}}}}
