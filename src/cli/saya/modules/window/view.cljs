@@ -224,7 +224,7 @@
                                            (not inputting?))
                                   [input-placeholder input-connr])]}
 
-                 (when (and input-line? inputting?)
+                 (when (and input-line? inputting? last-of-row?)
                    [input-window input-connr])]))]
            [:> k/Box {:flex-direction :row
                       :flex-wrap :wrap}
