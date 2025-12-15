@@ -20,12 +20,21 @@
   ([get-token on-key]
    (React/useEffect
     (fn []
-      (let [[last-token _] (reset-vals!
-                            active-token
-                            (resolve-token get-token))]
+      (let [[last-token set-token]
+            (swap-vals!
+             active-token
+             (fn [old]
+               (let [new (resolve-token get-token)]
+                 (if-not (= old new)
+                   new
+                   (do
+                     (when-not (= :dispatcher new)
+                       (>evt [:echo :error "Duplicate input token: " new]))
+                     old)))))]
 
         (fn unmount-use-keys []
-          (reset! active-token last-token))))
+          (when-not (= last-token set-token)
+            (reset! active-token last-token)))))
     #js [])
 
    (k/useInput
