@@ -27,7 +27,7 @@
           :else
           (seq results))))))
 
-(defn in-string [s direction query]
+(defn in-plain-string [s direction query]
   (find-all
    s
    (case direction
@@ -77,7 +77,7 @@
                      ; TODO: Can we avoid the garbage of stripping ansi?
                      ; Is it worth it?
                      (-> (->plain line)
-                         (in-string direction query)
+                         (in-plain-string direction query)
                          (->> (map (fn [match]
                                      (assoc-in match [:at :row] linenr)))))))
            (drop-while #(or (= (:at %)
