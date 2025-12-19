@@ -48,12 +48,15 @@
   (m/match params
     {:type "ExternalUI"
      :data {:type "Text"
-            :ansi ansi}}
+            :ansi ansi
+            :plain plain}}
     {:dispatch [::buffer-events/append-text
-                (let [ansi' (str/trim-newline ansi)]
+                (let [ansi' (str/trim-newline ansi)
+                      plain' (str/trim-newline plain)]
                   {:id bufnr
-                   :full-line? (not= ansi' ansi)
-                   :ansi ansi'})]}
+                   :full-line? (not= plain' plain)
+                   :ansi ansi'
+                   :plain plain'})]}
 
     {:type "ExternalUI"
      :data {:type "LocalSend"

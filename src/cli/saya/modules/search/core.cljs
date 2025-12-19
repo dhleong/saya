@@ -1,8 +1,7 @@
 (ns saya.modules.search.core
   (:require
-   ["strip-ansi" :default strip-ansi]
    [clojure.string :as str]
-   [saya.modules.buffers.line :refer [->ansi]]))
+   [saya.modules.buffers.line :refer [->plain]]))
 
 (defn- find-all [s f inc query]
   (let [length (count query)]
@@ -29,9 +28,8 @@
           (seq results))))))
 
 (defn in-string [s direction query]
-  ; TODO: Can we avoid the garbage of stripping ansi? Is it worth it?
   (find-all
-   (strip-ansi s)
+   s
    (case direction
      :newer str/index-of
      :older str/last-index-of)
@@ -71,16 +69,21 @@
     (->> (cond-> relevant-lines
            (= :older direction) (reverse))
 
-         (map-indexed vector-with-offset)
-         (mapcat (fn [[linenr line]]
-                   (-> (->ansi line)
-                       (in-string direction query)
-                       (->> (map (fn [match]
-                                   (assoc-in match [:at :row] linenr)))))))
-         (drop-while #(or (= (:at %)
-                             cursor)
-                          (and (= (:row (:at %))
-                                  (:row cursor))
-                               (drop-while-cursor-compare
-                                (:col (:at %))
-                                (:col cursor))))))))
+         (into
+          []
+          (comp
+           (map-indexed vector-with-offset)
+           (mapcat (fn [[linenr line]]
+                     ; TODO: Can we avoid the garbage of stripping ansi?
+                     ; Is it worth it?
+                     (-> (->plain line)
+                         (in-string direction query)
+                         (->> (map (fn [match]
+                                     (assoc-in match [:at :row] linenr)))))))
+           (drop-while #(or (= (:at %)
+                               cursor)
+                            (and (= (:row (:at %))
+                                    (:row cursor))
+                                 (drop-while-cursor-compare
+                                  (:col (:at %))
+                                  (:col cursor))))))))))

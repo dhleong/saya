@@ -1,6 +1,7 @@
 (ns saya.modules.buffers.line
   (:require
    ["ansi-parser" :default AnsiParser]
+   ["strip-ansi" :default strip-ansi]
    [applied-science.js-interop :as j]
    [clojure.string :as str]
    [saya.modules.ansi.split :as split]
@@ -9,6 +10,7 @@
 
 (defprotocol IBufferLine
   (->ansi [this])
+  (->plain [this])
   (ansi-chars [this])
   (length
     [this]
@@ -39,7 +41,12 @@
              group)))
         [])))
 
-(def ^:private EMPTY-PARTS [{:ansi ""}])
+(defn- part->plain [{:keys [ansi plain]}]
+  (or plain
+      (when ansi
+        (strip-ansi ansi))))
+
+(def ^:private EMPTY-PARTS [{:ansi "" :plain ""}])
 
 (defn- ->wrapped-lines [parts width]
   (->> (or (seq parts)
@@ -134,7 +141,9 @@
 
     (and (map? o)
          (:ansi o))
-    (update o :ansi strip-unprintable)
+    (-> o
+        (update :ansi strip-unprintable)
+        (update :plain strip-unprintable))
 
     :else o))
 
@@ -171,6 +180,11 @@
     (or (:ansi @state)
         (:ansi (swap! state assoc :ansi (->> (keep :ansi parts)
                                              (apply str))))))
+
+  (->plain [_]
+    (or (:plain @state)
+        (:plain (swap! state assoc :plain (->> (keep part->plain parts)
+                                               (apply str))))))
 
   (ansi-chars [_]
     (or (:chars @state)
