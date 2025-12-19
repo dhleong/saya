@@ -98,8 +98,8 @@
              (fnil conj (buffer-line))
              (if system
                {:system system}
-               (cond-> {:ansi ansi
-                        :plain plain}
+               (cond-> {:ansi ansi}
+                 plain (assoc :plain plain)
                  full-line? (assoc :full-line? true)))))
 
 (reg-event-db

@@ -141,9 +141,9 @@
 
     (and (map? o)
          (:ansi o))
-    (-> o
-        (update :ansi strip-unprintable)
-        (update :plain strip-unprintable))
+    (cond-> (update o :ansi strip-unprintable)
+      (:plain o)
+      (update :plain strip-unprintable))
 
     :else o))
 
