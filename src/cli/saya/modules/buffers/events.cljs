@@ -93,12 +93,13 @@
 ;  [unwrap]
 ;  create-for-connection)
 
-(defn append-text [buffer {:keys [ansi full-line? system]}]
+(defn append-text [buffer {:keys [ansi plain full-line? system]}]
   (update-in buffer [:lines (dec (count (:lines buffer)))]
              (fnil conj (buffer-line))
              (if system
                {:system system}
                (cond-> {:ansi ansi}
+                 plain (assoc :plain plain)
                  full-line? (assoc :full-line? true)))))
 
 (reg-event-db

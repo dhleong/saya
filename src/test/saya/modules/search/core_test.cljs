@@ -2,26 +2,26 @@
   (:require
    [cljs.test :refer-macros [deftest is testing]]
    [saya.modules.buffers.line :refer [buffer-line]]
-   [saya.modules.search.core :refer [in-buffer in-string]]))
+   [saya.modules.search.core :refer [in-buffer in-plain-string]]))
 
 (deftest search-in-string-test
   (testing "Handle negative case"
     (is (nil?
-         (in-string "bacon ipsum al pastor"
-                    :newer
-                    "birria"))))
+         (in-plain-string "bacon ipsum al pastor"
+                          :newer
+                          "birria"))))
 
   (testing "Simple search"
     (is (= [{:at {:col 0}
              :length 9}]
-           (in-string "al pastor"
-                      :newer
-                      "al pastor")))
+           (in-plain-string "al pastor"
+                            :newer
+                            "al pastor")))
     (is (= [{:at {:col 12}
              :length 9}]
-           (in-string "bacon ipsum al pastor"
-                      :newer
-                      "al pastor"))))
+           (in-plain-string "bacon ipsum al pastor"
+                            :newer
+                            "al pastor"))))
 
   (testing "Multiple Results in a line"
     (is (= [{:at {:col 0}
@@ -30,32 +30,18 @@
              :length 2}
             {:at {:col 4}
              :length 2}]
-           (in-string "alalal"
-                      :newer
-                      "al")))
+           (in-plain-string "alalal"
+                            :newer
+                            "al")))
     (is (= [{:at {:col 4}
              :length 2}
             {:at {:col 2}
              :length 2}
             {:at {:col 0}
              :length 2}]
-           (in-string "alalal"
-                      :older
-                      "al"))))
-
-  (testing "Ansi search"
-    (is (= [{:at {:col 0}
-             :length 9}]
-           (in-string "\u001b[32mal pastor"
-                      :newer
-                      "al pastor"))))
-
-  (testing "Mixed-in Ansi search"
-    (is (= [{:at {:col 0}
-             :length 9}]
-           (in-string "\u001b[32mal \u001b[33mpastor"
-                      :newer
-                      "al pastor")))))
+           (in-plain-string "alalal"
+                            :older
+                            "al")))))
 
 (deftest search-in-buffer-test
   (testing "Order reverse search results correctly"
@@ -141,4 +127,22 @@
                       :col 8}}
             :newer
             "burrito"))
-        "starting on the last of multiple matches in a line")))
+        "starting on the last of multiple matches in a line"))
+
+  (testing "Ansi search"
+    (is (= [{:at {:col 0 :row 0}
+             :length 9}]
+           (in-buffer
+            {:lines [(buffer-line "\u001b[32mal pastor")]
+             :cursor {:row 1 :col 0}}
+            :older
+            "al pastor"))))
+
+  (testing "Mixed-in Ansi search"
+    (is (= [{:at {:col 0 :row 0}
+             :length 9}]
+           (in-buffer
+            {:lines [(buffer-line "\u001b[32mal \u001b[33mpastor")]
+             :cursor {:row 1 :col 0}}
+            :older
+            "al pastor")))))

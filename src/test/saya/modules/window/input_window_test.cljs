@@ -1,5 +1,6 @@
 (ns saya.modules.window.input-window-test
   (:require
+   ["strip-ansi" :default strip-ansi]
    [archetype.util :refer [>evt]]
    [cljs.test :refer-macros [deftest is testing]]
    [day8.re-frame.test :as rft]
@@ -15,7 +16,8 @@
   (>evt [::kodachi-events/on-message {:connection_id 0
                                       :type "ExternalUI"
                                       :data {:type "Text"
-                                             :ansi text}}]))
+                                             :ansi text
+                                             :plain (strip-ansi text)}}]))
 (defn receive-newline []
   (>evt [::kodachi-events/on-message {:connection_id 0
                                       :type "ExternalUI"
