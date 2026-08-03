@@ -6,7 +6,6 @@
    [promesa.core :as p]
    [re-frame.core :as re-frame]
    [saya.cli.args :as args]
-   [saya.cli.fullscreen :refer [activate-alternate-screen]]
    [saya.env :as env]
    [saya.events :as events]
    [saya.modules.input.test-helpers]
@@ -24,22 +23,25 @@
 (defn ^:dev/after-load mount-root []
   (re-frame/clear-subscription-cache!)
 
-  (let [app (reagent/as-root [views/main])]
+  (let [app (reagent/as-root
+             [views/main]
+             #_[views/main :> k/Text "hi"])]
     (if-some [ink @ink-instance]
       (.rerender ^js ink app)
       (reset! ink-instance (k/render app #js {:exitOnCtrlC false
                                               :patchConsole false
-                                              :stdout (ink/stdout
-                                                       {} stdout)})))))
+                                              :alternateScreen true
+                                              :stdout stdout #_(ink/stdout
+                                                                {} stdout)})))))
 
 (defn- -main [args]
   (perf/init!)
 
   (p/do
-    (activate-alternate-screen
-     :stdout stdout
-     :on-deactivate #(when-some [^js ink @ink-instance]
-                       (ink/unmount ink)))
+    ; (activate-alternate-screen
+    ;  :stdout stdout
+    ;  :on-deactivate #(when-some [^js ink @ink-instance]
+    ;                    (ink/unmount ink)))
 
     (logging/patch)
     (re-frame/dispatch-sync [::events/initialize-db])

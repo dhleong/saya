@@ -42,9 +42,8 @@
     "env-paths": "^3.0.0",
     "figures": "^3.2.0",
     "highlight.js": "11.0.1",
-    "ink": "^6.5.1",
+    "ink": "^7.1.1",
     "ink-spinner": "^5.0.0",
-    "ink-use-stdout-dimensions": "^1.0.5",
     "react": "^19",
     "react-dom": "^19",
     "split2": "^4.2.0",
@@ -53,9 +52,6 @@
     "untildify": "^5.0.0"
   },
   "pnpm": {
-    "patchedDependencies": {
-      "ink": "patches/ink.patch"
-    },
     "overrides": {
       "elliptic@<=6.6.0": ">=6.6.1",
       "pbkdf2@<=3.1.2": ">=3.1.3",
