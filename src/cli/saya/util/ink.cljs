@@ -1,11 +1,17 @@
 (ns saya.util.ink
   (:require
    ["ansi-escapes" :as ansi]
+   ["ink" :as k]
    [applied-science.js-interop :as j]
    [archetype.util :refer [>evt]]
    [clojure.string :as str]
+   [promesa.core :as p]
    [saya.modules.ui.cursor :refer [extract-cursor-position get-cursor-shape
                                    strip-cursor]]))
+
+; Grab a reference at declare time to avoid conflict with
+; log patching
+(def ^:private original-stdout js/process.stdout)
 
 (defn- ansi-cursor [v]
   (str "\u001B[" v " q"))
@@ -74,29 +80,10 @@
          :last-lines lines
          :last-output output))))
 
-(defn- strip-provided-ansi [output]
-  ; Let update-screen work with a clean slate. Since we're
-  ; always a "full screen" app, output *should always* start
-  ; with clearTerminal. Occasionally, however, ink tries
-  ; to render an incomplete frame or something. We ignore those,
-  ; since they typically do things like "clear N lines" which
-  ; will break things unexpectedly, and *should* be followed by
-  ; a normal "full screen" render.
-  (cond
-    (str/starts-with? output ansi/clearTerminal)
-    (subs output (count ansi/clearTerminal))
-
-    ; NOTE: Somewhere in ink 6 (presumably when it added support for
-    ; incremental rendering) it started clearing lines explicitly
-    ; instead of using clearTerminal...
-    (str/starts-with? output ansi/eraseLine)
-    (let [end (.indexOf output ansi/cursorLeft)]
-      (subs output (inc end)))))
-
 (defonce ^:private last-state (atom nil))
 
 (defn stdout
-  ([] (stdout {} js/process.stdout))
+  ([] (stdout {} original-stdout))
   ([opts ^js out]
    (stdout opts (atom {:out out}) out))
   ([opts state ^js out]
@@ -105,28 +92,49 @@
    (js/Object.defineProperties
     (j/obj .-write (partial swap! state
                             (fn [state str]
-                              (let [stripped (strip-provided-ansi str)]
-                                (cond
-                                  (some? stripped)
-                                  (update-screen state stripped)
+                              (cond
+                                (some? str)
+                                (update-screen state str)
 
-                                  (and (:always-render? opts)
-                                       (not= ansi/clearTerminal str))
-                                  (update-screen state str)
+                                (and (:always-render? opts)
+                                     (not= ansi/clearTerminal str))
+                                (update-screen state str)
 
-                                  :else
-                                  state))))
+                                :else
+                                state)))
            .-on (.bind (.-on out) out)
-           .-off (.bind (.-off out) out))
+           .-off (.bind (.-off out) out)
+           :original-stream out
+           :saya? true)
     #js {:rows #js {:get #(.-rows out)}
          :columns #js {:get #(.-columns out)}})))
 
-(defn unmount [^js instance]
+(defn- unmount [^js instance saya-stdout]
   (.unmount instance)
-  (when-not (= :block (get-cursor-shape))
-    ; Reset cursor
-    (print (ansi-cursor-shape :block)))
-  (print ansi/cursorShow))
+  (let [raw-stdout (j/get saya-stdout :original-stream)]
+    (when-not (= :block (get-cursor-shape))
+      ; Reset cursor
+      (.write raw-stdout (ansi-cursor-shape :block)))
+    (.write raw-stdout ansi/cursorShow)))
+
+(defn ->exit-promise [^js instance]
+  (.waitUntilExit instance))
+
+(defn render-alternate [app opts]
+  (let [stdout (if (j/get-in opts [:stdout :saya?])
+                 (j/get opts :stdout)
+                 (stdout {} (j/get opts :stdout original-stdout)))
+        opts (j/assoc! opts
+                       ; NOTE: Without :debug true, ink tries
+                       ; to do throttling and its own diffing
+                       ; and cursor movement, etc.
+                       :debug true
+                       :alternateScreen true
+                       :stdout stdout)
+        ink (k/render app opts)]
+    (-> (->exit-promise ink)
+        (p/then #(unmount ink stdout)))
+    ink))
 
 (comment
   (take-last 5 (map count (:history @@last-state)))

@@ -1,6 +1,5 @@
 (ns saya.cli
   (:require
-   ["ink" :as k]
    [applied-science.js-interop :as j]
    [clojure.core.match :as m]
    [promesa.core :as p]
@@ -18,36 +17,30 @@
    [saya.modules.perf.core :as perf]))
 
 (defonce ^:private ink-instance (atom nil))
-(defonce ^:private stdout js/process.stdout)
 
 (defn ^:dev/after-load mount-root []
   (re-frame/clear-subscription-cache!)
 
-  (let [app (reagent/as-root
-             [views/main]
-             #_[views/main :> k/Text "hi"])]
+  (let [app (reagent/as-root [views/main])]
     (if-some [ink @ink-instance]
-      (.rerender ^js ink app)
-      (reset! ink-instance (k/render app #js {:exitOnCtrlC false
-                                              :patchConsole false
-                                              :alternateScreen true
-                                              :stdout stdout #_(ink/stdout
-                                                                {} stdout)})))))
+      (doto ^js ink
+        (.rerender app))
+      (reset! ink-instance
+              (ink/render-alternate app #js {:exitOnCtrlC false
+                                             :patchConsole false})))))
 
 (defn- -main [args]
   (perf/init!)
 
   (p/do
-    ; (activate-alternate-screen
-    ;  :stdout stdout
-    ;  :on-deactivate #(when-some [^js ink @ink-instance]
-    ;                    (ink/unmount ink)))
-
     (logging/patch)
     (re-frame/dispatch-sync [::events/initialize-db])
     (re-frame/dispatch-sync [::events/initialize-cli args])
 
-    (mount-root)
+    (-> (mount-root)
+        ; Exit runtime when ink unmounts
+        (ink/->exit-promise)
+        (p/then #(js/process.exit 0)))
 
     (env/initialize)
 
