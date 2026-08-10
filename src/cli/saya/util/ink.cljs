@@ -25,6 +25,10 @@
     :pipe/blink (ansi-cursor 5)
     :pipe (ansi-cursor 6)))
 
+(defn- stdout->dimens [out]
+  {:w (j/get out .-columns)
+   :h (j/get out .-rows)})
+
 (defn update-screen [{:keys [out last-lines cursor-shape? position-cursor?]
                       :or {cursor-shape? true
                            position-cursor? true}
@@ -32,9 +36,10 @@
                      output]
   (let [lines (str/split-lines output)
         metrics (atom {})
-        cursor-shape (get-cursor-shape)]
-    (if-not (= (count lines)
-               (count last-lines))
+        cursor-shape (get-cursor-shape)
+        dimens (stdout->dimens out)]
+    (if-not (= dimens
+               (:last-dimens state))
       ; Either this is the first render, of the lines count
       ; has changed (perhaps due to a resize). Just start
       ; from scratch:
@@ -48,13 +53,21 @@
       (doseq [i (range (count lines))]
         ; NOTE: We diff *without* the cursor, since we don't need
         ; to re-render the whole line if just the cursor position changed!
-        (let [last (strip-cursor (nth last-lines i))
+        (let [last (strip-cursor (nth last-lines i nil))
               this (strip-cursor (nth lines i))]
           (when-not (= last this)
             (swap! metrics update :dirty-lines (fnil inc 0))
             (.write out (ansi/cursorTo 0 i))
             (.write out ansi/eraseLine)
             (.write out this)))))
+
+    ; Erase down any lines we'd previously rendered but no longer do
+    (when (> (count last-lines)
+             (count lines))
+      (swap! metrics update :dirty-lines + (- (count last-lines)
+                                              (count lines)))
+      (.write out (ansi/cursorTo 0 (count last-lines)))
+      (.write out ansi/eraseDown))
 
     (if-let [{:keys [x y] :as position} (extract-cursor-position lines)]
       (do
@@ -75,6 +88,7 @@
         (update :history (fnil conj []) lines)
         (update :metrics-history (fnil conj []) @metrics)
         (assoc
+         :last-dimens dimens
          :last-cursor cursor-shape
          :last-metrics @metrics
          :last-lines lines

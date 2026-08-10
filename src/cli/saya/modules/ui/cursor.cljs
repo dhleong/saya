@@ -31,7 +31,8 @@
    to break in ways that the renderer can't diff correctly, so
    we just strip it out before rendering."
   [s]
-  (str/replace s cursor-text ""))
+  (when s
+    (str/replace s cursor-text "")))
 
 (defn- f>cursor [shape]
   ; HACKS: This should *really* be a useLayoutEffect, but
