@@ -37,10 +37,14 @@
     (re-frame/dispatch-sync [::events/initialize-db])
     (re-frame/dispatch-sync [::events/initialize-cli args])
 
-    (-> (mount-root)
-        ; Exit runtime when ink unmounts
-        (ink/->exit-promise)
-        (p/then #(js/process.exit 0)))
+    ; We don't want to block on waiting for exit here,
+    ; so we wrap the promise in (not) to ensure the p/do
+    ; macro doesn't see a promise value
+    (not
+     (-> (mount-root)
+         ; Exit runtime when ink unmounts
+         (ink/->exit-promise)
+         (p/then #(js/process.exit 0))))
 
     (env/initialize)
 

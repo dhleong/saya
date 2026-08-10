@@ -4,4 +4,4 @@
 
 (defn line []
   [:> k/Box {:min-height 1}
-   [:> k/Text "\u001B"]])
+   [:> k/Text "\u00A0"]])
