@@ -37,19 +37,28 @@
   (let [lines (str/split-lines output)
         metrics (atom {})
         cursor-shape (get-cursor-shape)
-        dimens (stdout->dimens out)]
-    (if-not (= dimens
-               (:last-dimens state))
+        dimens (stdout->dimens out)
+        literal-ansi? (#{ansi/exitAlternativeScreen
+                         ansi/enterAlternativeScreen
+                         ansi/showCursorEscape}
+                       output)]
+    (cond
+      literal-ansi?
+      (.write out output)
+
+      (not= dimens
+            (:last-dimens state))
       ; Either this is the first render, of the lines count
       ; has changed (perhaps due to a resize). Just start
       ; from scratch:
       (let [to-render (strip-cursor output)]
         (reset! metrics {:full-render? {:before (count last-lines)
                                         :after (count lines)}})
-        (.write out ansi/clearTerminal)
+        (.write out ansi/clearViewport)
         (.write out to-render))
 
       ; Diff each line
+      :else
       (doseq [i (range (count lines))]
         ; NOTE: We diff *without* the cursor, since we don't need
         ; to re-render the whole line if just the cursor position changed!
@@ -62,27 +71,28 @@
             (.write out this)))))
 
     ; Erase down any lines we'd previously rendered but no longer do
-    (when (> (count last-lines)
-             (count lines))
-      (swap! metrics update :dirty-lines + (- (count last-lines)
-                                              (count lines)))
-      (.write out (ansi/cursorTo 0 (count last-lines)))
-      (.write out ansi/eraseDown))
+    (when-not literal-ansi?
+      (when (> (count last-lines)
+               (count lines))
+        (swap! metrics update :dirty-lines + (- (count last-lines)
+                                                (count lines)))
+        (.write out (ansi/cursorTo 0 (count lines)))
+        (.write out ansi/eraseDown))
 
-    (if-let [{:keys [x y] :as position} (extract-cursor-position lines)]
-      (do
-        (when position-cursor?
-          (>evt [:saya.events/set-global-cursor position]))
-        (swap! metrics assoc :moved-cursor [x y cursor-shape])
-        (.write out (ansi/cursorTo x y))
-        (when cursor-shape?
-          (.write out (ansi-cursor-shape cursor-shape)))
-        (.write out ansi/cursorShow))
+      (if-let [{:keys [x y] :as position} (extract-cursor-position lines)]
+        (do
+          (when position-cursor?
+            (>evt [:saya.events/set-global-cursor position]))
+          (swap! metrics assoc :moved-cursor [x y cursor-shape])
+          (.write out (ansi/cursorTo x y))
+          (when cursor-shape?
+            (.write out (ansi-cursor-shape cursor-shape)))
+          (.write out ansi/cursorShow))
 
-      (do
-        (when position-cursor?
-          (>evt [:saya.events/set-global-cursor nil]))
-        (.write out ansi/cursorHide)))
+        (do
+          (when position-cursor?
+            (>evt [:saya.events/set-global-cursor nil]))
+          (.write out ansi/cursorHide))))
 
     (-> state
         (update :history (fnil conj []) lines)
@@ -121,11 +131,12 @@
            :original-stream out
            :saya? true)
     #js {:rows #js {:get #(.-rows out)}
-         :columns #js {:get #(.-columns out)}})))
+         :columns #js {:get #(.-columns out)}
+         :isTTY #js {:get #(.-isTTY out)}})))
 
 (defn- unmount [^js instance saya-stdout]
-  (.unmount instance)
   (let [raw-stdout (j/get saya-stdout :original-stream)]
+    (.unmount instance)
     (when-not (= :block (get-cursor-shape))
       ; Reset cursor
       (.write raw-stdout (ansi-cursor-shape :block)))

@@ -17,8 +17,8 @@ importers:
   .:
     dependencies:
       ansi-escapes:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.3.0
+        version: 7.3.0
       ansi-parser:
         specifier: ^3.2.11
         version: 3.2.11
@@ -70,10 +70,6 @@ packages:
 
   '@alcalzone/ansi-tokenize@0.3.0':
     resolution: {integrity: sha512-p+CMKJ93HFmLkjXKlXiVGlMQEuRb6H0MokBSwUsX+S6BRX8eV5naFZpQJFfJHjRZY0Hmnqy1/r6UWl3x+19zYA==}
-    engines: {node: '>=18'}
-
-  ansi-escapes@7.0.0:
-    resolution: {integrity: sha512-GdYO7a61mR0fOlAsvC9/rIHf7L96sBc6dEWzeOu+KAea5bZyQRPIpojrVoI4AXGJS/ycu/fBTdLrUkA4ODrvjw==}
     engines: {node: '>=18'}
 
   ansi-escapes@7.3.0:
@@ -768,10 +764,6 @@ snapshots:
     dependencies:
       ansi-styles: 6.2.3
       is-fullwidth-code-point: 5.0.0
-
-  ansi-escapes@7.0.0:
-    dependencies:
-      environment: 1.1.0
 
   ansi-escapes@7.3.0:
     dependencies:
