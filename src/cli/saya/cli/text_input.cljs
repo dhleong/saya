@@ -19,10 +19,10 @@
             (on-change value (:cursor state)))]
     (match [key]
       [:return] (on-submit value)
-      [:delete] (let [[_ new-state] (swap-vals! state-ref update :cursor dec-to-zero)
-                      [before after] (split-text-by-state new-state value)
-                      new-value (str before (subs after 1))]
-                  (on-change new-value (:cursor new-state)))
+      [:backspace] (let [[_ new-state] (swap-vals! state-ref update :cursor dec-to-zero)
+                         [before after] (split-text-by-state new-state value)
+                         new-value (str before (subs after 1))]
+                     (on-change new-value (:cursor new-state)))
 
       [:ctrl/a] (notify-state (swap! state-ref assoc :cursor 0))
       [:ctrl/e] (notify-state (swap! state-ref assoc :cursor (count value)))
@@ -31,12 +31,12 @@
       [:right] (notify-state (swap! state-ref update :cursor inc-to-max (count value)))
 
       ; TODO: Reuse logic for "delete back word" from regular mappings
-      [:meta/delete] (let [{:keys [cursor]} @state-ref
-                           last-word-start (or (str/last-index-of value " " cursor) 0)]
-                       (swap! state-ref assoc :cursor last-word-start)
-                       (on-change (str (subs value 0 last-word-start)
-                                       (subs value cursor))
-                                  last-word-start))
+      [:meta/backspace] (let [{:keys [cursor]} @state-ref
+                              last-word-start (or (str/last-index-of value " " cursor) 0)]
+                          (swap! state-ref assoc :cursor last-word-start)
+                          (on-change (str (subs value 0 last-word-start)
+                                          (subs value cursor))
+                                     last-word-start))
 
       [:tab] (cycle-completion-candidates params state-ref (fnil inc -1) value)
       [:shift/tab] (cycle-completion-candidates
