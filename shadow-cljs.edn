@@ -40,12 +40,7 @@
 
  :builds {:cli {:target :esm
                 :output-dir "resources/"
-                :modules {:cli {:prepend-js
-                                ; NOTE: Hacks because esm doesn't
-                                ; handle this properly default
-                                "import WebSocket from 'ws';
-                                 global.WebSocket = WebSocket;"
-                                :init-fn saya.cli/init}}
+                :modules {:cli {:init-fn saya.cli/init}}
                 :js-options {:js-provider :import
                              :keep-native-requires true
                              :keep-as-require #{"ansi-escapes"}}
