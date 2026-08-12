@@ -2,6 +2,7 @@
   (:require
    ["ansi-escapes" :as ansi]
    ["ink" :as k]
+   ["node:fs" :as fs]
    [applied-science.js-interop :as j]
    [archetype.util :refer [>evt]]
    [clojure.string :as str]
@@ -12,6 +13,23 @@
 ; Grab a reference at declare time to avoid conflict with
 ; log patching
 (def ^:private original-stdout js/process.stdout)
+
+; Can be helpful for debugging:
+(def ^:private log-file (when-some [path js/process.env.INK_DEBUG_LOG]
+                          (fs/createWriteStream
+                           path
+                           #js {:flush true})))
+
+(defn- log-write [out s & context]
+  (.write out s)
+
+  (when (and log-file (seq context))
+    (.write log-file "->")
+    (.write log-file (-> (str/join
+                          " <-- "
+                          (cons s context))
+                         (str/replace "\u001B" "ESC")))
+    (.write log-file "\n")))
 
 (defn- ansi-cursor [v]
   (str "\u001B[" v " q"))
@@ -44,7 +62,7 @@
                        output)]
     (cond
       literal-ansi?
-      (.write out output)
+      (log-write out output "literal ansi")
 
       (not= dimens
             (:last-dimens state))
@@ -54,8 +72,8 @@
       (let [to-render (strip-cursor output)]
         (reset! metrics {:full-render? {:before (count last-lines)
                                         :after (count lines)}})
-        (.write out ansi/clearViewport)
-        (.write out to-render))
+        (log-write out ansi/clearViewport "scratch")
+        (log-write out to-render))
 
       ; Diff each line
       :else
@@ -66,9 +84,9 @@
               this (strip-cursor (nth lines i))]
           (when-not (= last this)
             (swap! metrics update :dirty-lines (fnil inc 0))
-            (.write out (ansi/cursorTo 0 i))
-            (.write out ansi/eraseLine)
-            (.write out this)))))
+            (log-write out (ansi/cursorTo 0 i) "diff @ " i)
+            (log-write out ansi/eraseLine)
+            (log-write out this)))))
 
     ; Erase down any lines we'd previously rendered but no longer do
     (when-not literal-ansi?
@@ -76,28 +94,33 @@
                (count lines))
         (swap! metrics update :dirty-lines + (- (count last-lines)
                                                 (count lines)))
-        (.write out (ansi/cursorTo 0 (count lines)))
-        (.write out ansi/eraseDown))
+        (log-write out (ansi/cursorTo 0 (count lines)) "extra lines")
+        (log-write out ansi/eraseDown))
 
       (if-let [{:keys [x y] :as position} (extract-cursor-position lines)]
         (do
           (when position-cursor?
             (>evt [:saya.events/set-global-cursor position]))
           (swap! metrics assoc :moved-cursor [x y cursor-shape])
-          (.write out (ansi/cursorTo x y))
+          (log-write out (ansi/cursorTo x y) "move to " x y)
           (when cursor-shape?
-            (.write out (ansi-cursor-shape cursor-shape)))
-          (.write out ansi/cursorShow))
+            (log-write out (ansi-cursor-shape cursor-shape)))
+          (log-write out ansi/cursorShow "position-cursor? show"))
 
         (do
           (when position-cursor?
             (>evt [:saya.events/set-global-cursor nil]))
-          (.write out ansi/cursorHide))))
+          (log-write out ansi/cursorHide "position-cursor? hide"))))
 
     (-> state
         (update :history (fnil conj []) lines)
         (update :metrics-history (fnil conj []) @metrics)
         (assoc
+          ; This is a somewhat janky way to skip any extra render
+          ; requests from Ink after we have exited the alternative
+          ; screen. This hack ensures we cleanly restore the
+          ; original screen state on quit
+         :exited? (= ansi/exitAlternativeScreen output)
          :last-dimens dimens
          :last-cursor cursor-shape
          :last-metrics @metrics
@@ -115,17 +138,18 @@
 
    (js/Object.defineProperties
     (j/obj .-write (partial swap! state
-                            (fn [state str]
-                              (cond
-                                (some? str)
-                                (update-screen state str)
+                            (fn [{:keys [exited?] :as state} str]
+                              (when-not exited?
+                                (cond
+                                  (some? str)
+                                  (update-screen state str)
 
-                                (and (:always-render? opts)
-                                     (not= ansi/clearTerminal str))
-                                (update-screen state str)
+                                  (and (:always-render? opts)
+                                       (not= ansi/clearTerminal str))
+                                  (update-screen state str)
 
-                                :else
-                                state)))
+                                  :else
+                                  state))))
            .-on (.bind (.-on out) out)
            .-off (.bind (.-off out) out)
            :original-stream out
@@ -134,13 +158,12 @@
          :columns #js {:get #(.-columns out)}
          :isTTY #js {:get #(.-isTTY out)}})))
 
-(defn- unmount [^js instance saya-stdout]
+(defn- unmount [^js saya-stdout]
   (let [raw-stdout (j/get saya-stdout :original-stream)]
-    (.unmount instance)
     (when-not (= :block (get-cursor-shape))
       ; Reset cursor
-      (.write raw-stdout (ansi-cursor-shape :block)))
-    (.write raw-stdout ansi/cursorShow)))
+      (log-write raw-stdout (ansi-cursor-shape :block) "unmount"))
+    (log-write raw-stdout ansi/cursorShow "unmount -> show cursor")))
 
 (defn ->exit-promise [^js instance]
   (.waitUntilExit instance))
@@ -158,11 +181,13 @@
                        :stdout stdout)
         ink (k/render app opts)]
     (-> (->exit-promise ink)
-        (p/then #(unmount ink stdout)))
+        (p/then #(unmount stdout)))
     ink))
 
 (comment
   (take-last 5 (map count (:history @@last-state)))
+
+  (.on js/process "beforeExit" #(println @@last-state))
 
   (last (butlast (:history @@last-state)))
   (last (:history @@last-state))
