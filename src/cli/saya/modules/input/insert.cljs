@@ -43,7 +43,7 @@
       (update-in [:buffer :cursor :col] dec-to-zero)))
 
 (def basic-editing-keymaps
-  {[:delete] backspace})
+  {[:backspace] backspace})
 
 (def keymaps
   (merge

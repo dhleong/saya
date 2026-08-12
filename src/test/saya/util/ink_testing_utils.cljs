@@ -117,7 +117,9 @@
   ([component] (render->vec {} component))
   ([opts component]
    (-> (render->string opts component)
-       (str/split-lines))))
+       ; NOTE: split-lines drops trailing empty lines; -1 says
+       ; "never drop trailing empty lines"
+       (str/split #"\n" -1))))
 
 (defn input! [renderer text]
   (feed-stdin renderer text))
