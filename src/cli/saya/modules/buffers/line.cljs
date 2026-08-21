@@ -48,24 +48,58 @@
 
 (def ^:private EMPTY-PARTS [{:ansi "" :plain ""}])
 
+(defn- compose-systems-onto-prior-strings []
+  (fn [rf]
+    (let [last-line (volatile! nil)
+          feed-last-line (fn [result l]
+                           (reduce rf result l))]
+      (fn
+        ([] (rf))
+        ([result]
+         (if-some [l @last-line]
+           (rf (feed-last-line result l))
+           (rf result)))
+        ([result {:keys [strings systems]}]
+         (let [l @last-line]
+           (cond
+             strings
+             (let [result (if (some? l)
+                            (feed-last-line result l)
+                            result)]
+               ; Store for later
+               (vreset! last-line strings)
+               result)
+
+             (and systems (some? l))
+             (let [with-system (vec l)
+                   with-system (update with-system
+                                       (dec (count with-system))
+                                       into
+                                       systems)]
+               (vreset! last-line nil)
+               (reduce rf result with-system))
+
+             :else
+             (rf result systems))))))))
+
 (defn- ->wrapped-lines [parts width]
   (->> (or (seq parts)
            EMPTY-PARTS)
-       (map (fn [{:keys [ansi system]}]
-              (or system ansi)))
-       (partition-by string?)
 
-       (map
-        (fn [group]
-          (if (string? (first group))
-            {:strings (->> (wrap-ansi
-                            (apply str group)
-                            width)
-                           (map split/chars-with-ansi))}
+       (sequence
+        (comp
+         (map (fn [{:keys [ansi system]}]
+                (or system ansi)))
+         (partition-by string?)
+         (map
+          (fn [group]
+            (if (string? (first group))
+              {:strings (->> (wrap-ansi
+                              (apply str group)
+                              width)
+                             (map split/chars-with-ansi))}
 
-            {:systems group})))
-
-       ; NOTE: These double vector is a bit itchy... can we do better?
+              {:systems group})))
 
        ; From above, `strings` will be a sequence of split lines,
        ; with each line being a sequence of chars-with-ansi;
@@ -76,15 +110,7 @@
        ; line sequence (if any). This does mean that on a narrow
        ; screen a trailing system message could get clipped, but
        ; that's probably fine.
-       (reduce
-        (fn [result {:keys [strings systems]}]
-          (if strings
-            (into result strings)
-            (conj (if (seq result)
-                    (pop result)
-                    result)
-                  (concat (peek result) systems))))
-        [])
+         (compose-systems-onto-prior-strings)))
 
        (reduce
         (fn [result line]
