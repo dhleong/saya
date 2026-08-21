@@ -82,6 +82,39 @@
              :else
              (rf result systems))))))))
 
+(defn- drop-empty-lines-followed-by-others []
+  (fn [rf]
+    (let [last-line (volatile! nil)]
+      (fn
+        ([] (rf))
+        ([result]
+         (if-some [l @last-line]
+           (rf (rf result l))
+           (rf result)))
+        ([result line]
+         (let [l @last-line
+               result (if (seq l)
+                        (rf result l)
+                        result)]
+           (vreset! last-line line)
+           result))))))
+
+(defn- compose-col-numbers []
+  ; Each subsequent chunk should have the appropriate :col
+  ; value based on the length of the prior chunks
+  (fn [rf]
+    (let [last-line (volatile! nil)]
+      (fn
+        ([] (rf))
+        ([result] (rf result))
+        ([result line]
+         (let [l @last-line
+               with-col {:col (+ (count (:line l))
+                                 (:col l 0))
+                         :line line}]
+           (vreset! last-line with-col)
+           (rf result with-col)))))))
+
 (defn- ->wrapped-lines [parts width]
   (->> (or (seq parts)
            EMPTY-PARTS)
@@ -110,34 +143,25 @@
        ; line sequence (if any). This does mean that on a narrow
        ; screen a trailing system message could get clipped, but
        ; that's probably fine.
-         (compose-systems-onto-prior-strings)))
+         (compose-systems-onto-prior-strings)
 
-       (reduce
-        (fn [result line]
-          (let [last-line (peek result)]
-            (cond-> result
-              ; When doing a hard split, we might end up with eg:
-              ; [{:col 0 :line []}
-              ;  {:col 0 :line ["-" "-" ..]}]
-              ; This collapses that useless bit on the same
-              ; column.
-              ; TODO: would be better to fix upstream, but this
-              ; prevents react complaining about duplicate keys
-              ; until then.
-              (and last-line
-                   (empty? (:line last-line)))
-              (pop)
+         ; When doing a hard split, we might end up with eg:
+         ; [{:col 0 :line []}
+         ;  {:col 0 :line ["-" "-" ..]}]
+         ; This collapses that useless bit on the same
+         ; column.
+         (drop-empty-lines-followed-by-others)
 
-              :always
-              (conj {:col (+ (count (:line (peek result)))
-                             (:col (peek result) 0))
-                     :line line}))))
-        [])))
+         (compose-col-numbers)))))
 
 (defn- perform-line-wrap [^BufferLine buffer-line width]
   (tufte/p
    ::perform-line-wrap
-   (->wrapped-lines (.-parts buffer-line) width)
+   (cond-> (->wrapped-lines (.-parts buffer-line) width)
+     ; When profiling, it's easier to associate cost if we
+     ; materialize upfront instead of staying lazy
+     (seq js/process.env.PROFILE)
+     (vec))
    #_[{:line (into (wrap-ansi (->ansi buffer-line) width)
                    (keep :system (.-parts buffer-line)))
        :col 0}]))
