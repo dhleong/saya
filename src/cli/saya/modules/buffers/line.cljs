@@ -36,7 +36,7 @@
            formatted
            (if (string? (first group))
              (split/chars-with-ansi
-              (apply str group))
+              (str/join group))
 
              group)))
         [])))
@@ -128,7 +128,7 @@
           (fn [group]
             (if (string? (first group))
               {:strings (->> (wrap-ansi
-                              (apply str group)
+                              (str/join group)
                               width)
                              (map split/chars-with-ansi))}
 
@@ -197,6 +197,13 @@
 
     :else o))
 
+(defn- concat->str [parts xducer]
+  (transduce
+   xducer
+   str
+   ""
+   parts))
+
 (deftype BufferLine [parts state]
   Object
   (equiv [this other]
@@ -229,12 +236,12 @@
   (->ansi [_]
     (or (:ansi @state)
         (:ansi (swap! state assoc :ansi (->> (keep :ansi parts)
-                                             (apply str))))))
+                                             (str/join))))))
 
   (->plain [_]
     (or (:plain @state)
         (:plain (swap! state assoc :plain (->> (keep part->plain parts)
-                                               (apply str))))))
+                                               (str/join))))))
 
   (ansi-chars [_]
     (or (:chars @state)
