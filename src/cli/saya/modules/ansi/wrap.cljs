@@ -1,7 +1,6 @@
 (ns saya.modules.ansi.wrap
   (:require
    ["ansi-parser" :default AnsiParser]
-   ["strip-ansi" :default strip-ansi]
    [clojure.string :as str]
    [taoensso.tufte :as tufte]))
 
@@ -18,14 +17,32 @@
         ; ink should handle it for us, so keeping it is just noise
        (trim-suffix "\u001B[0m"))))
 
+(defn- is-space? [part]
+  (= " " (.-content part)))
+
+(defn- ->ansi-chars [^String s]
+  (tufte/p
+   ::ansi-chars
+   (seq (.parse AnsiParser s))))
+
+(defn- ->word-lengths [ansi-chars]
+  (tufte/p
+   ::word-lengths
+   (->> ansi-chars
+        (sequence
+         (comp
+          (partition-by is-space?)
+          (remove #(is-space? (first %)))
+          (map count))))))
+
 (defn- do-wrap-ansi [s width]
   {:pre [(number? width)]}
   (loop [lines []
          current-line []
          current-line-width 0
-         word-lengths (map count
-                           (str/split (strip-ansi s) #" "))
-         ansi-chars (seq (.parse AnsiParser s))]
+         ansi-chars (->ansi-chars s)
+         word-lengths (->word-lengths ansi-chars)]
+
     (if (empty? ansi-chars)
       ; Done!
       (conj lines (finalize-line current-line))
@@ -45,16 +62,16 @@
                  (into [] (take to-take ansi-chars))
                  ; (to-array (take to-take ansi-chars))
                  to-take ; new line initial length
-                 next-word-lengths
-                 (drop to-take ansi-chars))
+                 (drop to-take ansi-chars)
+                 next-word-lengths)
 
           ; Continue on line
           (recur lines
                  ; (into current-line (take to-take ansi-chars))
                  (into current-line (take to-take ansi-chars))
                  (+ current-line-width to-take)
-                 next-word-lengths
-                 (drop to-take ansi-chars)))))))
+                 (drop to-take ansi-chars)
+                 next-word-lengths))))))
 
 (defn wrap-ansi [s width]
   (tufte/p

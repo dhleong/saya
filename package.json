@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "shadow-cljs start && shadow-cljs watch :cli",
     "cli": "node resources/cli.js",
+    "cli:prof": "node --prof resources/cli.js",
     "start": "shadow-cljs start",
     "stop": "shadow-cljs stop",
     "build:release": "shadow-cljs release :cli",
