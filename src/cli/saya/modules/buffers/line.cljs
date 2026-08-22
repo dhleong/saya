@@ -5,7 +5,7 @@
    [applied-science.js-interop :as j]
    [clojure.string :as str]
    [saya.modules.ansi.split :as split]
-   [saya.modules.ansi.wrap :refer [wrap-ansi]]
+   [saya.modules.ansi.wrap :refer [wrap-ansi-chars]]
    [taoensso.tufte :as tufte]))
 
 (defprotocol IBufferLine
@@ -127,10 +127,14 @@
          (map
           (fn [group]
             (if (string? (first group))
-              {:strings (->> (wrap-ansi
-                              (str/join group)
-                              width)
-                             (map split/chars-with-ansi))}
+              {:strings
+               #_(->> (wrap-ansi
+                       (str/join group)
+                       width)
+                      (map split/chars-with-ansi))
+               (wrap-ansi-chars
+                (mapcat split/chars-with-ansi group)
+                width)}
 
               {:systems group})))
 

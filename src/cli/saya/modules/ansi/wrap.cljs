@@ -10,12 +10,17 @@
                                          (count suffix)))))
 
 (defn- finalize-line [line]
-  (tufte/p
-   ::finalize-line
-   (-> (.stringify AnsiParser (to-array line))
-        ; This trailing "reset styles" is "nice" but unnecessary.
-        ; ink should handle it for us, so keeping it is just noise
-       (trim-suffix "\u001B[0m"))))
+  (if (string? (first line))
+    (tufte/p
+     ::finalize-line-string
+     line)
+
+    (tufte/p
+     ::finalize-line-parser
+     (-> (.stringify AnsiParser (to-array line))
+          ; This trailing "reset styles" is "nice" but unnecessary.
+          ; ink should handle it for us, so keeping it is just noise
+         (trim-suffix "\u001B[0m")))))
 
 (defn- is-space? [part]
   (= " " (.-content part)))
@@ -35,12 +40,12 @@
           (remove #(is-space? (first %)))
           (map count))))))
 
-(defn- do-wrap-ansi [s width]
+(defn wrap-ansi-chars [ansi-chars width]
   {:pre [(number? width)]}
   (loop [lines []
          current-line []
          current-line-width 0
-         ansi-chars (->ansi-chars s)
+         ansi-chars ansi-chars
          word-lengths (->word-lengths ansi-chars)]
 
     (if (empty? ansi-chars)
@@ -76,4 +81,4 @@
 (defn wrap-ansi [s width]
   (tufte/p
    ::wrap-ansi
-   (do-wrap-ansi s width)))
+   (wrap-ansi-chars (->ansi-chars s) width)))
