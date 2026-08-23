@@ -181,9 +181,15 @@
 (defn- ->ansi-continuation [^BufferLine buffer-line]
   (let [tokens (tokenized-parts buffer-line)
         last-tok (peek tokens)]
-    (when last-tok
-      (when (= "ansi" (.-type last-tok))
-        (.-code last-tok)))))
+    (or (when (and last-tok
+                   (= "ansi" (.-type last-tok)))
+          (if (= "\u001B[0m" (.-code last-tok))
+            "" ; Hacks...?
+            (.-code last-tok)))
+        (let [parts (split/tokens->chars-with-ansi tokens)
+              last-char (last parts)]
+          (println last-char)
+          (subs last-char 0 (dec (count last-char)))))))
 
 (defn- clean-part [o]
   (cond
