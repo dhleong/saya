@@ -7,7 +7,6 @@
    [taoensso.tufte :as tufte]))
 
 (defprotocol IBufferLine
-  (->ansi [this])
   (->plain [this])
   (ansi-chars [this])
   (length
@@ -207,8 +206,9 @@
   Object
   (equiv [this other]
     (-equiv this other))
-  (toString [this]
-    (->ansi this))
+  (toString [_]
+    (->> (keep :ansi parts)
+         (str/join)))
 
   IEquiv
   (-equiv [o other] (-equiv (.-parts o) (if (instance? BufferLine other)
@@ -232,10 +232,6 @@
     (seq (.-parts this)))
 
   IBufferLine
-  (->ansi [_]
-    (or (:ansi @state)
-        (:ansi (swap! state assoc :ansi (->> (keep :ansi parts)
-                                             (str/join))))))
 
   (->plain [_]
     (or (:plain @state)
@@ -273,7 +269,7 @@
 
       (do
         (-write writer "\"")
-        (-write writer (->ansi a))
+        (-write writer (str a))
         (-write writer "\"")))
     (-write writer "]")))
 
