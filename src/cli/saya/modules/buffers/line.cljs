@@ -160,10 +160,7 @@
      ; When profiling, it's easier to associate cost if we
      ; materialize upfront instead of staying lazy
      (seq js/process.env.PROFILE)
-     (vec))
-   #_[{:line (into (wrap-ansi (->ansi buffer-line) width)
-                   (keep :system (.-parts buffer-line)))
-       :col 0}]))
+     (vec))))
 
 (defonce width-recalcs (atom 0))
 
