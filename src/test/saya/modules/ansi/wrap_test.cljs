@@ -4,13 +4,14 @@
    [cljs.test :refer-macros [deftest is testing]]
    [clojure.string :as str]
    [saya.modules.ansi.split :as split]
-   [saya.modules.ansi.wrap :as wrap :refer [wrap-ansi-chars]]))
+   [saya.modules.ansi.wrap :as wrap :refer [wrap-ansi-chars]]
+   [saya.util.string :as string]))
 
 (defn- simplify-line [s]
   (-> (ansi/tokenize s)
       (ansi/styledCharsFromTokens)
       (ansi/styledCharsToString)
-      (wrap/trim-suffix "\u001b[39m")))
+      (string/trim-suffix "\u001b[39m")))
 
 (defn wrap-ansi [s width]
   (-> s

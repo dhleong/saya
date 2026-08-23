@@ -3,11 +3,6 @@
    [clojure.string :as str]
    [taoensso.tufte :as tufte]))
 
-(defn trim-suffix [s suffix]
-  (cond-> s
-    (str/ends-with? s suffix) (subs 0 (- (count s)
-                                         (count suffix)))))
-
 (defn- is-space? [part]
   (str/ends-with? part " "))
 
