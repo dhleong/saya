@@ -18,7 +18,7 @@
          text (or text
                   (->> (get-in db [:buffers bufnr :lines])
                        (str/join "\n")))]
-     (when bufnr
+     (when connr
        {:fx [[:dispatch
               ; NOTE: Ensure input is cleared; on-persist-value *may not*
               ; be called from the cmdline window. This is kinda hacks,

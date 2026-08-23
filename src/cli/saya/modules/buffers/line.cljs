@@ -203,6 +203,7 @@
     :else o))
 
 (deftype BufferLine [parts state]
+  ISequential
   Object
   (equiv [this other]
     (-equiv this other))
@@ -226,13 +227,11 @@
   (-count [this]
     (count (.-parts this)))
 
-  ISequential
   ISeqable
   (-seq [this]
     (seq (.-parts this)))
 
   IBufferLine
-
   (->plain [_]
     (or (:plain @state)
         (:plain (swap! state assoc :plain (->> (keep part->plain parts)
