@@ -48,7 +48,13 @@
     (is (= [{:col 0 :line ["-" "-" "-" "-"]}]
            (->> (wrapped-lines
                  (buffer-line "----")
-                 4))))))
+                 4)))))
+
+  (testing "Handle system messages on empty lines (?)"
+    (is (= [{:col 0 :line [[:local-send "honor"]]}]
+           (-> (buffer-line "")
+               (conj {:system [:local-send "honor"]})
+               (wrapped-lines 4))))))
 
 (deftest ansi-continuation-test
   (testing "Capture final ansi"

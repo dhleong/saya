@@ -1,11 +1,9 @@
 (ns saya.modules.buffers.line
   (:require
-   ["ansi-parser" :default AnsiParser]
    ["strip-ansi" :default strip-ansi]
-   [applied-science.js-interop :as j]
    [clojure.string :as str]
    [saya.modules.ansi.split :as split]
-   [saya.modules.ansi.wrap :refer [wrap-ansi]]
+   [saya.modules.ansi.wrap :refer [wrap-ansi-chars]]
    [taoensso.tufte :as tufte]))
 
 (defprotocol IBufferLine
@@ -22,31 +20,34 @@
 
 (declare ->BufferLine BufferLine)
 
+(def ^:private EMPTY-PARTS [{:ansi "" :plain ""}])
+
 (defn- strip-unprintable [s]
   (str/replace s "\u0000" ""))
 
-(defn- ->ansi-chars [parts]
-  (->> parts
-       (map (fn [{:keys [ansi system]}]
-              (or system ansi)))
-       (partition-by string?)
-       (reduce
-        (fn [formatted group]
-          (concat
-           formatted
-           (if (string? (first group))
-             (split/chars-with-ansi
-              (str/join group))
-
-             group)))
-        [])))
+(defn- tokenized-parts [^BufferLine buffer-line]
+  (or (:tokens @(.-state buffer-line))
+      (:tokens (swap! (.-state buffer-line)
+                      assoc
+                      :tokens
+                      (->> (or (.-parts buffer-line)
+                               EMPTY-PARTS)
+                           (sequence
+                            (comp
+                             (map (fn [{:keys [ansi system]}]
+                                    (or system ansi)))
+                             (partition-by string?)
+                             (mapcat
+                              (fn [group]
+                                (if (string? (first group))
+                                  (mapcat split/->ansi-tokens
+                                          group)
+                                  group))))))))))
 
 (defn- part->plain [{:keys [ansi plain]}]
   (or plain
       (when ansi
         (strip-ansi ansi))))
-
-(def ^:private EMPTY-PARTS [{:ansi "" :plain ""}])
 
 (defn- compose-systems-onto-prior-strings []
   (fn [rf]
@@ -115,24 +116,22 @@
            (vreset! last-line with-col)
            (rf result with-col)))))))
 
-(defn- ->wrapped-lines [parts width]
-  (->> (or (seq parts)
-           EMPTY-PARTS)
+(defn- ->wrapped-lines [^BufferLine buffer-line width]
+  (->> (or (seq (tokenized-parts buffer-line))
+           [""])
 
        (sequence
         (comp
-         (map (fn [{:keys [ansi system]}]
-                (or system ansi)))
          (partition-by string?)
          (map
           (fn [group]
-            (if (string? (first group))
-              {:strings (->> (wrap-ansi
-                              (str/join group)
-                              width)
-                             (map split/chars-with-ansi))}
+            (if (vector? (first group))
+              {:systems group}
 
-              {:systems group})))
+              {:strings
+               (wrap-ansi-chars
+                (split/tokens->chars-with-ansi group)
+                width)})))
 
        ; From above, `strings` will be a sequence of split lines,
        ; with each line being a sequence of chars-with-ansi;
@@ -157,7 +156,7 @@
 (defn- perform-line-wrap [^BufferLine buffer-line width]
   (tufte/p
    ::perform-line-wrap
-   (cond-> (->wrapped-lines (.-parts buffer-line) width)
+   (cond-> (->wrapped-lines buffer-line width)
      ; When profiling, it's easier to associate cost if we
      ; materialize upfront instead of staying lazy
      (seq js/process.env.PROFILE)
@@ -179,11 +178,21 @@
             (:wrapped)
             (second)))))
 
-(defn- ->ansi-continuation [ansi]
-  (when-let [parts (seq (.parse AnsiParser (str ansi " ")))]
-    (let [ansi (j/get (nth parts (dec (count parts))) :style)]
-      (when (seq ansi)
-        ansi))))
+(defn- ->ansi-continuation [^BufferLine buffer-line]
+  (let [tokens (->> (tokenized-parts buffer-line)
+                    (take-while (complement vector?)))
+        last-tok (last tokens)]
+    ; NOTE: the last ^here and below operate on sequences.
+    ; Not the most efficient, but it's a simple way to ensure
+    ; system messages don't interfere
+    (or (when (and last-tok
+                   (= "ansi" (.-type last-tok)))
+          (if (= "\u001B[0m" (.-code last-tok))
+            "" ; Hacks...?
+            (.-code last-tok)))
+        (let [parts (split/tokens->chars-with-ansi tokens)]
+          (when-some [last-char (last parts)]
+            (subs last-char 0 (dec (count last-char))))))))
 
 (defn- clean-part [o]
   (cond
@@ -196,13 +205,6 @@
       (update :plain strip-unprintable))
 
     :else o))
-
-(defn- concat->str [parts xducer]
-  (transduce
-   xducer
-   str
-   ""
-   parts))
 
 (deftype BufferLine [parts state]
   Object
@@ -243,9 +245,9 @@
         (:plain (swap! state assoc :plain (->> (keep part->plain parts)
                                                (str/join))))))
 
-  (ansi-chars [_]
-    (or (:chars @state)
-        (:chars (swap! state assoc :chars (->ansi-chars parts)))))
+  (ansi-chars [this]
+    (split/tokens->chars-with-ansi
+     (tokenized-parts this)))
 
   (length [this]
     (count (ansi-chars this)))
@@ -260,7 +262,7 @@
   (ansi-continuation [this]
     ; NOTE: We don't cache this because we *shouldn't* need it
     ; more than once per line anyway
-    (->ansi-continuation (->ansi this))))
+    (->ansi-continuation this)))
 
 (extend-protocol IPrintWithWriter
   BufferLine
