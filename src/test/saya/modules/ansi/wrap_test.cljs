@@ -1,13 +1,31 @@
 (ns saya.modules.ansi.wrap-test
-  (:require [cljs.test :refer-macros [deftest is testing]]
-            [saya.modules.ansi.wrap :refer [wrap-ansi-chars]]
-            [saya.modules.ansi.split :as split]))
+  (:require
+   ["@alcalzone/ansi-tokenize" :as ansi]
+   [cljs.test :refer-macros [deftest is testing]]
+   [clojure.string :as str]
+   [saya.modules.ansi.split :as split]
+   [saya.modules.ansi.wrap :as wrap :refer [wrap-ansi-chars]]))
+
+(defn- simplify-line [s]
+  (-> (ansi/tokenize s)
+      (ansi/styledCharsFromTokens)
+      (ansi/styledCharsToString)
+      (#'wrap/trim-suffix "\u001b[39m")))
 
 (defn wrap-ansi [s width]
   (-> s
       (split/->ansi-tokens)
       (split/tokens->chars-with-ansi)
-      (wrap-ansi-chars width)))
+      (wrap-ansi-chars width)
+      (->> (map str/join)
+           (map simplify-line))))
+
+(deftest word-lengths-test
+  (testing "Count words"
+    (is (= [3 3 5 2 10]
+           (#'wrap/->word-lengths
+            (split/->ansi-tokens
+             "\u001b[38;5;002mFor the honor of Grayskull!"))))))
 
 (deftest wrap-ansi-test
   (testing "Wrap, preserving complex ansi"
