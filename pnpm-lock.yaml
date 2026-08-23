@@ -25,9 +25,6 @@ importers:
       ansi-parser:
         specifier: ^3.2.11
         version: 3.2.11
-      ansi-regex:
-        specifier: ^6.1.0
-        version: 6.1.0
       env-paths:
         specifier: ^3.0.0
         version: 3.0.0
