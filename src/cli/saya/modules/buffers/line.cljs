@@ -20,31 +20,35 @@
 
 (declare ->BufferLine BufferLine)
 
+(def ^:private EMPTY-PARTS [{:ansi "" :plain ""}])
+
 (defn- strip-unprintable [s]
   (str/replace s "\u0000" ""))
 
-(defn- ->ansi-chars [parts]
-  (->> parts
-       (map (fn [{:keys [ansi system]}]
-              (or system ansi)))
-       (partition-by string?)
-       (reduce
-        (fn [formatted group]
-          (concat
-           formatted
-           (if (string? (first group))
-             (split/chars-with-ansi
-              (str/join group))
-
-             group)))
-        [])))
+(defn- tokenized-parts [^BufferLine buffer-line]
+  (or (:tokens @(.-state buffer-line))
+      (:tokens (swap! (.-state buffer-line)
+                      assoc
+                      :tokens
+                      (->> (or (.-parts buffer-line)
+                               EMPTY-PARTS)
+                           (transduce
+                            (comp
+                             (map (fn [{:keys [ansi system]}]
+                                    (or system ansi)))
+                             (partition-by string?)
+                             (mapcat
+                              (fn [group]
+                                (if (string? (first group))
+                                  (mapcat split/->ansi-tokens
+                                          group)
+                                  group))))
+                            conj []))))))
 
 (defn- part->plain [{:keys [ansi plain]}]
   (or plain
       (when ansi
         (strip-ansi ansi))))
-
-(def ^:private EMPTY-PARTS [{:ansi "" :plain ""}])
 
 (defn- compose-systems-onto-prior-strings []
   (fn [rf]
@@ -113,24 +117,21 @@
            (vreset! last-line with-col)
            (rf result with-col)))))))
 
-(defn- ->wrapped-lines [parts width]
-  (->> (or (seq parts)
-           EMPTY-PARTS)
+(defn- ->wrapped-lines [^BufferLine buffer-line width]
+  (->> (tokenized-parts buffer-line)
 
        (sequence
         (comp
-         (map (fn [{:keys [ansi system]}]
-                (or system ansi)))
          (partition-by string?)
          (map
           (fn [group]
-            (if (string? (first group))
+            (if (vector? (first group))
+              {:systems group}
+
               {:strings
                (wrap-ansi-chars
-                (mapcat split/chars-with-ansi group)
-                width)}
-
-              {:systems group})))
+                (split/tokens->chars-with-ansi group)
+                width)})))
 
        ; From above, `strings` will be a sequence of split lines,
        ; with each line being a sequence of chars-with-ansi;
@@ -155,7 +156,7 @@
 (defn- perform-line-wrap [^BufferLine buffer-line width]
   (tufte/p
    ::perform-line-wrap
-   (cond-> (->wrapped-lines (.-parts buffer-line) width)
+   (cond-> (->wrapped-lines buffer-line width)
      ; When profiling, it's easier to associate cost if we
      ; materialize upfront instead of staying lazy
      (seq js/process.env.PROFILE)
@@ -178,11 +179,11 @@
             (second)))))
 
 (defn- ->ansi-continuation [^BufferLine buffer-line]
-  (when-some [ch (some->> (ansi-chars buffer-line)
-                          (seq)
-                          (last))]
-    (when (string? ch)
-      (subs ch 0 (dec (count ch))))))
+  (let [tokens (tokenized-parts buffer-line)
+        last-tok (peek tokens)]
+    (when last-tok
+      (when (= "ansi" (.-type last-tok))
+        (.-code last-tok)))))
 
 (defn- clean-part [o]
   (cond
@@ -235,9 +236,9 @@
         (:plain (swap! state assoc :plain (->> (keep part->plain parts)
                                                (str/join))))))
 
-  (ansi-chars [_]
-    (or (:chars @state)
-        (:chars (swap! state assoc :chars (->ansi-chars parts)))))
+  (ansi-chars [this]
+    (split/tokens->chars-with-ansi
+     (tokenized-parts this)))
 
   (length [this]
     (count (ansi-chars this)))

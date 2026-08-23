@@ -1,49 +1,17 @@
 (ns saya.modules.ansi.split
   (:require
    ["@alcalzone/ansi-tokenize" :as ansi]
-   ["ansi-regex" :default ansi-regex]
    [applied-science.js-interop :as j]))
 
-(defn chars-with-ansi-old [s]
-  {:pre [(string? s)]}
-  (let [regex (ansi-regex)]
-    (loop [start 0
-           pending-ansi nil
-           result []]
-      (let [m (.exec regex s)
-            ansi (get m 0)
-            end (if ansi
-                  (.-lastIndex regex)
-                  (count s))
-            without-ansi (subs s start (- end
-                                          (count ansi)))
-            new-result (if (and (seq without-ansi) pending-ansi)
-                         (-> result
-                             (conj (str pending-ansi
-                                        (first without-ansi)))
-                             (into (next without-ansi)))
+(defn ->ansi-tokens [^String s]
+  (ansi/tokenize s))
 
-                         (into result without-ansi))]
-        (cond
-          ansi
-          (recur end
-                 ansi
-                 new-result)
-
-          ; If there's a pending ansi at the end, tack it onto
-          ; the last visible character
-          (and pending-ansi (seq new-result))
-          (update new-result (dec (count new-result)) str pending-ansi)
-
-          pending-ansi
-          [pending-ansi]
-
-          :else
-          new-result)))))
-
-(defn chars-with-ansi [^String s]
-  (->> (ansi/tokenize s)
-       (ansi/styledCharsFromTokens)
-       (map (j/fn [^:js {:keys [value styles]}]
-              (str (ansi/ansiCodesToString styles)
-                   value)))))
+(defn tokens->chars-with-ansi [toks]
+  (concat
+   (->> toks
+        (take-while (complement vector?))
+        (ansi/styledCharsFromTokens)
+        (map (j/fn [^:js {:keys [value styles]}]
+               (str (ansi/ansiCodesToString styles)
+                    value))))
+   (drop-while (complement vector?) toks)))
