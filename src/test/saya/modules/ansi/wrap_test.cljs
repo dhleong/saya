@@ -10,7 +10,7 @@
   (-> (ansi/tokenize s)
       (ansi/styledCharsFromTokens)
       (ansi/styledCharsToString)
-      (#'wrap/trim-suffix "\u001b[39m")))
+      (wrap/trim-suffix "\u001b[39m")))
 
 (defn wrap-ansi [s width]
   (-> s
@@ -24,8 +24,9 @@
   (testing "Count words"
     (is (= [3 3 5 2 10]
            (#'wrap/->word-lengths
-            (split/->ansi-tokens
-             "\u001b[38;5;002mFor the honor of Grayskull!"))))))
+            (-> "\u001b[38;5;002mFor the honor of Grayskull!"
+                (split/->ansi-tokens)
+                (split/tokens->chars-with-ansi)))))))
 
 (deftest wrap-ansi-test
   (testing "Wrap, preserving complex ansi"
