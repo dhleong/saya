@@ -1,8 +1,10 @@
 (ns saya.modules.ansi.split
   (:require
-   ["ansi-regex" :default ansi-regex]))
+   ["@alcalzone/ansi-tokenize" :as ansi]
+   ["ansi-regex" :default ansi-regex]
+   [applied-science.js-interop :as j]))
 
-(defn chars-with-ansi [s]
+(defn chars-with-ansi-old [s]
   {:pre [(string? s)]}
   (let [regex (ansi-regex)]
     (loop [start 0
@@ -38,3 +40,10 @@
 
           :else
           new-result)))))
+
+(defn chars-with-ansi [^String s]
+  (->> (ansi/tokenize s)
+       (ansi/styledCharsFromTokens)
+       (map (j/fn [^:js {:keys [value styles]}]
+              (str (ansi/ansiCodesToString styles)
+                   value)))))

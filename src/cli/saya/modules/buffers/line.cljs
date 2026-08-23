@@ -1,8 +1,6 @@
 (ns saya.modules.buffers.line
   (:require
-   ["ansi-parser" :default AnsiParser]
    ["strip-ansi" :default strip-ansi]
-   [applied-science.js-interop :as j]
    [clojure.string :as str]
    [saya.modules.ansi.split :as split]
    [saya.modules.ansi.wrap :refer [wrap-ansi-chars]]
@@ -183,11 +181,12 @@
             (:wrapped)
             (second)))))
 
-(defn- ->ansi-continuation [ansi]
-  (when-let [parts (seq (.parse AnsiParser (str ansi " ")))]
-    (let [ansi (j/get (nth parts (dec (count parts))) :style)]
-      (when (seq ansi)
-        ansi))))
+(defn- ->ansi-continuation [^BufferLine buffer-line]
+  (when-some [ch (some->> (ansi-chars buffer-line)
+                          (seq)
+                          (last))]
+    (when (string? ch)
+      (subs ch 0 (dec (count ch))))))
 
 (defn- clean-part [o]
   (cond
@@ -200,13 +199,6 @@
       (update :plain strip-unprintable))
 
     :else o))
-
-(defn- concat->str [parts xducer]
-  (transduce
-   xducer
-   str
-   ""
-   parts))
 
 (deftype BufferLine [parts state]
   Object
@@ -264,7 +256,7 @@
   (ansi-continuation [this]
     ; NOTE: We don't cache this because we *shouldn't* need it
     ; more than once per line anyway
-    (->ansi-continuation (->ansi this))))
+    (->ansi-continuation this)))
 
 (extend-protocol IPrintWithWriter
   BufferLine
