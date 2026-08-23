@@ -118,7 +118,8 @@
            (rf result with-col)))))))
 
 (defn- ->wrapped-lines [^BufferLine buffer-line width]
-  (->> (tokenized-parts buffer-line)
+  (->> (or (seq (tokenized-parts buffer-line))
+           [""])
 
        (sequence
         (comp
