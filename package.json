@@ -39,7 +39,6 @@
   "dependencies": {
     "@alcalzone/ansi-tokenize": "^0.3.0",
     "ansi-escapes": "^7.3.0",
-    "ansi-parser": "^3.2.11",
     "env-paths": "^3.0.0",
     "figures": "^3.2.0",
     "highlight.js": "11.0.1",
