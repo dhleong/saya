@@ -18,7 +18,8 @@
        (trim-suffix "\u001B[0m"))))
 
 (defn- is-space? [part]
-  (= " " (.-content part)))
+  (= " " (or (.-value part)
+             (.-content part))))
 
 (defn- ->ansi-chars [^String s]
   (tufte/p
@@ -31,6 +32,7 @@
    (->> ansi-chars
         (sequence
          (comp
+          (remove #(= "ansi" (.-type %)))
           (partition-by is-space?)
           (remove #(is-space? (first %)))
           (map count))))))

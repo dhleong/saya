@@ -1,6 +1,13 @@
 (ns saya.modules.ansi.wrap-test
   (:require [cljs.test :refer-macros [deftest is testing]]
-            [saya.modules.ansi.wrap :refer [wrap-ansi]]))
+            [saya.modules.ansi.wrap :refer [wrap-ansi-chars]]
+            [saya.modules.ansi.split :as split]))
+
+(defn wrap-ansi [s width]
+  (-> s
+      (split/->ansi-tokens)
+      (split/tokens->chars-with-ansi)
+      (wrap-ansi-chars width)))
 
 (deftest wrap-ansi-test
   (testing "Wrap, preserving complex ansi"
