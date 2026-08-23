@@ -32,7 +32,7 @@
                       :tokens
                       (->> (or (.-parts buffer-line)
                                EMPTY-PARTS)
-                           (transduce
+                           (sequence
                             (comp
                              (map (fn [{:keys [ansi system]}]
                                     (or system ansi)))
@@ -42,8 +42,7 @@
                                 (if (string? (first group))
                                   (mapcat split/->ansi-tokens
                                           group)
-                                  group))))
-                            conj []))))))
+                                  group))))))))))
 
 (defn- part->plain [{:keys [ansi plain]}]
   (or plain
@@ -180,17 +179,20 @@
             (second)))))
 
 (defn- ->ansi-continuation [^BufferLine buffer-line]
-  (let [tokens (tokenized-parts buffer-line)
-        last-tok (peek tokens)]
+  (let [tokens (->> (tokenized-parts buffer-line)
+                    (take-while (complement vector?)))
+        last-tok (last tokens)]
+    ; NOTE: the last ^here and below operate on sequences.
+    ; Not the most efficient, but it's a simple way to ensure
+    ; system messages don't interfere
     (or (when (and last-tok
                    (= "ansi" (.-type last-tok)))
           (if (= "\u001B[0m" (.-code last-tok))
             "" ; Hacks...?
             (.-code last-tok)))
-        (let [parts (split/tokens->chars-with-ansi tokens)
-              last-char (last parts)]
-          (println last-char)
-          (subs last-char 0 (dec (count last-char)))))))
+        (let [parts (split/tokens->chars-with-ansi tokens)]
+          (when-some [last-char (last parts)]
+            (subs last-char 0 (dec (count last-char))))))))
 
 (defn- clean-part [o]
   (cond
