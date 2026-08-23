@@ -126,10 +126,6 @@
           (fn [group]
             (if (string? (first group))
               {:strings
-               #_(->> (wrap-ansi
-                       (str/join group)
-                       width)
-                      (map split/chars-with-ansi))
                (wrap-ansi-chars
                 (mapcat split/chars-with-ansi group)
                 width)}

@@ -10,17 +10,12 @@
                                          (count suffix)))))
 
 (defn- finalize-line [line]
-  (if (string? (first line))
-    (tufte/p
-     ::finalize-line-string
-     line)
-
-    (tufte/p
-     ::finalize-line-parser
-     (-> (.stringify AnsiParser (to-array line))
+  (tufte/p
+   ::finalize-line-parser
+   (-> (.stringify AnsiParser (to-array line))
           ; This trailing "reset styles" is "nice" but unnecessary.
           ; ink should handle it for us, so keeping it is just noise
-         (trim-suffix "\u001B[0m")))))
+       (trim-suffix "\u001B[0m"))))
 
 (defn- is-space? [part]
   (= " " (.-content part)))
@@ -40,7 +35,7 @@
           (remove #(is-space? (first %)))
           (map count))))))
 
-(defn wrap-ansi-chars [ansi-chars width]
+(defn- wrap-ansi-chars-internal [finalize ansi-chars width]
   {:pre [(number? width)]}
   (loop [lines []
          current-line []
@@ -50,7 +45,7 @@
 
     (if (empty? ansi-chars)
       ; Done!
-      (conj lines (finalize-line current-line))
+      (conj lines (finalize current-line))
 
       (let [word-len (first word-lengths)
             want-to-take (inc word-len)
@@ -63,7 +58,7 @@
         (if (> (+ current-line-width word-len 1)
                width)
           ; Wrap
-          (recur (conj lines (finalize-line current-line))
+          (recur (conj lines (finalize current-line))
                  (into [] (take to-take ansi-chars))
                  ; (to-array (take to-take ansi-chars))
                  to-take ; new line initial length
@@ -78,7 +73,10 @@
                  (drop to-take ansi-chars)
                  next-word-lengths))))))
 
+(defn wrap-ansi-chars [ansi-chars width]
+  (wrap-ansi-chars-internal identity ansi-chars width))
+
 (defn wrap-ansi [s width]
   (tufte/p
    ::wrap-ansi
-   (wrap-ansi-chars (->ansi-chars s) width)))
+   (wrap-ansi-chars-internal finalize-line (->ansi-chars s) width)))
