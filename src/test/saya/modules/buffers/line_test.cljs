@@ -75,7 +75,13 @@
     (is (empty?
          (ansi-continuation
           (buffer-line
-           "[38;5;006mOpen and close[0m"))))))
+           "[38;5;006mOpen and close[0m")))))
+
+  (testing "Handle system messages"
+    (is (empty?
+         (ansi-continuation
+          (buffer-line
+           {:system [:local-send "honor"]}))))))
 
 (deftest unprintable-chars-test
   (testing "Don't allow unprintable chars in constructor"

@@ -19,13 +19,14 @@
 (reg-fx
  ::connect!
  (fn [{:keys [uri] :as payload}]
-   (p/let [{:keys [connection_id]} (api/request!
-                                    (merge
-                                     payload
-                                     {:type :Connect}))]
+   (p/let [{:keys [connection_id] :as opts} (api/request!
+                                             (merge
+                                              payload
+                                              {:type :Connect}))]
      (log "Opened connection" connection_id "to" uri)
      (>evt [::events/connecting {:uri uri
-                                 :connection-id connection_id}])
+                                 :connection-id connection_id
+                                 :opts opts}])
      (log "Queued ::connecting"))))
 
 (reg-fx
@@ -49,3 +50,16 @@
                    :connection_id connection-id
                    :width width
                    :height height})))
+
+(reg-fx
+ ::load-persisted-range!
+ (fn [{:keys [bufnr key start end]}]
+   (p/let [{:keys [lines]} (api/request! {:type :GetPersistedOutput
+                                          :persisted_output_key key
+                                          :start start
+                                          :end end})]
+     (>evt [::events/on-persisted-range-loaded
+            {:bufnr bufnr
+             :start start
+             :end end
+             :lines lines}]))))

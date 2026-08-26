@@ -12,6 +12,7 @@
    [saya.modules.connection.completion :refer [->ConnectionCompletionSource]]
    [saya.modules.connection.events :as conn-events]
    [saya.modules.input.window :as input-window]
+   [saya.modules.kodachi.events :as kodachi-events]
    [saya.modules.perf.core :as perf]
    [saya.modules.search.subs :as search-subs]
    [saya.modules.ui.cursor :refer [cursor]]
@@ -40,7 +41,20 @@
                  ; get both correctly!
                  [:> k/Text {:color :reset}
                   [:> k/Text {:italic true}
-                   text]])})
+                   text]])
+
+   :persisted-line (fn persisted-line [{:keys [bufnr idx]}]
+                     (React/useEffect
+                      (fn load-persisted-line []
+                        (>evt [::kodachi-events/enqueue-load-persisted-line
+                               {:bufnr bufnr
+                                :idx idx}])
+                        js/undefined)
+                      #js [bufnr idx])
+                     [:> k/Text "..."])
+   :restored-persisted (fn restored-persisted [{:keys [count _timestamp]}]
+                         [:> k/Text {:inverse true}
+                          "^^^ Restored " count " lines."])})
 
 (defn- input-window [connr]
   (let [bufnr [:conn/input connr]]
@@ -110,7 +124,7 @@
              (when (= cursor-col abs-col)
                [modeful-cursor])
              (if (vector? part)
-               (into [(system-messages (first part))] (rest part))
+               (into [:f> (system-messages (first part))] (rest part))
                [:> k/Text (when (highlighted? highlights abs-col)
                             {:background-color :yellow})
                 (cond-> part

@@ -4,6 +4,7 @@
    [clojure.string :as str]
    [re-frame.core :refer [reg-event-db reg-event-fx trim-v unwrap]]
    [saya.modules.buffers.events :as buffer-events]
+   [saya.modules.buffers.line :refer [buffer-line]]
    [saya.modules.logging.core :refer [log]]))
 
 (reg-event-db
@@ -36,13 +37,19 @@
 (reg-event-fx
  ::connecting
  [unwrap]
- (fn [{:keys [db]} {:keys [connection-id uri] :as params}]
+ (fn [{:keys [db]} {:keys [connection-id uri opts] :as params}]
    (let [db' (buffer-events/create-for-connection db params)
          bufnr (get-in db' [:connections connection-id :bufnr])]
      {:db db'
-      :dispatch [::buffer-events/new-line
-                 {:id bufnr
-                  :system [:connecting uri]}]})))
+      :fx [(when (> (:persisted_output_lines opts) 0)
+             [:dispatch
+              [::buffer-events/insert-persisted-lines
+               {:id bufnr
+                :count (:persisted_output_lines opts)}]])
+           [:dispatch
+            [::buffer-events/new-line
+             {:id bufnr
+              :system [:connecting uri]}]]]})))
 
 (defn- process-message [db connr bufnr params]
   (m/match params
@@ -153,6 +160,35 @@
  [unwrap]
  (fn [_ {:keys [connection-id]}]
    {:saya.modules.kodachi.fx/disconnect! {:connection-id connection-id}}))
+
+(reg-event-fx
+ ::load-persisted-range
+ [unwrap]
+ (fn [{:keys [db]} {:keys [bufnr start end]}]
+   (when-some [k (get-in db [:buffers bufnr :persistence-key])]
+     {:saya.modules.kodachi.fx/load-persisted-range!
+      {:bufnr bufnr
+       :key k
+       :start start
+       :end end}})))
+
+(defn- replace-range [buffer [start _end] replacement-lines]
+  (reduce
+   (fn [b' [i line]]
+     (assoc-in b' [:lines (+ start i)] line))
+   buffer
+   (map-indexed vector replacement-lines)))
+
+(defn- persisted->buffer-line [persisted]
+  (buffer-line (str "LOADED " persisted)))
+
+(reg-event-db
+ ::on-persisted-range-loaded
+ [unwrap]
+ (fn [db {:keys [bufnr start end lines]}]
+   (update-in db [:buffers bufnr :lines]
+              replace-range [start end]
+              (map persisted->buffer-line lines))))
 
 (comment
   (re-frame.core/dispatch [::connect {:uri "legendsofthejedi.com:5656"}])
