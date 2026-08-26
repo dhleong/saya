@@ -157,10 +157,11 @@
             should-restore?
             (update :lines into (generate-persisted-lines bufnr count)))
       :fx [(when should-restore?
-             [:saya.modules.kodachi.events/load-persisted-range
-              {:key bufnr
-               :start (max 0 (- count 100))
-               :end (dec count)}])]})))
+             [:dispatch
+              [:saya.modules.kodachi.events/load-persisted-range
+               {:key bufnr
+                :start (max 0 (- count 100))
+                :end (dec count)}]])]})))
 
 (defn- clear-line [buffer]
   (-> buffer

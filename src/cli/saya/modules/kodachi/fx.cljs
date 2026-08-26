@@ -55,9 +55,9 @@
  ::load-persisted-range!
  (fn [{:keys [bufnr key start end]}]
    (p/let [{:keys [lines]} (api/request! {:type :GetPersistedOutput
-                                          :persisted_output_key key
-                                          :start start
-                                          :end end})]
+                                          :key key
+                                          :start_line start
+                                          :end_line end})]
      (>evt [::events/on-persisted-range-loaded
             {:bufnr bufnr
              :start start
