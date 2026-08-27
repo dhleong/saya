@@ -187,8 +187,18 @@
    buffer-lines
    (map-indexed vector replacement-lines)))
 
-(defn- persisted->buffer-line [persisted]
-  (buffer-line (str "LOADED " persisted)))
+(defn- persisted->buffer-line [{:keys [parts]}]
+  (reduce
+   (fn [l part]
+     (m/match [part]
+       [{:Ansi s}] (conj l s)
+
+       [{:SystemMessage {:LocalSend value}}]
+       (conj l {:system [:local-send value]})
+
+       :else l))
+   (buffer-line)
+   parts))
 
 (reg-event-db
  ::on-persisted-range-loaded
