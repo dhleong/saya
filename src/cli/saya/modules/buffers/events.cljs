@@ -150,16 +150,16 @@
 (reg-event-fx
  ::insert-persisted-lines
  [unwrap buffer-path]
- (fn [{buffer :db} {:keys [bufnr count]}]
+ (fn [{buffer :db} {:keys [id count]}]
    (let [should-restore? (and (empty? (:lines buffer))
                               (> count 0))]
      {:db (cond-> buffer
             should-restore?
-            (update :lines into (generate-persisted-lines bufnr count)))
+            (update :lines into (generate-persisted-lines id count)))
       :fx [(when should-restore?
              [:dispatch
               [:saya.modules.kodachi.events/load-persisted-range
-               {:key bufnr
+               {:bufnr id
                 :start (max 0 (- count 100))
                 :end (dec count)}]])]})))
 

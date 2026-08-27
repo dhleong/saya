@@ -172,11 +172,19 @@
        :start start
        :end end}})))
 
-(defn- replace-range [buffer [start _end] replacement-lines]
+(reg-event-fx
+ ::enqueue-load-persisted-line
+ [unwrap]
+ (fn [{:keys [db]} {:keys [bufnr idx]}]
+   (when-some [k (get-in db [:buffers bufnr :persistence-key])]
+     ; TODO:
+     nil)))
+
+(defn- replace-range [buffer-lines [start _end] replacement-lines]
   (reduce
    (fn [b' [i line]]
-     (assoc-in b' [:lines (+ start i)] line))
-   buffer
+     (assoc b' (+ start i) line))
+   buffer-lines
    (map-indexed vector replacement-lines)))
 
 (defn- persisted->buffer-line [persisted]
