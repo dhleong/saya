@@ -261,7 +261,7 @@
 
            :else
            (recur
-            (f anchor-row 1)
+            (max (f anchor-row 1) (dec (:height window)))
             ; TODO: Actually if scrolling forward this probably should be
             ; (dec full-available-lines), I think
             0

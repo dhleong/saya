@@ -23,7 +23,7 @@
                      buffer-lines]
   ; NOTE: height might be unavailable on the first render
   (let [last-row-index (dec (count buffer-lines))
-        anchor-row (or anchor-row
+        anchor-row (or (max anchor-row (dec height))
                        last-row-index)
         first-line-index (max 0 (- anchor-row (dec height)))]
     (->>
