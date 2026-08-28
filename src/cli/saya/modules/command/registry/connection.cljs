@@ -10,7 +10,8 @@
 (reg-event-fx
  :command/connect
  [(aliases :c :co :con :conn) unwrap]
- (fn [_ {[uri-param] :params :keys [uri auto-prompts persist-output]}]
+ (fn [_ {[uri-param] :params :keys [uri auto-prompts persist-output
+                                    script-file]}]
    ; NOTE: This may be invoked either as:
    ;   [:command/connect {:uri uri}]
    ; OR, as from the UI:
@@ -23,9 +24,11 @@
      {:dispatch [::kodachi-events/connect
                  {:uri the-uri
                   :auto_prompts auto-prompts
-                  ; TODO: Use the script path in the slug somehow?
                   :persisted_output_key (when persist-output
-                                          (string/slugify the-uri))}]})))
+                                          (string/slugify
+                                           (str script-file
+                                                "-"
+                                                the-uri)))}]})))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (reg-event-fx

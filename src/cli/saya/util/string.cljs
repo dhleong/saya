@@ -4,7 +4,7 @@
 
 (def ^:private custom-slug-chars
   {":" "__"
-   "/" "_SLASH_"})
+   "/" "-"})
 
 (defn slugify [s]
   (-> s
