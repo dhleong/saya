@@ -19,13 +19,14 @@
 (reg-fx
  ::connect!
  (fn [{:keys [uri] :as payload}]
-   (p/let [{:keys [connection_id]} (api/request!
-                                    (merge
-                                     payload
-                                     {:type :Connect}))]
+   (p/let [{:keys [connection_id] :as opts} (api/request!
+                                             (merge
+                                              payload
+                                              {:type :Connect}))]
      (log "Opened connection" connection_id "to" uri)
      (>evt [::events/connecting {:uri uri
-                                 :connection-id connection_id}])
+                                 :connection-id connection_id
+                                 :opts opts}])
      (log "Queued ::connecting"))))
 
 (reg-fx
@@ -49,3 +50,49 @@
                    :connection_id connection-id
                    :width width
                    :height height})))
+
+(defn- load-persisted-range!
+  [{:keys [bufnr key start end]}]
+  (p/let [{:keys [lines]} (api/request! {:type :GetPersistedOutput
+                                         :key key
+                                         :start_line start
+                                         :end_line end})]
+    (>evt [::events/on-persisted-range-loaded
+           {:bufnr bufnr
+            :start start
+            :end end
+            :lines lines}])))
+
+(reg-fx
+ ::load-persisted-range!
+ load-persisted-range!)
+
+(defonce ^:private enqueued-ranges (atom {}))
+
+(defn- flush-load! [bufnr key]
+  (let [path [bufnr key]
+        [old _] (swap-vals! enqueued-ranges dissoc path)
+        request (merge
+                 (select-keys
+                  (get old path)
+                  [:start :end])
+                 {:bufnr bufnr
+                  :key key})]
+    (load-persisted-range! request)))
+
+(reg-fx
+ ::enqueue-load-persisted-line!
+ (fn [{:keys [bufnr key idx]}]
+   (swap!
+    enqueued-ranges
+    update
+    [bufnr key]
+    (fn [state]
+      (-> state
+          (update :start (fnil min idx) idx)
+          (update :end (fnil max idx) idx)
+          (cond->
+           (nil? (:timeout state))
+            (assoc :timeout (js/setTimeout
+                             (partial flush-load! bufnr key)
+                             50))))))))

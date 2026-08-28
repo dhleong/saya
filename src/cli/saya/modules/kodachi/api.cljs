@@ -117,17 +117,6 @@
       (throw (or last-err
                  (ex-info "Unable to find valid kodachi install" {}))))))
 
-(defn init []
-  (-> (perform-init)
-      (p/catch (fn [e]
-                 ; Clean up the bad instance on error
-                 (swap! instance
-                        (fn [^js v]
-                          (when v
-                            (.kill v))
-                          nil))
-                 (throw e)))))
-
 (defn- serialize-message [message]
   (-> message
       (clj->js)
@@ -174,4 +163,19 @@
         message' (assoc message :id next-id)]
     (dispatch! message')
     (await-response next-id)))
+
+(defn init []
+  (-> (p/do
+        (perform-init)
+        (dispatch! {:type :Identify
+                    :app_name "saya"}))
+
+      (p/catch (fn [e]
+                 ; Clean up the bad instance on error
+                 (swap! instance
+                        (fn [^js v]
+                          (when v
+                            (.kill v))
+                          nil))
+                 (throw e)))))
 

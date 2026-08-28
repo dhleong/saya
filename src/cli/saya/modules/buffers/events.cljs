@@ -1,7 +1,8 @@
 (ns saya.modules.buffers.events
   (:require
    [re-frame.core :refer [->interceptor assoc-coeffect assoc-effect
-                          get-coeffect get-effect reg-event-db unwrap]]
+                          get-coeffect get-effect reg-event-db reg-event-fx
+                          unwrap]]
    [saya.modules.buffers.line :refer [ansi-continuation buffer-line]]))
 
 (defn- build-allocator [db-objs-key db-next-id-key]
@@ -58,7 +59,7 @@
       {:buffer buffer
        :window window}])))
 
-(defn create-for-connection [db {:keys [connection-id uri]}]
+(defn create-for-connection [db {:keys [connection-id uri opts]}]
   (let [current-winnr (:current-winnr db)
         current-window (get-in db [:windows current-winnr])
         current-path [:buffers (:bufnr current-window)]
@@ -78,6 +79,7 @@
                                    db
                                    {:buffer
                                     {:uri uri
+                                     :persistence-key (:persisted_output_key opts)
                                      :connection-id connection-id}})]
         (-> db
             (update :connections
@@ -132,6 +134,34 @@
      (some? system)
      (-> (append-text {:system system})
          (new-line)))))
+
+(defn- generate-persisted-lines [bufnr lines-count]
+  (concat
+   (->> (range lines-count)
+        (map (fn [i]
+               (buffer-line
+                {:system [:persisted-line {:bufnr bufnr
+                                           :idx i}]}))))
+   [(buffer-line
+     {:system [:restored-persisted
+               {:count lines-count
+                :timestamp (js/Date.now)}]})]))
+
+(reg-event-fx
+ ::insert-persisted-lines
+ [unwrap buffer-path]
+ (fn [{buffer :db} {:keys [id count]}]
+   (let [should-restore? (and (empty? (:lines buffer))
+                              (> count 0))]
+     {:db (cond-> buffer
+            should-restore?
+            (update :lines into (generate-persisted-lines id count)))
+      :fx [(when should-restore?
+             [:dispatch
+              [:saya.modules.kodachi.events/load-persisted-range
+               {:bufnr id
+                :start (max 0 (- count 100))
+                :end (dec count)}]])]})))
 
 (defn- clear-line [buffer]
   (-> buffer
