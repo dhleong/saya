@@ -26,9 +26,12 @@
                   :auto_prompts auto-prompts
                   :persisted_output_key (when persist-output
                                           (string/slugify
-                                           (str script-file
-                                                "-"
-                                                the-uri)))}]})))
+                                           (or
+                                            (when (string? persist-output)
+                                              persist-output)
+                                            (str script-file
+                                                 "-"
+                                                 the-uri))))}]})))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (reg-event-fx
