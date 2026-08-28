@@ -51,15 +51,48 @@
                    :width width
                    :height height})))
 
+(defn- load-persisted-range!
+  [{:keys [bufnr key start end]}]
+  (p/let [{:keys [lines]} (api/request! {:type :GetPersistedOutput
+                                         :key key
+                                         :start_line start
+                                         :end_line end})]
+    (>evt [::events/on-persisted-range-loaded
+           {:bufnr bufnr
+            :start start
+            :end end
+            :lines lines}])))
+
 (reg-fx
  ::load-persisted-range!
- (fn [{:keys [bufnr key start end]}]
-   (p/let [{:keys [lines]} (api/request! {:type :GetPersistedOutput
-                                          :key key
-                                          :start_line start
-                                          :end_line end})]
-     (>evt [::events/on-persisted-range-loaded
-            {:bufnr bufnr
-             :start start
-             :end end
-             :lines lines}]))))
+ load-persisted-range!)
+
+(defonce ^:private enqueued-ranges (atom {}))
+
+(defn- flush-load! [bufnr key]
+  (let [path [bufnr key]
+        [old _] (swap-vals! enqueued-ranges dissoc path)
+        request (merge
+                 (select-keys
+                  (get old path)
+                  [:start :end])
+                 {:bufnr bufnr
+                  :key key})]
+    (load-persisted-range! request)))
+
+(reg-fx
+ ::enqueue-load-persisted-line!
+ (fn [{:keys [bufnr key idx]}]
+   (swap!
+    enqueued-ranges
+    update
+    [bufnr key]
+    (fn [state]
+      (-> state
+          (update :start (fnil min idx) idx)
+          (update :end (fnil max idx) idx)
+          (cond->
+           (nil? (:timeout state))
+            (assoc :timeout (js/setTimeout
+                             (partial flush-load! bufnr key)
+                             50))))))))

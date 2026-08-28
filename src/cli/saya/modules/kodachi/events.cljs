@@ -177,8 +177,10 @@
  [unwrap]
  (fn [{:keys [db]} {:keys [bufnr idx]}]
    (when-some [k (get-in db [:buffers bufnr :persistence-key])]
-     ; TODO:
-     nil)))
+     {:saya.modules.kodachi.fx/enqueue-load-persisted-line!
+      {:bufnr bufnr
+       :key k
+       :idx idx}})))
 
 (defn- replace-range [buffer-lines [start _end] replacement-lines]
   (reduce
