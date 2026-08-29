@@ -6,11 +6,22 @@
    [saya.modules.kodachi.events :as kodachi-events]
    [saya.util.string :as string]))
 
+(defn make-persistence-key [input {:keys [script-file uri]}]
+  (when input
+    (string/slugify
+     (or
+      (when (string? input)
+        input)
+      (str script-file
+           "-"
+           uri)))))
+
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (reg-event-fx
  :command/connect
  [(aliases :c :co :con :conn) unwrap]
- (fn [_ {[uri-param] :params :keys [uri auto-prompts persist-output
+ (fn [_ {[uri-param] :params :keys [uri auto-prompts nonce
+                                    persist-input persist-output
                                     script-file]}]
    ; NOTE: This may be invoked either as:
    ;   [:command/connect {:uri uri}]
@@ -23,15 +34,16 @@
                        "legendsofthejedi.com:5656"))]
      {:dispatch [::kodachi-events/connect
                  {:uri the-uri
+                  :nonce nonce
                   :auto_prompts auto-prompts
-                  :persisted_output_key (when persist-output
-                                          (string/slugify
-                                           (or
-                                            (when (string? persist-output)
-                                              persist-output)
-                                            (str script-file
-                                                 "-"
-                                                 the-uri))))}]})))
+                  :persisted_output_key (make-persistence-key
+                                         persist-output
+                                         {:script-file script-file
+                                          :uri the-uri})
+                  :persisted_input_key (make-persistence-key
+                                        persist-input
+                                        {:script-file script-file
+                                         :uri the-uri})}]})))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (reg-event-fx
