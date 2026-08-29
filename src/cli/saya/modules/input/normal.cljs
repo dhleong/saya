@@ -223,6 +223,49 @@
 
 ; ======= Scroll keymaps ===================================
 
+(defn- last-visible-offset [{:keys [buffer window]}]
+  (loop [line 0
+         lines-to-consume (:height window)]
+    (let [available-lines (count
+                           (wrapped-lines
+                            (get-in buffer [:lines line])
+                            (:width window)))
+          max-anchor-offset (dec-to-zero available-lines)]
+      (cond
+        (< available-lines lines-to-consume)
+        (recur
+         (inc line)
+         (- lines-to-consume available-lines))
+
+        (= available-lines lines-to-consume)
+        [line 0]
+
+        :else
+        [line (- max-anchor-offset
+                 (- available-lines lines-to-consume))]))))
+
+(defn- fit-anchor-to-window
+  "Update anchor-row to ensure the rendered top will be >=0"
+  [{:keys [_buffer window] :as ctx} [anchor-row anchor-offset]]
+  (cond
+    (nil? anchor-row)
+    [anchor-row anchor-offset]
+
+    (>= anchor-row (:height window))
+    [anchor-row anchor-offset]
+
+    :else
+    (let [[visible-line visible-offset] (last-visible-offset ctx)]
+      (cond
+        (< anchor-row visible-line)
+        [visible-line visible-offset]
+
+        (= anchor-row visible-line)
+        [visible-line (min visible-offset anchor-offset)]
+
+        :else
+        [anchor-row anchor-offset]))))
+
 (defn update-scroll [f compute-amount]
   (comp
    ; adjust-scroll-to-cursor
@@ -260,12 +303,17 @@
                    :anchor-offset anchor-offset)
 
            :else
-           (recur
-            (max (f anchor-row 1) (dec (:height window)))
-            ; TODO: Actually if scrolling forward this probably should be
-            ; (dec full-available-lines), I think
-            0
-            (- scroll-to-consume available-lines))))))))
+           (let [new-row (f anchor-row 1)
+                 [new-row' new-offset'] (fit-anchor-to-window
+                                         {:window window
+                                          :buffer buffer}
+                                         [new-row 0])]
+             (recur
+              new-row'
+               ; TODO: Actually if scrolling forward this probably should be
+               ; (dec full-available-lines), I think
+              new-offset'
+              (- scroll-to-consume available-lines)))))))))
 
 (defn- window-rows [{:keys [window]}]
   ; Actually a page is 2 less than the window height
