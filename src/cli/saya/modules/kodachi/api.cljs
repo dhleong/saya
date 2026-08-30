@@ -6,9 +6,9 @@
    [archetype.util :refer [>evt]]
    [promesa.core :as p]
    [saya.config :as config]
+   [saya.modules.echo.core :refer [echo]]
    [saya.modules.kodachi.events :as events]
-   [saya.modules.logging.core :refer [log]]
-   [saya.modules.scripting.core :refer [echo]]))
+   [saya.modules.logging.core :refer [log]]))
 
 (def ^:private default-paths
   ["../kodachi/target/release/kodachi"
@@ -27,12 +27,15 @@
       (.on "error" #(p/reject! promise %)))
     promise))
 
+(defonce ^:private failed-messages (atom []))
+
 (defn- parse-message [raw-message]
   (try
     (-> raw-message
         (js/JSON.parse)
         (js->clj :keywordize-keys true))
     (catch :default e
+      (swap! failed-messages conj raw-message)
       #_{:clj-kondo/ignore [:inline-def :unused-private-var]}
       (def ^:private last-message raw-message)
       #_{:clj-kondo/ignore [:inline-def :unused-private-var]}
