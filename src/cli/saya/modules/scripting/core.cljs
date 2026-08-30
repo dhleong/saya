@@ -7,8 +7,12 @@
    [promesa.core :as p]
    [re-frame.core :as rf]
    [re-frame.db :as rfdb]
+   [saya.config :as config]
    [saya.modules.echo.core :as echo-core]
+   [saya.modules.input.events :as input-events]
+   [saya.modules.kodachi.api :as kodachi-api]
    [saya.modules.kodachi.events :as kodachi]
+   [saya.modules.logging.core :refer [log]]
    [saya.modules.scripting.callbacks :refer [register-callback]]
    [saya.modules.scripting.events :as events]))
 
@@ -16,28 +20,48 @@
 
 ; ======= setup-connection =================================
 
-(defn- perform-connect [uri {:keys [auto-prompt? persist-output?]}]
+(defn- perform-connect [uri {:keys [auto-prompt? persist-output? persist-input?]}]
   (let [callback-id [::on-connection uri]
         stop-listening (fn stop-listening []
                          (rf/remove-post-event-callback callback-id))
+        nonce (str (js/Date.now) "." (js/Math.random))
         script-file *script-file*]
-    (p/create
-     (fn [p-resolve _]
-       (rf/add-post-event-callback
-        callback-id
-        (fn [[event-name & args] _]
-          (m/match [event-name (vec args)]
-            [::kodachi/connecting [{:connection-id connection-id
-                                    :uri uri}]]
-            (do (stop-listening)
-                (p-resolve connection-id))
+    (->
+     (p/create
+      (fn [p-resolve _]
+        (rf/add-post-event-callback
+         callback-id
+         (fn [[event-name & args] _]
+           (m/match [event-name (vec args)]
+             [::kodachi/connecting [{:connection-id connection-id
+                                     :uri uri
+                                     :opts {:nonce received-nonce}}]]
+             (when (= received-nonce nonce)
+               (stop-listening)
+               (p-resolve connection-id))
 
-            :else nil)))
+             :else nil)))
 
-       (>evt [:command/connect {:uri uri
-                                :auto-prompts auto-prompt?
-                                :script-file script-file
-                                :persist-output persist-output?}])))))
+        (>evt [:command/connect {:uri uri
+                                 :nonce nonce
+                                 :auto-prompts auto-prompt?
+                                 :script-file script-file
+                                 :persist-output persist-output?
+                                 :persist-input persist-input?}])))
+     (p/then
+      (fn [connection-id]
+        (p/do
+          (when persist-input?
+            (p/let [{:keys [entries]} (kodachi-api/request!
+                                       {:type :GetHistory
+                                        :connection_id connection-id
+                                        :limit config/history-length})]
+              (log "loaded history for " connection-id (count entries))
+              (>evt [::input-events/on-load-history-for-connection
+                     {:connr connection-id
+                      :entries entries}])))
+
+          connection-id))))))
 
 ; "Unpacks" a `conn` into a connr. For now, a no-op
 (def ^:private ->connr identity)

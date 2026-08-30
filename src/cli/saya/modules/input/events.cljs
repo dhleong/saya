@@ -36,3 +36,13 @@
    (cond-> db
      (seq (str/trim entry))
      (update-in [:histories bufnr] add-history-entry entry))))
+
+(reg-event-db
+ ::on-load-history-for-connection
+ [unwrap]
+ (fn [db {:keys [connr entries]}]
+   (let [bufnr [:conn/input connr]]
+     (cond-> db
+       ; Don't replacing existing history (this could be a reconnect)
+       (not (seq (get-in db [:histories bufnr])))
+       (assoc-in [:histories bufnr] entries)))))
