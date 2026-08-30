@@ -28,6 +28,9 @@ importers:
       figures:
         specifier: ^3.2.0
         version: 3.2.0
+      fzf:
+        specifier: ^0.5.2
+        version: 0.5.2
       highlight.js:
         specifier: 11.0.1
         version: 11.0.1
@@ -278,6 +281,9 @@ packages:
 
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
+
+  fzf@0.5.2:
+    resolution: {integrity: sha512-Tt4kuxLXFKHy8KT40zwsUPUkg1CrsgY25FxA2U/j/0WgEDCk3ddc/zLTCCcbSHX9FcKtLuVaDGtGE/STWC+j3Q==}
 
   get-east-asian-width@1.6.0:
     resolution: {integrity: sha512-QRbvDIbx6YklUe6RxeTeleMR0yv3cYH6PsPZHcnVn7xv7zO1BHN8r0XETu8n6Ye3Q+ahtSarc3WgtNWmehIBfA==}
@@ -958,6 +964,8 @@ snapshots:
       is-callable: 1.2.7
 
   function-bind@1.1.2: {}
+
+  fzf@0.5.2: {}
 
   get-east-asian-width@1.6.0: {}
 

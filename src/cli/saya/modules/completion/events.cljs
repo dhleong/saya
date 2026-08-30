@@ -11,6 +11,13 @@
        (update-in [:buffers bufnr :completion] dissoc :applied-candidate))))
 
 (reg-event-db
+ ::reset
+ [unwrap]
+ (fn [db {:keys [bufnr]}]
+   (-> db
+       (update-in [:buffers bufnr] dissoc :completion))))
+
+(reg-event-db
  ::on-applied-candidate
  [unwrap]
  (fn [db {:keys [bufnr candidate]}]
@@ -19,8 +26,11 @@
 (reg-event-db
  ::on-candidates
  [unwrap]
- (fn [db {:keys [bufnr candidates]}]
-   (assoc-in db [:buffers bufnr :completion :candidates] candidates)))
+ (fn [db {:keys [bufnr explicit? candidates]}]
+   (update-in db [:buffers bufnr :completion]
+              assoc
+              :candidates candidates
+              :explicit? explicit?)))
 
 (reg-event-db
  ::on-error

@@ -23,6 +23,13 @@
                                         :on-submit on-submit
                                         :bufnr bufnr})))))
 
+(reg-event-db
+ ::set-history-search-bufnr
+ [unwrap]
+ (fn [db {:keys [bufnr]}]
+   (-> db
+       (assoc :history-search {:bufnr bufnr}))))
+
 (defn add-history-entry [history new-entry]
   (->> history
        (filter (partial not= new-entry))

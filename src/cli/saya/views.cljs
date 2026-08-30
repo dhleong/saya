@@ -6,6 +6,7 @@
    [saya.cli.input :as input]
    [saya.modules.completion.view :refer [completion-menu]]
    [saya.modules.home.core :refer [home-view]]
+   [saya.modules.input.history.search :refer [history-search-view]]
    [saya.modules.ui.error-boundary :refer [error-boundary]]))
 
 (def ^:private pages
@@ -13,7 +14,8 @@
 
 (defn- popup-menus []
   [:<>
-   [completion-menu]])
+   [completion-menu]
+   [history-search-view]])
 
 (defn main []
   (let [[page args] (<sub [:page])
