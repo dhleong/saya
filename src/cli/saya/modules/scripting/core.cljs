@@ -12,6 +12,7 @@
    [saya.modules.input.events :as input-events]
    [saya.modules.kodachi.api :as kodachi-api]
    [saya.modules.kodachi.events :as kodachi]
+   [saya.modules.logging.core :refer [log]]
    [saya.modules.scripting.callbacks :refer [register-callback]]
    [saya.modules.scripting.events :as events]))
 
@@ -33,8 +34,8 @@
          (fn [[event-name & args] _]
            (m/match [event-name (vec args)]
              [::kodachi/connecting [{:connection-id connection-id
-                                     :nonce received-nonce
-                                     :uri uri}]]
+                                     :uri uri
+                                     :opts {:nonce received-nonce}}]]
              (when (= received-nonce nonce)
                (stop-listening)
                (p-resolve connection-id))
@@ -42,6 +43,7 @@
              :else nil)))
 
         (>evt [:command/connect {:uri uri
+                                 :nonce nonce
                                  :auto-prompts auto-prompt?
                                  :script-file script-file
                                  :persist-output persist-output?
@@ -54,6 +56,7 @@
                                        {:type :GetHistory
                                         :connection_id connection-id
                                         :limit config/history-length})]
+              (log "loaded history for " connection-id (count entries))
               (>evt [::input-events/on-load-history-for-connection
                      {:connr connection-id
                       :entries entries}])))
