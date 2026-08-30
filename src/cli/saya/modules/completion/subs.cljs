@@ -29,21 +29,31 @@
  :-> :applied-candidate)
 
 (reg-sub
+ ::explicit?
+ :<- [::state]
+ :-> :explicit?)
+
+(reg-sub
  ::left-offset
  :<- [::applied-candidate]
  :<- [::word-to-complete]
- :-> (fn [[applied-candidate word-to-complete]]
+ :<- [::explicit?]
+ :-> (fn [[applied-candidate word-to-complete explicit?]]
        (or (when (seq applied-candidate)
              (- (count applied-candidate)))
 
            (when (seq word-to-complete)
-             (- (count word-to-complete))))))
+             (- (count word-to-complete)))
+
+           (when explicit?
+             0))))
 
 (reg-sub
  ::candidates
  :<- [::state]
- :-> (fn [{:keys [candidates word-to-complete]}]
-       (when (seq word-to-complete)
+ :-> (fn [{:keys [candidates explicit? word-to-complete]}]
+       (when (or (seq word-to-complete)
+                 explicit?)
          ; TODO: It could be nice to be able to scroll through all?
          (take 15 candidates))))
 

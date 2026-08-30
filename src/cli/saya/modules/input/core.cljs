@@ -3,6 +3,7 @@
    [clojure.core.match :refer [match]]
    [re-frame.core :refer [reg-event-fx trim-v]]
    [saya.cli.text-input.helpers :refer [key->insertable]]
+   [saya.errors :as errors]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.command.interceptors :refer [with-buffer-context]]
    [saya.modules.connection.events :as conn-events]
@@ -45,6 +46,7 @@
                               (update-cursor :col dec)))
       :db
       (or db)
+      (dissoc :history-search)
       (assoc :mode (if (:connr cofx)
                      :prompt
                      :normal))))
@@ -103,6 +105,9 @@
     [:insert :return {:submit? true}] {:dispatch [::submit-cmdline]}
     [:normal :ctrl/c {:submit? true}] {:dispatch [::cancel-cmdline]}
     [:insert :ctrl/c {:submit? true}] {:dispatch [::cancel-cmdline]}
+
+    [:insert :ctrl/r {:submit? true}] {:dispatch [:echo :error errors/invalid-in-cmdline]}
+    [:insert :ctrl/r _] {:dispatch [:echo :error errors/invalid-outside-connection]}
 
     [:normal key {:bufnr? true}]
     (keymaps/maybe-perform-with-keymap-buffer

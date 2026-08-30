@@ -4,7 +4,8 @@
    [clojure.string :as str]
    [promesa.core :as p]
    [saya.modules.completion.events :as events]
-   [saya.modules.completion.proto :as proto :refer [ICompletionSource]]
+   [saya.modules.completion.proto :as proto :refer [ICompletionSource
+                                                    IConditionalCompletionSource]]
    [saya.modules.logging.core :refer [log]]))
 
 (defn word-to-complete [{:keys [line-before-cursor]}]
@@ -22,14 +23,17 @@
 
     (let [line-before-cursor (subs line 0 cursor)
           context {:line-before-cursor line-before-cursor}
-          word-to-complete (word-to-complete context)]
+          word-to-complete (word-to-complete context)
+          explicit? (and (satisfies? IConditionalCompletionSource source)
+                         (proto/should-gather? source context))]
       (>evt [::events/start {:bufnr bufnr
                              :word-to-complete word-to-complete
                              :line-before-cursor line-before-cursor}])
-
-      (when (seq word-to-complete)
+      (when (or (seq word-to-complete)
+                explicit?)
         (-> (p/let [candidates (proto/gather-candidates source context)]
               (>evt [::events/on-candidates {:bufnr bufnr
+                                             :explicit? explicit?
                                              :candidates (seq candidates)}]))
             (p/catch (fn [e]
                        (log "ERROR in completion: " e)

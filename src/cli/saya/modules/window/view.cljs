@@ -11,6 +11,8 @@
    [saya.modules.buffers.subs :as buffer-subs]
    [saya.modules.connection.completion :refer [->ConnectionCompletionSource]]
    [saya.modules.connection.events :as conn-events]
+   [saya.modules.input.history.search :refer [->HistoryCompletionSource]]
+   [saya.modules.input.history.subs :as history-subs]
    [saya.modules.input.window :as input-window]
    [saya.modules.kodachi.events :as kodachi-events]
    [saya.modules.perf.core :as perf]
@@ -57,26 +59,34 @@
                           "^^^ Restored " count " lines."])})
 
 (defn- input-window [connr]
-  (let [bufnr [:conn/input connr]]
-    [input-window/input-window
-     {:bufnr bufnr
-      :initial-value (<sub [::subs/input-text connr])
-      :initial-cursor (:col (<sub [::buffer-subs/buffer-cursor bufnr]))
-      :completion (->ConnectionCompletionSource connr)
-      :add-to-history? false ; Handled by submit-input-buffer
-      :on-persist-value #(>evt [::window-events/set-input-text {:connr connr
-                                                                :text %}])
-      :on-persist-cursor (fn [col]
-                           (>evt [::buffer-events/set-cursor
-                                  {:id bufnr
-                                   :cursor {:row 0 :col col}}]))
-      :on-prepare-buffer #(>evt [::window-events/prepare-input-cmdline-buffer
-                                 {:bufnr bufnr
-                                  :current %}])
-      :on-submit (fn [text]
-                   (>evt [::conn-events/submit-input-buffer
-                          {:connr connr
-                           :text text}]))}]))
+  (let [bufnr [:conn/input connr]
+        history-search? (= bufnr (<sub [::history-subs/history-search-bufnr]))]
+    [:> k/Box
+     (when history-search?
+       [:> k/Text "(reverse-i-search): "])
+
+     ^{:key bufnr}
+     [input-window/input-window
+      {:bufnr bufnr
+       :initial-value (<sub [::subs/input-text connr])
+       :initial-cursor (:col (<sub [::buffer-subs/buffer-cursor bufnr]))
+       :completion (if history-search?
+                     (->HistoryCompletionSource bufnr)
+                     (->ConnectionCompletionSource connr))
+       :add-to-history? false ; Handled by submit-input-buffer
+       :on-persist-value #(>evt [::window-events/set-input-text {:connr connr
+                                                                 :text %}])
+       :on-persist-cursor (fn [col]
+                            (>evt [::buffer-events/set-cursor
+                                   {:id bufnr
+                                    :cursor {:row 0 :col col}}]))
+       :on-prepare-buffer #(>evt [::window-events/prepare-input-cmdline-buffer
+                                  {:bufnr bufnr
+                                   :current %}])
+       :on-submit (fn [text]
+                    (>evt [::conn-events/submit-input-buffer
+                           {:connr connr
+                            :text text}]))}]]))
 
 (defn- modeful-cursor []
   (let [cursor-type (case (<sub [:mode])

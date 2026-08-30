@@ -6,12 +6,14 @@
    [clojure.core.match :refer [match]]
    [reagent.core :as r]
    [saya.cli.text-input :refer [text-input]]
+   [saya.errors :as errors]
    [saya.modules.completion.events :as completion-events]
    [saya.modules.completion.helpers :refer [refresh-completion]]
    [saya.modules.completion.subs :as completion-subs]
    [saya.modules.echo.core :refer [echo]]
    [saya.modules.input.core :as input]
-   [saya.modules.input.events :as events]))
+   [saya.modules.input.events :as events]
+   [applied-science.js-interop :as j]))
 
 (defn- safely [f & args]
   (let [f (partial f args)]
@@ -32,7 +34,13 @@
                   (>evt [::events/set-cmdline-bufnr {:bufnr bufnr
                                                      :on-submit on-submit}]))
 
-                (echo :error "Invalid in command-line window; <CR> executes, CTRL-C quits"))
+                (echo :error errors/invalid-in-cmdline))
+    [:ctrl/r] (if (and (vector? bufnr)
+                       (= :conn/input (first bufnr)))
+                (>evt [::events/set-history-search-bufnr
+                       {:bufnr bufnr}])
+                (echo :error errors/invalid-in-cmdline))
+
     [:ctrl/c] (let [input @input-ref]
                 ; NOTE: ctrl-c once to clear, again to exit
                 (on-change "" 0 nil {:for-cancel? true})
@@ -43,6 +51,7 @@
     [:escape] (let [to-persist @input-ref]
                 (when on-persist-value
                   (on-persist-value to-persist {:for-cancel? true}))
+                (>evt [::completion-events/reset {:bufnr bufnr}])
                 (>evt [::input/on-key key]))
     :else nil))
 
@@ -53,13 +62,16 @@
                             add-to-history?
                             completion]
                      :or {add-to-history? true}}]
-  (r/with-let [input-ref (atom (or initial-value ""))]
+  (r/with-let [input-ref (atom (or initial-value ""))
+               cursor-ref (atom (or initial-cursor 0))]
     (let [[input set-input!] (React/useState @input-ref)
+          current-completion (React/useRef completion)
           on-change (React/useCallback
                      (fn [v cursor completion-opts change-opts]
-                       (when completion
-                         (refresh-completion completion bufnr v cursor completion-opts))
+                       (when-let [compl (.-current current-completion)]
+                         (refresh-completion compl bufnr v cursor completion-opts))
                        (set-input! v)
+                       (reset! cursor-ref cursor)
                        (when on-persist-value
                          (on-persist-value v change-opts))
                        (when on-persist-cursor
@@ -89,6 +101,19 @@
          (fn on-dismount []
            (>evt [::completion-events/unset-bufnr bufnr])))
        #js [bufnr])
+
+      (React/useEffect
+       (fn on-mount []
+         (when (and completion
+                    (not= completion (.-current current-completion)))
+           (j/assoc! current-completion .-current completion)
+           (let [s @input-ref
+                 cursor @cursor-ref
+                 before-cursor (subs s 0 cursor)]
+             (refresh-completion completion bufnr before-cursor cursor nil)))
+
+         js/undefined)
+       #js [completion])
 
       [:> k/Box
        [:> k/Text before
