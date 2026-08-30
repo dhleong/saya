@@ -41,7 +41,7 @@
  ::on-load-history-for-connection
  [unwrap]
  (fn [db {:keys [connr entries]}]
-   (let [bufnr (get-in db [:connections connr :bufnr])]
+   (let [bufnr [:conn/input connr]]
      (cond-> db
        ; Don't replacing existing history (this could be a reconnect)
        (not (seq (get-in db [:histories bufnr])))
