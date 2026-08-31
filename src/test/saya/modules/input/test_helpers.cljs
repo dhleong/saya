@@ -58,12 +58,13 @@
                              (insert-cursor cursor))))))
        (into [])))
 
-(defn make-context [& {:keys [buffer window]}]
+(defn make-context [& {:keys [buffer registers window]}]
   {:buffer (or (when (and buffer (not= :empty buffer))
                  (str->buffer buffer))
                (-> (buffer-events/create-blank default-db)
                    (second)
                    :buffer))
+   :registers registers
    :window (merge {:height 2 :width 20} window)
    :mode :normal})
 
@@ -73,12 +74,19 @@
 
 (defn with-keymap-compare-buffer
   [f buffer-before buffer-after & {:keys [window window-expect pending-operator
-                                          mode-expect]}]
+                                          mode-expect registers]}]
   (let [ctx (-> (make-context :buffer buffer-before
+                              :registers registers
                               :window window)
                 (assoc :pending-operator pending-operator))
         ctx' (try (binding [*mode* (:mode ctx)]
-                    (f ctx))
+                    (if (coll? f)
+                      (reduce
+                       (fn [ctx' f']
+                         (f' ctx'))
+                       ctx
+                       f)
+                      (f ctx)))
                   (catch :default e
                     (println "ERROR performing " f ": " e)
                     (println (.-stack e))

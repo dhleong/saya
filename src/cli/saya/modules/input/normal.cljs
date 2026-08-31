@@ -1,6 +1,7 @@
 (ns saya.modules.input.normal
   (:require
-   [saya.cli.text-input.helpers :refer [dec-to-zero]]
+   [clojure.core.match :as m]
+   [saya.cli.text-input.helpers :refer [dec-to-zero split-text-by-state]]
    [saya.modules.buffers.line :refer [wrapped-lines]]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.input.helpers :refer [adjust-cursor-to-scroll
@@ -9,7 +10,8 @@
                                        current-buffer-line-last-col
                                        last-buffer-row movement->operation
                                        update-cursor]]
-   [saya.modules.input.insert :refer [line->string update-buffer-line-string]]
+   [saya.modules.input.insert :refer [line->string update-buffer-line-string
+                                      update-cursor-line-string]]
    [saya.modules.input.motions.word :refer [big-word-boundary?
                                             end-of-word-movement
                                             small-word-boundary? word-movement]]
@@ -162,17 +164,24 @@
         (assoc :yanked {:chars (subs (line->string (nth (:lines buffer) linenr))
                                      start end)}))))
 
+(defn- unpack-buffer-yanked [{{:keys [yanked]} :buffer :as context}]
+  (-> context
+      (update :buffer dissoc :yanked)
+      (assoc :yanked yanked)))
+
 (defn delete-operator {:char "d"} [context {:keys [start end linewise?] :as flags}]
   (cond
     ; Line-wise delete
     linewise?
-    (update context :buffer delete-lines (:row start) (:row end))
+    (-> (update context :buffer delete-lines (:row start) (:row end))
+        (unpack-buffer-yanked))
 
     ; Char-wise delete within a line
     (= (:row start) (:row end))
     (-> context
         (update :buffer delete-chars flags (:row start) (:col start) (:col end))
-        (clamp-cursor))
+        (clamp-cursor)
+        (unpack-buffer-yanked))
 
     :else
     {:error "TODO: support char-wise cross-line deletes"}))
@@ -183,6 +192,12 @@
   (-> context
       (assoc :mode :insert)
       (delete-operator flags)))
+
+;; Yank (copy)
+
+(defn yank-operator {:char "y"} [context flags]
+  (let [{:keys [yanked]} (delete-operator context flags)]
+    (assoc context :yanked yanked)))
 
 ;; Integration
 
@@ -198,13 +213,27 @@
 
 (def operator-keymaps
   {["c"] (enqueue-operator #'change-operator)
-   ["d"] (enqueue-operator #'delete-operator)})
+   ["d"] (enqueue-operator #'delete-operator)
+   ["y"] (enqueue-operator #'yank-operator)})
 
 ; ======= Edit keymaps =====================================
 
 (defn- create-edit-with-operator [operator motion]
   (fn perform-edit [ctx]
     (operator ctx (movement->operation motion ctx))))
+
+(def ^:private paste-selected-register
+  (with-editable
+    (fn [{:keys [buffer registers] :as ctx}]
+      (let [reg-id \"]
+        (m/match [(get registers reg-id)]
+          [{:chars to-paste}]
+          (-> ctx
+              (update-cursor-line-string
+               (fn [line]
+                 (let [[before after] (split-text-by-state buffer line)]
+                   (str before to-paste after))))
+              ((update-cursor :col (partial + (dec (count to-paste)))))))))))
 
 (def edit-keymaps
   {["C"] (create-edit-with-operator
@@ -213,13 +242,20 @@
    ["D"] (create-edit-with-operator
           #'delete-operator
           #'to-end-of-line)
+   ["Y"] (create-edit-with-operator
+          #'yank-operator
+          #'to-end-of-line)
 
    ["x"] (create-edit-with-operator
           #'delete-operator
           (update-cursor :col inc))
    ["X"] (create-edit-with-operator
           #'delete-operator
-          (update-cursor :col dec))})
+          (update-cursor :col dec))
+
+   ["p"] (comp paste-selected-register
+               (update-cursor :col inc))
+   ["P"] paste-selected-register})
 
 ; ======= Scroll keymaps ===================================
 

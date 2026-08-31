@@ -20,7 +20,7 @@
                 f
                 (fnil str "")))))
 
-(defn- update-cursor-line-string [{:keys [buffer] :as context} f]
+(defn update-cursor-line-string [{:keys [buffer] :as context} f]
   (let [{linenr :row} (:cursor buffer)]
     (update context :buffer update-buffer-line-string linenr f)))
 

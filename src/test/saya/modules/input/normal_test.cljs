@@ -236,3 +236,16 @@
     (with-keys-compare-buffer ["X"]
       "Talkin awa|y"
       "Talkin aw|y")))
+
+(deftest yank-paste-test
+  (testing "Paste after"
+    (with-keys-compare-buffer ["p"]
+      "I| know"
+      "I don't| know"
+      :registers {\" {:chars "don't "}}))
+
+  (testing "Paste before"
+    (with-keys-compare-buffer ["P"]
+      "I |know"
+      "I don't| know"
+      :registers {\" {:chars "don't "}})))
