@@ -245,7 +245,8 @@
               (update-in [:buffer :lines]
                          insert-into-vec
                          (cond-> (get-in buffer [:cursor :row])
-                           (= :after where)
+                           (and (seq (get-in ctx [:buffer :lines]))
+                                (= :after where))
                            (inc))
                          lines)
               (cond->

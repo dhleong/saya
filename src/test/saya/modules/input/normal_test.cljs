@@ -259,4 +259,15 @@
       "what I'm |to say"
       "|I don't know
        what I'm to say"
+      :registers {\" {:lines [(buffer-line "I don't know")]}}))
+
+  (testing "Empty buffer"
+    (with-keys-compare-buffer ["p"]
+      "|"
+      "I don't kno|w"
+      :registers {\" {:chars "I don't know"}})
+
+    (with-keys-compare-buffer ["p"]
+      "|"
+      "|I don't know"
       :registers {\" {:lines [(buffer-line "I don't know")]}})))
