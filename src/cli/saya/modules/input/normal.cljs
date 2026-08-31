@@ -2,7 +2,7 @@
   (:require
    [clojure.core.match :as m]
    [saya.cli.text-input.helpers :refer [dec-to-zero split-text-by-state]]
-   [saya.modules.buffers.line :refer [wrapped-lines]]
+   [saya.modules.buffers.line :refer [buffer-line wrapped-lines]]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.input.helpers :refer [adjust-cursor-to-scroll
                                        adjust-scroll-to-cursor clamp-cursor
@@ -148,7 +148,7 @@
         (assoc :lines (into (subvec lines 0 start)
                             (subvec lines (inc end))))
         (assoc-in [:cursor :row] start)
-        (assoc :yanked {:lines yanked}))))
+        (assoc :yanked {:lines (mapv line->string yanked)}))))
 
 (defn- delete-chars [buffer {:keys [inclusive?]} linenr start end]
   (let [[start end] (align-start-end start end)
@@ -248,7 +248,7 @@
                            (and (seq (get-in ctx [:buffer :lines]))
                                 (= :after where))
                            (inc))
-                         lines)
+                         (map buffer-line lines))
               (cond->
                (= :after where)
                 (update-in [:buffer :cursor :row] inc))
