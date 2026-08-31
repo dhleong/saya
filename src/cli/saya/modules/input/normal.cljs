@@ -196,7 +196,7 @@
 
 ;; Yank (copy)
 
-(defn yank-operator {:char "y"} [context flags]
+(defn yank-operator {:char "y" :read? true} [context flags]
   (let [{:keys [yanked]} (delete-operator context flags)]
     (assoc context :yanked yanked)))
 
@@ -204,7 +204,8 @@
 
 (defn- enqueue-operator [operator]
   (fn operator-keymap [{:keys [buffer] :as context}]
-    (if (and (buffers/readonly? buffer)
+    (if (and (not (:read? (meta operator)))
+             (buffers/readonly? buffer)
              (nil? (:editable context)))
       {:error "Read-only buffer"}
 

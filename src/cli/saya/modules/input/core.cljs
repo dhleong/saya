@@ -87,7 +87,8 @@
                                    (buffers/readonly?
                                     (get-in db [:buffers bufnr])))
                     :connr? (some? connr)
-                    :submit? (some? (get-in db [:windows winnr :on-submit]))}]
+                    :submit? (some? (get-in db [:windows winnr :on-submit]))
+                    :op-is-read? (:read? (meta (:pending-operator db)))}]
     [(:or :normal :prompt) ":" _] {:db (assoc db :mode :command)
                                    :fx [[:dispatch [::echo-events/ack-echo]]]}
 
@@ -159,8 +160,10 @@
 
                            cofx))))
 
-    [:operator-pending key {:bufnr? true
-                            :readonly? false}]
+    [:operator-pending key (:or {:bufnr? true
+                                 :readonly? false}
+                                {:bufnr? true
+                                 :op-is-read? true})]
     (perform-operator-pending
      :cofx cofx
      :db db
