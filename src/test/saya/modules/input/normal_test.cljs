@@ -1,6 +1,7 @@
 (ns saya.modules.input.normal-test
   (:require
    [cljs.test :refer-macros [deftest testing]]
+   [saya.modules.buffers.line :refer [buffer-line]]
    [saya.modules.input.helpers :refer [update-cursor]]
    [saya.modules.input.normal :as normal :refer [delete-operator update-scroll]]
    [saya.modules.input.test-helpers :refer [with-keymap-compare-buffer]]))
@@ -242,10 +243,20 @@
     (with-keys-compare-buffer ["p"]
       "I| know"
       "I don't| know"
-      :registers {\" {:chars "don't "}}))
+      :registers {\" {:chars "don't "}})
+    (with-keys-compare-buffer ["p"]
+      "I don't| know"
+      "I don't know
+       |what I'm to say"
+      :registers {\" {:lines [(buffer-line "what I'm to say")]}}))
 
   (testing "Paste before"
     (with-keys-compare-buffer ["P"]
       "I |know"
       "I don't| know"
-      :registers {\" {:chars "don't "}})))
+      :registers {\" {:chars "don't "}})
+    (with-keys-compare-buffer ["P"]
+      "what I'm |to say"
+      "|I don't know
+       what I'm to say"
+      :registers {\" {:lines [(buffer-line "I don't know")]}})))

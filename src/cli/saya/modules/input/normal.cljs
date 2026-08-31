@@ -16,7 +16,8 @@
                                             end-of-word-movement
                                             small-word-boundary? word-movement]]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]
-   [saya.modules.search.core :as search]))
+   [saya.modules.search.core :as search]
+   [saya.util.coll :refer [insert-into-vec]]))
 
 ; ======= Mode-change keymaps ==============================
 
@@ -222,18 +223,35 @@
   (fn perform-edit [ctx]
     (operator ctx (movement->operation motion ctx))))
 
-(def ^:private paste-selected-register
+(defn- paste-selected-register [where]
   (with-editable
     (fn [{:keys [buffer registers] :as ctx}]
       (let [reg-id \"]
         (m/match [(get registers reg-id)]
+          [nil]
+          (-> ctx
+              (assoc :error (str "Nothing in register " reg-id)))
+
           [{:chars to-paste}]
           (-> ctx
               (update-cursor-line-string
                (fn [line]
                  (let [[before after] (split-text-by-state buffer line)]
                    (str before to-paste after))))
-              ((update-cursor :col (partial + (dec (count to-paste)))))))))))
+              ((update-cursor :col (partial + (dec (count to-paste))))))
+
+          [{:lines lines}]
+          (-> ctx
+              (update-in [:buffer :lines]
+                         insert-into-vec
+                         (cond-> (get-in buffer [:cursor :row])
+                           (= :after where)
+                           (inc))
+                         lines)
+              (cond->
+               (= :after where)
+                (update-in [:buffer :cursor :row] inc))
+              (assoc-in [:buffer :cursor :col] 0)))))))
 
 (def edit-keymaps
   {["C"] (create-edit-with-operator
@@ -253,9 +271,9 @@
           #'delete-operator
           (update-cursor :col dec))
 
-   ["p"] (comp paste-selected-register
+   ["p"] (comp (paste-selected-register :after)
                (update-cursor :col inc))
-   ["P"] paste-selected-register})
+   ["P"] (paste-selected-register :before)})
 
 ; ======= Scroll keymaps ===================================
 
