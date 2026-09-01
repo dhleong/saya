@@ -211,6 +211,7 @@
 
       (assoc context
              :mode :operator-pending
+             :pending-operator/from-mode (:mode context)
              :pending-operator operator))))
 
 (def operator-keymaps

@@ -22,16 +22,17 @@
    (keys keymaps)))
 
 (defn build-context [{:keys [bufnr connr winnr] :as cofx}]
-  {:buffer (get-in cofx [:db :buffers bufnr])
-   :normal-buffer (get-in cofx [:db :buffers (:normal-bufnr cofx)])
-   :window (get-in cofx [:db :windows winnr])
-   :editable (when-not (= bufnr [:conn/input connr])
-               (get-in cofx [:db :buffers [:conn/input connr]]))
-   :pending-operator (get-in cofx [:db :pending-operator])
-   :registers (get-in cofx [:db :registers])
-   :search (select-keys (get-in cofx [:db :search])
-                        [:direction :query])
-   :histories (get-in cofx [:db :histories])})
+  (merge
+   {:buffer (get-in cofx [:db :buffers bufnr])
+    :normal-buffer (get-in cofx [:db :buffers (:normal-bufnr cofx)])
+    :window (get-in cofx [:db :windows winnr])
+    :editable (when-not (= bufnr [:conn/input connr])
+                (get-in cofx [:db :buffers [:conn/input connr]]))
+    :search (select-keys (get-in cofx [:db :search])
+                         [:direction :query])}
+   (-> cofx
+       :db
+       (select-keys [:mode :pending-operator :registers :histories]))))
 
 (defn perform [{:keys [bufnr winnr] :as cofx} f]
   (try
@@ -50,9 +51,12 @@
         {:db (-> (:db cofx)
                  (assoc-in [:buffers bufnr] (:buffer context'))
                  (assoc-in [:windows winnr] (:window context'))
-                 (dissoc :keymap-buffer :pending-operator)
+                 (dissoc :keymap-buffer
+                         :pending-operator
+                         :pending-operator/from-mode)
                  (merge (select-keys context' [:mode
                                                :pending-operator
+                                               :pending-operator/from-mode
                                                :registers]))
                  (cond->
                   (:editable context')

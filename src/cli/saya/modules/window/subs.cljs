@@ -138,8 +138,10 @@
  ::conn-pending-operator?
  :<- [:mode]
  :<- [:current-buffer]
+ :<- [:pending-operator/from-mode]
  :<- [::pending-operator]
- (fn [[mode buffer op]]
+ (fn [[mode buffer from-mode op]]
    (and (= :operator-pending mode)
         (some? (:connection-id buffer))
-        (not (:read? (meta op))))))
+        (or (not (:read? (meta op)))
+            (= :prompt from-mode)))))
