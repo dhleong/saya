@@ -8,7 +8,8 @@
    [saya.util.functional :refer [with-meta->>]]))
 
 (defn small-word-boundary? [ch]
-  (not (re-matches #"[a-zA-Z0-9]" ch)))
+  (when ch
+    (not (re-matches #"[a-zA-Z0-9]" ch))))
 
 (def big-word-boundary? str/blank?)
 

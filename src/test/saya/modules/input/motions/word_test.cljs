@@ -6,6 +6,11 @@
    [saya.modules.input.test-helpers :refer [with-keymap-compare-buffer]]))
 
 (deftest word-motion-test
+  (testing "Handle empty buffer"
+    (with-keymap-compare-buffer (word-movement inc small-word-boundary?)
+      "|"
+      "|"))
+
   (testing "Small word movement forward"
     (with-keymap-compare-buffer (word-movement inc small-word-boundary?)
       "|For the honor of Grayskull!"
