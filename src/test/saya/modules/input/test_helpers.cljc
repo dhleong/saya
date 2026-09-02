@@ -3,6 +3,7 @@
 (declare make-keymap-cofx)
 (declare get-cofx-buffer)
 (declare perform-cofx-key)
+(declare ^:private do-feed-keys)
 
 (defmacro with-session
   {:clj-kondo/macroexpand-hook true}
@@ -15,19 +16,7 @@
          ~'buffer (comp (partial get-cofx-buffer)
                         ~'state)
          ~'mode (comp :mode ~'state)
-         ~'feed-keys (fn [& keys#]
-                       (->
-                        cofx#
-                        (swap!
-                         (fn [cofx'#]
-                           (reduce
-                            (fn [co'# k#]
-                              (let [n# (perform-cofx-key co'# k#)]
-                                (println n#)
-                                n#))
-                            cofx'#
-                            keys#)))
-                        (get-cofx-buffer)))
+         ~'feed-keys (partial do-feed-keys cofx#)
          ; Ignore unused keys:
          ~'_ [~'mode ~'feed-keys ~'buffer]]
      ~@body))

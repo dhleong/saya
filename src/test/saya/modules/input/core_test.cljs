@@ -7,7 +7,7 @@
 (deftest delete-operator-test
   (testing "Delete operator lands in :normal mode"
     (with-session {:buffer "for |the honor"}
-      (feed-keys "d" "w")
+      (feed-keys "dw")
       (is (= {:mode :normal}
              (state :mode)))))
 
