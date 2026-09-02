@@ -97,3 +97,8 @@
                                    :width width
                                    :height height}}))
 
+(reg-event-db
+ :config/upsert
+ [unwrap (path :config)]
+ (fn [config new-config]
+   (merge config new-config)))

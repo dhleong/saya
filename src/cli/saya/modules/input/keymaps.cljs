@@ -2,6 +2,7 @@
   (:require
    [saya.modules.echo.core :refer [echo-fx]]
    [saya.modules.echo.events :as echo-events]
+   [saya.modules.input.clipboard :as clipboard]
    [saya.modules.input.helpers :refer [*mode*]]))
 
 (defn- starts-with? [sequence candidate]
@@ -36,7 +37,8 @@
 
 (defn perform [{:keys [bufnr winnr] :as cofx} f]
   (try
-    (let [context (build-context cofx)
+    (let [context (-> (build-context cofx)
+                      (clipboard/update-context cofx))
           ; This merge allows us to omit unchanged fields
           context' (merge context (f context))
           yanked (:yanked context')
@@ -72,8 +74,9 @@
               (when (:mode context')
                 [:dispatch [::echo-events/ack-echo]])
 
-              ; TODO: clipboard=unnamedplus behavior
-              ]}
+              (when (and (clipboard/cofx-enabled-integration? cofx)
+                         (some? yanked))
+                [::clipboard/write yanked])]}
 
         {:db (-> (:db cofx)
                  ; Still clear this even if nothing happened:
