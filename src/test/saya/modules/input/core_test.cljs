@@ -2,16 +2,14 @@
   (:require
    [cljs.test :refer-macros [deftest is testing]]
    [saya.modules.input.test-helpers :refer [get-cofx-buffer make-keymap-cofx
-                                            perform-cofx-key]]))
+                                            perform-cofx-key with-session]]))
 
 (deftest delete-operator-test
   (testing "Delete operator lands in :normal mode"
-    (is (= {:mode :normal}
-           (-> (make-keymap-cofx "for |the honor")
-               (perform-cofx-key "d")
-               (perform-cofx-key "w")
-               :db
-               (select-keys [:mode])))))
+    (with-session {:buffer "for |the honor"}
+      (feed-keys "d" "w")
+      (is (= {:mode :normal}
+             (state :mode)))))
 
   (testing "Delete operator is clamped correctly"
     (is (= "for the hon|o"

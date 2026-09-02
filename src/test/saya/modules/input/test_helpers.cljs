@@ -10,7 +10,9 @@
    [saya.modules.input.core :refer [handle-on-key]]
    [saya.modules.input.helpers :refer [*mode*]]
    [saya.modules.input.insert :refer [line->string]]
-   [saya.modules.window.subs :refer [visible-lines]]))
+   [saya.modules.window.subs :refer [visible-lines]])
+  (:require-macros
+   [saya.modules.input.test-helpers]))
 
 (defn- extract-lines-and-cursor [s]
   (loop [raw-lines (str/split-lines s)
