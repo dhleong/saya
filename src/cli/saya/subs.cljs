@@ -12,6 +12,10 @@
 (reg-sub :last-winnr :-> :last-winnr)
 
 (reg-sub
+ :pending-operator/from-mode
+ :-> :pending-operator/from-mode)
+
+(reg-sub
  :current-window
  :<- [:windows]
  :<- [:current-winnr]

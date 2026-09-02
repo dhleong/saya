@@ -20,3 +20,8 @@
                 (next coll)))
 
        [nil not-found before]))))
+
+(defn insert-into-vec [v idx entries]
+  (-> (subvec v 0 idx)
+      (into entries)
+      (into (subvec v idx))))

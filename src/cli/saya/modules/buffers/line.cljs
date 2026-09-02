@@ -277,10 +277,16 @@
 (defn buffer-line
   ([] EMPTY)
   ([initial-part]
-   (if (some? initial-part)
+   (cond
+     (instance? BufferLine initial-part)
+     initial-part
+
+     (some? initial-part)
      (->BufferLine
       [(clean-part initial-part)]
       (atom nil))
+
+     :else
      EMPTY)))
 
 (comment

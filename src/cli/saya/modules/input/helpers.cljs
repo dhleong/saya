@@ -209,5 +209,5 @@
      (extract-flags f)
      {:start start
       :end end
-      :linewise? (or (::linewise? ctx)
+      :linewise? (or (:input/linewise? ctx)
                      (not= (:row start) (:row end)))})))

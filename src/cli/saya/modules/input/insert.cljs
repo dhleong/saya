@@ -1,12 +1,12 @@
 (ns saya.modules.input.insert
   (:require
    [saya.cli.text-input.helpers :refer [dec-to-zero split-text-by-state]]
-   [saya.modules.buffers.line :refer [buffer-line]]
+   [saya.modules.buffers.line :refer [->plain buffer-line]]
    [saya.modules.input.helpers :refer [update-cursor]]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]))
 
 (defn line->string [line]
-  (str line))
+  (->plain line))
 
 (defn update-buffer-line-string [buffer linenr f]
   (cond-> buffer
@@ -20,7 +20,7 @@
                 f
                 (fnil str "")))))
 
-(defn- update-cursor-line-string [{:keys [buffer] :as context} f]
+(defn update-cursor-line-string [{:keys [buffer] :as context} f]
   (let [{linenr :row} (:cursor buffer)]
     (update context :buffer update-buffer-line-string linenr f)))
 

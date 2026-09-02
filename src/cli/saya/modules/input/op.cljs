@@ -14,7 +14,7 @@
     (let [motion-range (get-range context)
           ; TODO: There's eg o_v for turning a normally line-wise
           ; motion into a character-wise one
-          context (dissoc context ::linewise?)]
+          context (dissoc context :input/linewise?)]
       (if-not (= (:start motion-range) (:end motion-range))
         (-> context
             (pending-operator motion-range)
@@ -102,5 +102,5 @@
   {[:full-line] (comp
                  (movement->motion #'to-end-of-line)
                  (fn [ctx]
-                   (assoc ctx ::linewise? true))
+                   (assoc ctx :input/linewise? true))
                  to-start-of-line)})

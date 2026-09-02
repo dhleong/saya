@@ -112,6 +112,12 @@
           (p/catch (fn [e]
                      (echo-core/echo :exception "ERROR in config: " e)))))))
 
+; ======= Config ===========================================
+
+#_{:clojure-lsp/ignore [:clojure-lsp/unused-public-var]}
+(defn config [& {:as kvs}]
+  (>evt [:config/upsert kvs]))
+
 ; ======= Simple APIs ======================================
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}

@@ -131,9 +131,17 @@
      (get-in prompts [0 0]))))
 
 (reg-sub
+ ::pending-operator
+ :-> :pending-operator)
+
+(reg-sub
  ::conn-pending-operator?
  :<- [:mode]
  :<- [:current-buffer]
- (fn [[mode buffer]]
+ :<- [:pending-operator/from-mode]
+ :<- [::pending-operator]
+ (fn [[mode buffer from-mode op]]
    (and (= :operator-pending mode)
-        (some? (:connection-id buffer)))))
+        (some? (:connection-id buffer))
+        (or (not (:read? (meta op)))
+            (= :prompt from-mode)))))

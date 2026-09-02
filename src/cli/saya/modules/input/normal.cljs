@@ -1,7 +1,8 @@
 (ns saya.modules.input.normal
   (:require
-   [saya.cli.text-input.helpers :refer [dec-to-zero]]
-   [saya.modules.buffers.line :refer [wrapped-lines]]
+   [clojure.core.match :as m]
+   [saya.cli.text-input.helpers :refer [dec-to-zero split-text-by-state]]
+   [saya.modules.buffers.line :refer [buffer-line wrapped-lines]]
    [saya.modules.buffers.util :as buffers]
    [saya.modules.input.helpers :refer [adjust-cursor-to-scroll
                                        adjust-scroll-to-cursor clamp-cursor
@@ -9,12 +10,14 @@
                                        current-buffer-line-last-col
                                        last-buffer-row movement->operation
                                        update-cursor]]
-   [saya.modules.input.insert :refer [line->string update-buffer-line-string]]
+   [saya.modules.input.insert :refer [line->string update-buffer-line-string
+                                      update-cursor-line-string]]
    [saya.modules.input.motions.word :refer [big-word-boundary?
                                             end-of-word-movement
                                             small-word-boundary? word-movement]]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]
-   [saya.modules.search.core :as search]))
+   [saya.modules.search.core :as search]
+   [saya.util.coll :refer [insert-into-vec]]))
 
 ; ======= Mode-change keymaps ==============================
 
@@ -145,7 +148,7 @@
         (assoc :lines (into (subvec lines 0 start)
                             (subvec lines (inc end))))
         (assoc-in [:cursor :row] start)
-        (assoc :yanked {:lines yanked}))))
+        (assoc :yanked {:lines (mapv line->string yanked)}))))
 
 (defn- delete-chars [buffer {:keys [inclusive?]} linenr start end]
   (let [[start end] (align-start-end start end)
@@ -162,17 +165,24 @@
         (assoc :yanked {:chars (subs (line->string (nth (:lines buffer) linenr))
                                      start end)}))))
 
+(defn- unpack-buffer-yanked [{{:keys [yanked]} :buffer :as context}]
+  (-> context
+      (update :buffer dissoc :yanked)
+      (assoc :yanked yanked)))
+
 (defn delete-operator {:char "d"} [context {:keys [start end linewise?] :as flags}]
   (cond
     ; Line-wise delete
     linewise?
-    (update context :buffer delete-lines (:row start) (:row end))
+    (-> (update context :buffer delete-lines (:row start) (:row end))
+        (unpack-buffer-yanked))
 
     ; Char-wise delete within a line
     (= (:row start) (:row end))
     (-> context
         (update :buffer delete-chars flags (:row start) (:col start) (:col end))
-        (clamp-cursor))
+        (clamp-cursor)
+        (unpack-buffer-yanked))
 
     :else
     {:error "TODO: support char-wise cross-line deletes"}))
@@ -184,27 +194,67 @@
       (assoc :mode :insert)
       (delete-operator flags)))
 
+;; Yank (copy)
+
+(defn yank-operator {:char "y" :read? true} [context flags]
+  (let [{:keys [yanked]} (delete-operator context flags)]
+    (assoc context :yanked yanked)))
+
 ;; Integration
 
 (defn- enqueue-operator [operator]
   (fn operator-keymap [{:keys [buffer] :as context}]
-    (if (and (buffers/readonly? buffer)
+    (if (and (not (:read? (meta operator)))
+             (buffers/readonly? buffer)
              (nil? (:editable context)))
       {:error "Read-only buffer"}
 
       (assoc context
              :mode :operator-pending
+             :pending-operator/from-mode (:mode context)
              :pending-operator operator))))
 
 (def operator-keymaps
   {["c"] (enqueue-operator #'change-operator)
-   ["d"] (enqueue-operator #'delete-operator)})
+   ["d"] (enqueue-operator #'delete-operator)
+   ["y"] (enqueue-operator #'yank-operator)})
 
 ; ======= Edit keymaps =====================================
 
 (defn- create-edit-with-operator [operator motion]
   (fn perform-edit [ctx]
     (operator ctx (movement->operation motion ctx))))
+
+(defn- paste-selected-register [where]
+  (with-editable
+    (fn [{:keys [buffer registers] :as ctx}]
+      (let [reg-id \"]
+        (m/match [(get registers reg-id)]
+          [nil]
+          (-> ctx
+              (assoc :error (str "Nothing in register " reg-id)))
+
+          [{:chars to-paste}]
+          (-> ctx
+              (update-cursor-line-string
+               (fn [line]
+                 (let [[before after] (split-text-by-state buffer line)]
+                   (str before to-paste after))))
+              ((update-cursor :col (partial + (dec (count to-paste))))))
+
+          [{:lines lines}]
+          (-> ctx
+              (update-in [:buffer :lines]
+                         insert-into-vec
+                         (cond-> (get-in buffer [:cursor :row])
+                           (and (seq (get-in ctx [:buffer :lines]))
+                                (= :after where))
+                           (inc))
+                         (map buffer-line lines))
+              (cond->
+               (= :after where)
+                (update-in [:buffer :cursor :row] inc))
+              (assoc-in [:buffer :cursor :col] 0)))))))
 
 (def edit-keymaps
   {["C"] (create-edit-with-operator
@@ -213,13 +263,20 @@
    ["D"] (create-edit-with-operator
           #'delete-operator
           #'to-end-of-line)
+   ["Y"] (create-edit-with-operator
+          #'yank-operator
+          #'to-end-of-line)
 
    ["x"] (create-edit-with-operator
           #'delete-operator
           (update-cursor :col inc))
    ["X"] (create-edit-with-operator
           #'delete-operator
-          (update-cursor :col dec))})
+          (update-cursor :col dec))
+
+   ["p"] (comp (paste-selected-register :after)
+               (update-cursor :col inc))
+   ["P"] (paste-selected-register :before)})
 
 ; ======= Scroll keymaps ===================================
 

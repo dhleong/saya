@@ -18,5 +18,7 @@
 
    :echo-history []
    :echo-cleared-at nil
-   :echo-ack-pending-since nil})
+   :echo-ack-pending-since nil
+
+   :config {}})
 
