@@ -5,9 +5,7 @@
 (declare perform-cofx-key)
 (declare ^:private do-feed-keys)
 
-(defmacro with-session
-  {:clj-kondo/macroexpand-hook true}
-  [setup & body]
+(defmacro with-session [setup & body]
   `(let [cofx# (atom (make-keymap-cofx
                       ~(:buffer setup)))
          ~'state (fn
