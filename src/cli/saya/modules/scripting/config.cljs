@@ -1,6 +1,7 @@
 (ns saya.modules.scripting.config
   (:require
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [saya.modules.scripting.keys :refer [->keys]]))
 
 (def ^:private core-send (delay
                            (resolve 'saya.modules.scripting.core/send)))
@@ -9,13 +10,6 @@
   (fn send-callable [ctx]
     (@core-send connr send)
     ctx))
-
-(defn- ->keys [v]
-  (cond
-    (string? v) (str/split v "")
-    (vector? v) v
-    :else (throw (ex-info (str "Invalid keys value: `" v "`")
-                          {:v v}))))
 
 (defn- format-user-keymap [connr ->f user-keymap]
   ; TODO: Consider a spec?

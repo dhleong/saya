@@ -10,7 +10,10 @@
    [saya.modules.input.core :refer [handle-on-key]]
    [saya.modules.input.helpers :refer [*mode*]]
    [saya.modules.input.insert :refer [line->string]]
-   [saya.modules.window.subs :refer [visible-lines]]))
+   [saya.modules.scripting.keys :refer [->keys]]
+   [saya.modules.window.subs :refer [visible-lines]])
+  (:require-macros
+   [saya.modules.input.test-helpers]))
 
 (defn- extract-lines-and-cursor [s]
   (loop [raw-lines (str/split-lines s)
@@ -133,3 +136,21 @@
   (->> (get-in cofx [:db :buffers 0])
        (buffer->vec)
        (str/join "\n")))
+
+(defn- expand-keys [the-keys]
+  (mapcat
+   ->keys
+   the-keys))
+
+; Helper for the with-session macro
+(defn do-feed-keys [cofx-ref & the-keys]
+  (->
+   cofx-ref
+   (swap!
+    (fn [cofx]
+      (reduce
+       perform-cofx-key
+       cofx
+       (expand-keys the-keys))))
+    ; Return the updated buffer, for simple tests
+   (get-cofx-buffer)))
