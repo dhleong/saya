@@ -391,8 +391,7 @@
     (assoc context :buffer (-> buffer
                                (update :undo-stack pop)
                                (update :redo-stack (fnil conj []) (undo/capture-change context))
-                               (merge change))
-           :did-undo? true)
+                               (merge change)))
     {:error "Already at oldest change"}))
 
 (defn- redo [{:keys [buffer] :as context}]
@@ -400,8 +399,7 @@
     (assoc context :buffer (-> buffer
                                (update :redo-stack pop)
                                (update :undo-stack (fnil conj []) (undo/capture-change context))
-                               (merge change))
-           :did-undo? true)
+                               (merge change)))
     {:error "Already at newest change"}))
 
 (def undo-keymaps
