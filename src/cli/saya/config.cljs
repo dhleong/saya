@@ -11,3 +11,5 @@
 (def no-ansi? false)
 
 (def history-length 50)
+
+(def undo-stack-size 20)

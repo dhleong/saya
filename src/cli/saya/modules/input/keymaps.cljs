@@ -3,7 +3,8 @@
    [saya.modules.echo.core :refer [echo-fx]]
    [saya.modules.echo.events :as echo-events]
    [saya.modules.input.clipboard :as clipboard]
-   [saya.modules.input.helpers :refer [*mode*]]))
+   [saya.modules.input.helpers :refer [*mode*]]
+   [saya.modules.input.undo :refer [maybe-enqueue-undo]]))
 
 (defn- starts-with? [sequence candidate]
   (and
@@ -44,11 +45,13 @@
           yanked (:yanked context')
           yanked-register (:yanked-register context' \")
           context' (-> context'
-                       (dissoc :yanked)
+                       (maybe-enqueue-undo context)
+                       (dissoc :yanked :did-undo?)
                        (cond->
                          ; Store yanked in a register, if set
                         (some? yanked)
                          (assoc-in [:registers yanked-register] yanked)))]
+
       (if-not (= context context')
         {:db (-> (:db cofx)
                  (assoc-in [:buffers bufnr] (:buffer context'))
