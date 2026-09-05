@@ -10,6 +10,7 @@
          ~'buffer (fn [] "")
          ~'mode (comp :mode ~'state)
          ~'feed-keys (fn [& ~'_] "")
-         ~'_ [~'mode ~'feed-keys ~'buffer]]
+         ~'error (fn [] "")
+         ~'_ [~'mode ~'feed-keys ~'buffer ~'error]]
      ~@body))
 

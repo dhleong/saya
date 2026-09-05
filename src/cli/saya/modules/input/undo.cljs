@@ -17,9 +17,14 @@
       (not (buffers-unchanged?
             change
             (peek (:undo-stack (:buffer old-context)))))
-      (update-in [:buffer :undo-stack]
-                 (fnil #(conj-with-limit %1 %2 config/undo-stack-size) [])
-                 change))))
+      (->
+       (update-in [:buffer :undo-stack]
+                  (fnil #(conj-with-limit %1 %2 config/undo-stack-size) [])
+                  change)
+
+        ; When enqueuing a new undo state, we clear the redo stack
+        ; Theoretically we could build an undo *tree* but... not now.
+       (update :buffer dissoc :redo-stack)))))
 
 (defn- should-enqueue-undo? [old-context new-context]
   (and

@@ -10,6 +10,7 @@
   (cond
     (string? v) (str/split v "")
     (vector? v) (vec (mapcat ->keys v))
+    (keyword? v) [v]
     :else (throw (ex-info (str "Invalid keys value: `" v "`")
                           {:v v}))))
 
