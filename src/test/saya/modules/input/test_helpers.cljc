@@ -27,7 +27,7 @@
 
 (defmacro has-error? [error-match]
   (if (string? error-match)
-    `(is (= ~error-match (~'error)))
+    `(cljs.test/is (= ~error-match (~'error)))
     `(let [~'error-message (~'error)]
        (cljs.test/is (string? ~'error-message))
        (cljs.test/is (re-seq ~error-match ~'error-message)

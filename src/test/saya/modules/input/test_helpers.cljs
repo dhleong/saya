@@ -165,5 +165,7 @@
                    args))))
        (keep (fn [[_echo kind & msg]]
                (when (#{:exception :error} kind)
-                 (str/join " " msg))))
+                 ; always inserted by the {:error} "fx"
+                 (assert (= "ERROR:" (first msg)))
+                 (str/join " " (next msg)))))
        (last)))
