@@ -6,30 +6,45 @@
    [saya.modules.echo.view :refer [echo-window]]
    [saya.modules.input.cmdline :refer [cmdline-window]]
    [saya.modules.kodachi.subs :as kodachi]
+   [saya.modules.layout.subs :as layout-subs]
+   [saya.modules.layout.view :refer [layout-view]]
    [saya.modules.logging.view :refer [logging-view]]
    [saya.modules.search.view :refer [search-mode-view]]
    [saya.modules.ui.error-boundary :refer [error-boundary]]
-   [saya.modules.window.view :refer [window-view]]
-   [saya.modules.ui.placeholders :as placeholders]))
+   [saya.modules.ui.placeholders :as placeholders]
+   [saya.modules.window.view :refer [window-view]]))
 
 (defn- home-content []
-  (if-let [current-winnr (<sub [:current-winnr])]
-    ; HACKS:
-    [window-view (or (when (number? current-winnr)
-                       current-winnr)
-                     (<sub [:last-winnr]))]
+  (let [layout (<sub [::layout-subs/current])
+        current-winnr (<sub [:current-winnr])]
+    (cond
+      (some? layout)
+      [:> k/Box {:flex-direction :column
+                 :height :100%
+                 :width :100%
+                 :justify-content :center
+                 :align-items :center}
+       ; TODO: tab id?
+       [layout-view 0]]
 
-    [:> k/Box {:flex-direction :column
-               :height :100%
-               :width :100%
-               :justify-content :center
-               :align-items :center}
-     [:> k/Text "Welcome to saya"]
+      ; HACKS:
+      (some? current-winnr)
+      [window-view (or (when (number? current-winnr)
+                         current-winnr)
+                       (<sub [:last-winnr]))]
 
-     (case (<sub [::kodachi/state])
-       :unavailable [:> k/Text "Could not locate or install kodachi"]
-       :initializing [:> k/Text "..."]
-       (nil :ready) nil)]))
+      :else
+      [:> k/Box {:flex-direction :column
+                 :height :100%
+                 :width :100%
+                 :justify-content :center
+                 :align-items :center}
+       [:> k/Text "Welcome to saya"]
+
+       (case (<sub [::kodachi/state])
+         :unavailable [:> k/Text "Could not locate or install kodachi"]
+         :initializing [:> k/Text "..."]
+         (nil :ready) nil)])))
 
 (defn- status-area []
   (let [mode (<sub [:mode])
