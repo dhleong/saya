@@ -46,7 +46,7 @@
           yanked-register (:yanked-register context' \")
           context' (-> context'
                        (maybe-enqueue-undo context)
-                       (dissoc :yanked :did-undo?)
+                       (dissoc :yanked)
                        (cond->
                          ; Store yanked in a register, if set
                         (some? yanked)
