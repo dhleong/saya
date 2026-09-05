@@ -16,6 +16,7 @@
                                             end-of-word-movement
                                             small-word-boundary? word-movement]]
    [saya.modules.input.shared :refer [to-end-of-line to-start-of-line]]
+   [saya.modules.input.undo :as undo]
    [saya.modules.search.core :as search]
    [saya.util.coll :refer [insert-into-vec]]))
 
@@ -383,13 +384,41 @@
    [:ctrl/b] (update-scroll - window-rows)
    [:ctrl/f] (update-scroll + window-rows)})
 
+; ======= Undo =============================================
+
+(defn- make-undo-stack-shuffle [{:keys [from to error]}]
+  (fn undo-redo-handler [{:keys [buffer] :as context}]
+    (if-some [change (peek (from buffer))]
+      (assoc context :buffer (-> buffer
+                                 (update from pop)
+                                 (update to (fnil conj []) (undo/capture-change context))
+                                 (merge change)))
+      {:error error})))
+
+(def undo (make-undo-stack-shuffle
+           {:from :undo-stack
+            :to :redo-stack
+            :error "Already at oldest change"}))
+
+(def redo (make-undo-stack-shuffle
+           {:from :redo-stack
+            :to :undo-stack
+            :error "Already at newest change"}))
+
+(def undo-keymaps
+  {["u"] undo
+   [:ctrl/r] redo})
+
+; ======= Entrypoint =======================================
+
 (def keymaps
   (merge
    mode-change-keymaps
    movement-keymaps
    operator-keymaps
    edit-keymaps
-   scroll-keymaps))
+   scroll-keymaps
+   undo-keymaps))
 
 #_{:clj-kondo/ignore [:unresolved-namespace]}
 (comment

@@ -29,7 +29,7 @@
 (reg-event-db
  ::set-input-text
  [unwrap]
- (fn [db {:keys [connr text]}]
+ (fn [db {:keys [connr text clear-undo?]}]
    ; NOTE: formatting string text like it's a buffer with :lines here:
    (let [bufnr [:conn/input connr]]
      (-> db
@@ -37,7 +37,9 @@
          (assoc-in [:buffers bufnr :lines]
                    (->> text
                         (str/split-lines)
-                        (mapv buffer-line)))))))
+                        (mapv buffer-line)))
+         (cond-> clear-undo?
+           (update-in [:buffers bufnr] dissoc :undo-stack :redo-stack))))))
 
 (reg-event-db
  ::prepare-input-cmdline-buffer

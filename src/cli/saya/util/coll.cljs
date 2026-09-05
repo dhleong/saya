@@ -25,3 +25,10 @@
   (-> (subvec v 0 idx)
       (into entries)
       (into (subvec v idx))))
+
+(defn conj-with-limit [coll x limit]
+  {:pre [(vector? coll)]}
+  (cond-> (conj coll x)
+    (>= (count coll) limit)
+    (subvec (inc (- (count coll) limit))
+            (inc (count coll)))))

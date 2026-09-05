@@ -69,7 +69,7 @@
          :key key
          :cofx cofx))
 
-      ; If we haven't explicitly set left :pending-operator mode,
+      ; If we haven't explicitly left :pending-operator mode,
       ; and there's no pending keymap-buffer, do so:
       (update :db
               (fn [{:keys [mode keymap-buffer] :as db'}]

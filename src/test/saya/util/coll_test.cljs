@@ -1,6 +1,6 @@
 (ns saya.util.coll-test
   (:require [cljs.test :refer-macros [deftest is testing]]
-            [saya.util.coll :refer [insert-into-vec]]))
+            [saya.util.coll :refer [conj-with-limit insert-into-vec]]))
 
 (deftest insert-into-vec-test
   (testing "Insert into empty vec"
@@ -31,3 +31,10 @@
             3
             [4 5 6])))))
 
+(deftest conj-with-limit-test
+  (testing "Limit conj"
+    (is (= [1 2]
+           (-> []
+               (conj-with-limit 0 2)
+               (conj-with-limit 1 2)
+               (conj-with-limit 2 2))))))
