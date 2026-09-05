@@ -80,7 +80,6 @@
   (let [current-window (get-in db [:windows (:current-winnr db)])]
     (get-in db [:buffers (:bufnr current-window)])))
 
-#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn setup-connection
   "Ensure that a connection exists in the current window for the given URI,
    configuring the associated buffer with the params provided.
@@ -114,17 +113,14 @@
 
 ; ======= Config ===========================================
 
-#_{:clojure-lsp/ignore [:clojure-lsp/unused-public-var]}
 (defn config [& {:as kvs}]
   (>evt [:config/upsert kvs]))
 
 ; ======= Simple APIs ======================================
 
-#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn echo [& messages]
   (apply echo-core/echo messages))
 
-#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn send
   ([conn s] (send conn s {}))
   ([conn s {:keys [persist?]

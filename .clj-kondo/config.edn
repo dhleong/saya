@@ -1,7 +1,11 @@
 {:linters {:unresolved-symbol {:exclude [goog.DEBUG
 
                                          (com.rpl.specter/recursive-path)]}
-           :redundant-ignore {:exclude [:clojure-lsp/unused-public-var]}}
+           :redundant-ignore {:exclude [:clojure-lsp/unused-public-var]}
+
+           :clojure-lsp/unused-public-var {:level :warning
+                                           :exclude-regex #{"saya\\.modules\\.scripting\\..*"}}}
+
  :lint-as {applied-science.js-interop/defn clojure.core/defn
            applied-science.js-interop/let clojure.core/let
            applied-science.js-interop/fn clojure.core/fn
@@ -9,10 +13,4 @@
 
  :hooks {:macroexpand
          {saya.modules.input.test-helpers/with-session
-          hooks.test-helpers/with-session}}
-
- :ns-groups [{:pattern "saya\\.modules\\.scripting\\..*" :name scripting-group}]
-
- ; NOTE: This is not actually respected by clojure-lsp... yet
- :config-in-ns {scripting-group {:ignore [:clojure-lsp/unused-public-var
-                                          clojure-lsp/unused-public-var]}}}
+          hooks.test-helpers/with-session}}}
