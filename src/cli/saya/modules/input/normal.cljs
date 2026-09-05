@@ -386,21 +386,24 @@
 
 ; ======= Undo =============================================
 
-(defn- undo [{:keys [buffer] :as context}]
-  (if-some [change (peek (:undo-stack buffer))]
-    (assoc context :buffer (-> buffer
-                               (update :undo-stack pop)
-                               (update :redo-stack (fnil conj []) (undo/capture-change context))
-                               (merge change)))
-    {:error "Already at oldest change"}))
+(defn- make-undo-stack-shuffle [{:keys [from to error]}]
+  (fn undo-redo-handler [{:keys [buffer] :as context}]
+    (if-some [change (peek (from buffer))]
+      (assoc context :buffer (-> buffer
+                                 (update from pop)
+                                 (update to (fnil conj []) (undo/capture-change context))
+                                 (merge change)))
+      {:error error})))
 
-(defn- redo [{:keys [buffer] :as context}]
-  (if-some [change (peek (:redo-stack buffer))]
-    (assoc context :buffer (-> buffer
-                               (update :redo-stack pop)
-                               (update :undo-stack (fnil conj []) (undo/capture-change context))
-                               (merge change)))
-    {:error "Already at newest change"}))
+(def undo (make-undo-stack-shuffle
+           {:from :undo-stack
+            :to :redo-stack
+            :error "Already at oldest change"}))
+
+(def redo (make-undo-stack-shuffle
+           {:from :redo-stack
+            :to :undo-stack
+            :error "Already at newest change"}))
 
 (def undo-keymaps
   {["u"] undo
