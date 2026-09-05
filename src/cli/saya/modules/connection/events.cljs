@@ -24,7 +24,8 @@
               ; be called from the cmdline window. This is kinda hacks,
               ; but fixing properly in input-window feels... annoying
               [::window-events/set-input-text {:connr connr
-                                               :text ""}]]
+                                               :text ""
+                                               :clear-undo? true}]]
              [:dispatch
               [::input-events/add-history {:bufnr bufnr
                                            :entry text}]]
