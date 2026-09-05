@@ -3,16 +3,18 @@
    ["node:fs/promises" :as fs]
    [promesa.core :as p]
    [saya.modules.logging.core :refer [log]]
+   [saya.modules.scripting.layout :as _]
    [saya.modules.scripting.core :refer [*script-file*]]
    [saya.util.paths :as paths]
    [sci.core :as sci]))
 
-(def ^:private saya-core-ns
-  (let [core-ns (sci/create-ns 'saya.core)]
-    (sci/copy-ns saya.modules.scripting.core core-ns)))
+(def ^:private scripting-namespaces
+  {'saya.core (let [core-ns (sci/create-ns 'saya.core)]
+                (sci/copy-ns saya.modules.scripting.core core-ns))
+   'saya.layout (let [layout-ns (sci/create-ns 'saya.layout)]
+                  (sci/copy-ns saya.modules.scripting.layout layout-ns))})
 
-(def ^:private context-opts {:namespaces
-                             {'saya.core saya-core-ns}
+(def ^:private context-opts {:namespaces scripting-namespaces
 
                              ; Convenience to convert `#send "string"` into
                              ; a mapping that sends "string" to the connection
