@@ -45,7 +45,7 @@
 
 (defn create-blank
   ([db] (create-blank db {}))
-  ([db {:keys [buffer]}]
+  ([db {:keys [buffer focus?] :or {focus? true}}]
    (let [[db buffer] (allocate-buffer db (merge
                                           buffer
                                           {:lines []
@@ -53,8 +53,9 @@
          ; TODO: Possibly reuse the current window?
          [db window] (allocate-window db {:bufnr (:id buffer)
                                           :anchor-row nil})]
-     [(-> db
-          (assoc :current-winnr (:id window)))
+     [(cond-> db
+        (or focus? (nil? (:current-winnr db)))
+        (assoc :current-winnr (:id window)))
 
       {:buffer buffer
        :window window}])))
@@ -186,6 +187,12 @@
  [unwrap buffer-path]
  (fn [buffer {:keys [cursor]}]
    (assoc buffer :cursor cursor)))
+
+(reg-event-db
+ ::set-string-lines
+ [unwrap buffer-path]
+ (fn [buffer {:keys [lines]}]
+   (assoc buffer :lines (mapv buffer-line lines))))
 
 (comment
   (re-frame.core/dispatch [::clear-partial-line {:id 0}])

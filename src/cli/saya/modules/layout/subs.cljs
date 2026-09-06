@@ -22,3 +22,12 @@
  (fn [[_ layout-id]]
    (subscribe [::with-id layout-id]))
  :-> layout/evaluate)
+
+(reg-sub
+ ::all-keys
+ :-> :layout/keys)
+
+(reg-sub
+ ::key
+ :<- [::all-keys]
+ :=> get)
