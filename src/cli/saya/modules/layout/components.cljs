@@ -3,18 +3,27 @@
    ["ink" :as k]
    [clojure.string :as str]))
 
-(defn horizontal [_opts & children]
-  (into [:> k/Box {:flex-direction :row
-                   :flex-grow 1
-                   :width :100%
-                   :flex 1}]
+(defn- build-box [{:keys [background-color flex-direction height width]}]
+  [:> k/Box {:flex-direction flex-direction
+             :flex-grow (when-not (number? height)
+                          1)
+             :background-color (when (or (string? background-color)
+                                         (keyword? background-color))
+                                 background-color)
+             :height (when (number? height)
+                       height)
+             :width (if (or (number? width)
+                            (keyword? width))
+                      width
+                      :100%)
+             :flex 1}])
+
+(defn horizontal [opts & children]
+  (into (build-box (assoc opts :flex-direction :row))
         children))
 
-(defn vertical [_opts & children]
-  (into [:> k/Box {:flex-direction :column
-                   :flex-grow 1
-                   :width :100%
-                   :flex 1}]
+(defn vertical [opts & children]
+  (into (build-box (assoc opts :flex-direction :column))
         children))
 
 (defn edit-file-view [filename]
