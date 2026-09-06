@@ -19,6 +19,7 @@
     :edit (m/match [(first args)]
             [{:file path}] [components/edit-file-view path]
             [{:content (s :guard string?)}] [components/edit-string-view s]
+            [{:content (s :guard coll?)}] [components/edit-string-view s]
             [{:content s}] [components/edit-ref-view s])))
 
 (defn evaluate [{:layout/keys [component state-atom]}]

@@ -24,8 +24,9 @@
                  :width :100%
                  :justify-content :center
                  :align-items :center}
-       ; TODO: tab id?
-       [layout-view 0]]
+       [error-boundary
+        ; TODO: tab id?
+        [layout-view 0]]]
 
       ; HACKS:
       (some? current-winnr)
