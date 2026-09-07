@@ -64,12 +64,13 @@
   (case component
     :horizontal (install-layout-part db (conj parent-key :horizontal) args)
     :vertical (install-layout-part db (conj parent-key :vertical) args)
-    :edit (let [child-key (key-for-params (first args))
+    :edit (let [{:keys [focus] :as params} (first args)
+                child-key (key-for-params params)
                 full-key (conj parent-key child-key)
                 existing-mapping (get-in db [:layout/keys full-key])]
             (if existing-mapping
               db
-              (let [[db {:keys [buffer window]}] (create-blank db {:foucs? false})]
+              (let [[db {:keys [buffer window]}] (create-blank db {:focus? focus})]
                 (assoc-in db [:layout/keys full-key] {:bufnr (:id buffer)
                                                       :winnr (:id window)}))))))
 
