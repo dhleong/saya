@@ -12,7 +12,7 @@
 
 ; Grab a reference at declare time to avoid conflict with
 ; log patching
-(def ^:private original-stdout js/process.stdout)
+(def original-stdout js/process.stdout)
 
 ; Can be helpful for debugging:
 (def ^:private log-file (when-some [path js/process.env.INK_DEBUG_LOG]

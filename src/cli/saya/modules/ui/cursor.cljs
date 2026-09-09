@@ -12,14 +12,24 @@
 ; - Zero-width non-joiner (should be between characters that normally
 ;   are rendered together with ligatures)
 ; - Another zero-width space
-(def ^:private cursor-text "\u200B\u200C\u200B")
+; (def ^:private cursor-text "\u200B\u200C\u200B")
+(def ^:private cursor-text
+  (str
+   "\u001B]8;;" ; start link
+   "saya://cursor" ; URL
+   "\u001B\\" ; separator
+   "\u200B" ; "Visible" text
+   "\u001b]8;;\u001B\\"))
+; (def ^:private cursor-text "\u001B[9999m\u200B")
 
 (defn extract-cursor-position [lines]
   (loop [y 0
          lines lines]
     (when-some [line (first lines)]
-      (if-let [x (str/index-of (strip-ansi line) cursor-text)]
-        {:x x :y y}
+      (if-let [raw-x (str/index-of line cursor-text)]
+        (let [before (subs line 0 raw-x)
+              x (count (strip-ansi before))]
+          {:x x :y y})
         (recur (inc y)
                (next lines))))))
 
@@ -39,7 +49,12 @@
   ; that doesn't seem to consistently happen in time...?
   (reset! shape-ref shape)
 
-  [:> k/Text cursor-text])
+  [:> k/Cursor {:shape (case shape
+                         :block/blink "blockBlink"
+                         :underscore/blink "underscoreBlink"
+                         :pipe/blink "pipeBlink"
+                         (name shape))}]
+  #_[:> k/Text cursor-text])
 
 (defn cursor
   ([] [cursor :block])
