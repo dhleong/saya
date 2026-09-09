@@ -12,6 +12,11 @@ overrides:
   cipher-base@<=1.0.4: '>=1.0.5'
   elliptic@<6.6.0: '>=6.6.0'
 
+patchedDependencies:
+  ink:
+    hash: mai6a5o6wphk4pzcoim2m62c5i
+    path: patches/ink.patch
+
 importers:
 
   .:
@@ -39,10 +44,10 @@ importers:
         version: 11.0.1
       ink:
         specifier: ^7.1.1
-        version: 7.1.1(react@19.2.8)
+        version: 7.1.1(patch_hash=mai6a5o6wphk4pzcoim2m62c5i)(react@19.2.8)
       ink-spinner:
         specifier: ^5.0.0
-        version: 5.0.0(ink@7.1.1(react@19.2.8))(react@19.2.8)
+        version: 5.0.0(ink@7.1.1(patch_hash=mai6a5o6wphk4pzcoim2m62c5i)(react@19.2.8))(react@19.2.8)
       react:
         specifier: ^19.2.8
         version: 19.2.8
@@ -1303,13 +1308,13 @@ snapshots:
 
   inherits@2.0.4: {}
 
-  ink-spinner@5.0.0(ink@7.1.1(react@19.2.8))(react@19.2.8):
+  ink-spinner@5.0.0(ink@7.1.1(patch_hash=mai6a5o6wphk4pzcoim2m62c5i)(react@19.2.8))(react@19.2.8):
     dependencies:
       cli-spinners: 2.9.2
-      ink: 7.1.1(react@19.2.8)
+      ink: 7.1.1(patch_hash=mai6a5o6wphk4pzcoim2m62c5i)(react@19.2.8)
       react: 19.2.8
 
-  ink@7.1.1(react@19.2.8):
+  ink@7.1.1(patch_hash=mai6a5o6wphk4pzcoim2m62c5i)(react@19.2.8):
     dependencies:
       '@alcalzone/ansi-tokenize': 0.3.0
       ansi-escapes: 7.3.0

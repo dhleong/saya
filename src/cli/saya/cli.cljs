@@ -1,6 +1,8 @@
 (ns saya.cli
   (:require
+   ["ink" :as k]
    [applied-science.js-interop :as j]
+   [archetype.util :refer [>evt]]
    [clojure.core.match :as m]
    [promesa.core :as p]
    [re-frame.core :as re-frame]
@@ -8,13 +10,13 @@
    [saya.env :as env]
    [saya.events :as events]
    [saya.modules.input.test-helpers]
+   [saya.modules.perf.core :as perf]
    [saya.prelude]
    [saya.reagent :as reagent]
    [saya.util.ink :as ink]
    [saya.util.ink-testing-utils] ; NOTE: Required here just to convince shadow to build them in dev
    [saya.util.logging :as logging]
-   [saya.views :as views]
-   [saya.modules.perf.core :as perf]))
+   [saya.views :as views]))
 
 (defonce ^:private ink-instance (atom nil))
 
@@ -26,8 +28,17 @@
       (doto ^js ink
         (.rerender app))
       (reset! ink-instance
-              (ink/render-alternate app #js {:exitOnCtrlC false
-                                             :patchConsole false})))))
+              (k/render
+               app
+               #js {:alternateScreen true
+                    :stdout ink/original-stdout
+                    :onRender (j/fn [^:js {:keys [cursor]}]
+                                (>evt [:saya.events/set-global-cursor
+                                       (js->clj cursor :keywordize-keys true)])
+                                (def last-c cursor)
+                                #_(println x y shape))})
+              #_(ink/render-alternate app #js {:exitOnCtrlC false
+                                               :patchConsole false})))))
 
 (defn- -main [args]
   (perf/init!)

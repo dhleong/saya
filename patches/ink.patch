@@ -1,0 +1,183 @@
+diff --git a/build/components/Cursor.js b/build/components/Cursor.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..0c2d370c399464fcf191f13fb858a5a500ab201c
+--- /dev/null
++++ b/build/components/Cursor.js
+@@ -0,0 +1,20 @@
++import React from 'react';
++import { buildRenderCursorAtPositionSequence } from '../cursor-helpers.js';
++const shapeToCode = {
++    blockBlink: 1,
++    block: 2,
++    underscoreBlink: 3,
++    underscore: 4,
++    pipeBlink: 5,
++    pipe: 6,
++
++}
++export default function Cursor({ shape = 'block' }) {
++    const code = shapeToCode[shape];
++    if (code == null) {
++        throw new Error(`No such cursor shape ${shape}`);
++    }
++    const content = buildRenderCursorAtPositionSequence(code);
++    globalThis.lastContent = content;
++    return (React.createElement("ink-text", { style: { flexGrow: 0, flexShrink: 1, flexDirection: 'row', textWrap: 'wrap' } }, content));
++}
+diff --git a/build/cursor-helpers.js b/build/cursor-helpers.js
+index be493545f0a22d2972a36ad858d2e4bbc4c9326a..ece510c58ba8ed9cf5a52cb468968297adcd15fc 100644
+--- a/build/cursor-helpers.js
++++ b/build/cursor-helpers.js
+@@ -1,11 +1,38 @@
+ import ansiEscapes from 'ansi-escapes';
++
++// Special URL with zero-width string
++export const CURSOR_POSITION_CHAR = "\u200B";
++const RENDER_CURSOR_AT_POSITION_SEQUENCE_PREFIX = "\u001B]8;;ink.js://cursor/";
++const RENDER_CURSOR_AT_POSITION_SEQUENCE_SUFFIX = `\u001B\\${CURSOR_POSITION_CHAR}\u001B]8;;\u001B\\`
++export { RENDER_CURSOR_AT_POSITION_SEQUENCE_PREFIX };
++export const buildRenderCursorAtPositionSequence = (shape) => RENDER_CURSOR_AT_POSITION_SEQUENCE_PREFIX + shape + RENDER_CURSOR_AT_POSITION_SEQUENCE_SUFFIX;
++export const extractCursorShape = (char) => {
++    if (char.value !== CURSOR_POSITION_CHAR) {
++        return;
++    }
++
++    globalThis.lastChar = char;
++    for (const style of char.styles) {
++        if (style.code.startsWith(RENDER_CURSOR_AT_POSITION_SEQUENCE_PREFIX)) {
++            const cursorShape = style.code.substring(RENDER_CURSOR_AT_POSITION_SEQUENCE_PREFIX.length, style.code.length - 2);
++            return cursorShape;
++        }
++    }
++};
++
+ const showCursorEscape = '\u001B[?25h';
+ const hideCursorEscape = '\u001B[?25l';
+ export { showCursorEscape, hideCursorEscape };
+ /**
+ Compare two cursor positions. Returns true if they differ.
+ */
+-export const cursorPositionChanged = (a, b) => a?.x !== b?.x || a?.y !== b?.y;
++export const cursorPositionChanged = (a, b) => a?.x !== b?.x || a?.y !== b?.y || a?.shape !== b?.shape;
++export const buildCursorShape = (shape) => {
++    if (!shape) {
++        return '';
++    }
++    return `\u001B[${shape} q`;
++}
+ /**
+ Build escape sequence to move cursor from bottom of output to the target position and show it.
+ Assumes cursor is at (col 0, line visibleLineCount) — i.e. just after the last output line.
+@@ -17,7 +44,7 @@ export const buildCursorSuffix = (visibleLineCount, cursorPosition) => {
+     const moveUp = visibleLineCount - cursorPosition.y;
+     return ((moveUp > 0 ? ansiEscapes.cursorUp(moveUp) : '') +
+         ansiEscapes.cursorTo(cursorPosition.x) +
+-        showCursorEscape);
++        showCursorEscape) + buildCursorShape(cursorPosition.shape);
+ };
+ /**
+ Build escape sequence to move cursor from previousCursorPosition back to the bottom of output.
+diff --git a/build/index.js b/build/index.js
+index cc849f0d5642d763f4a0176ebabe7d20e18979bc..a45afc751820a1b49f951c0d125f2962cf46aca6 100644
+--- a/build/index.js
++++ b/build/index.js
+@@ -1,6 +1,7 @@
+ export { default as render } from './render.js';
+ export { default as renderToString } from './render-to-string.js';
+ export { default as Box } from './components/Box.js';
++export { default as Cursor } from './components/Cursor.js';
+ export { default as Text } from './components/Text.js';
+ export { default as Static } from './components/Static.js';
+ export { default as Transform } from './components/Transform.js';
+diff --git a/build/ink.js b/build/ink.js
+index 0082666b281ec2db77b875d6b8460bcc19a59ce7..4208a11e8f95d5641e6c2b5748c3c87e6a7bdcc8 100644
+--- a/build/ink.js
++++ b/build/ink.js
+@@ -345,8 +345,9 @@ export default class Ink {
+             this.nextRenderCommit = undefined;
+         }
+         const startTime = performance.now();
+-        const { output, outputHeight, staticOutput } = render(this.rootNode, this.isScreenReaderEnabled);
+-        this.options.onRender?.({ renderTime: performance.now() - startTime });
++        const { output, outputHeight, staticOutput, cursor } = render(this.rootNode, this.isScreenReaderEnabled);
++        this.setCursorPosition(cursor);
++        this.options.onRender?.({ renderTime: performance.now() - startTime, cursor });
+         // If <Static> output isn't empty, it means new children have been added to it
+         const hasStaticOutput = staticOutput && staticOutput !== '\n';
+         if (this.options.debug) {
+diff --git a/build/output.js b/build/output.js
+index c763b7763c5fc133c7fbb53c54c466cdf51c282b..2b7d1c45e521bb01b1a46f5c6d9506fbadb0a541 100644
+--- a/build/output.js
++++ b/build/output.js
+@@ -1,6 +1,7 @@
+ import sliceAnsi from 'slice-ansi';
+ import stringWidth from 'string-width';
+ import { styledCharsFromTokens, styledCharsToString, tokenize, } from '@alcalzone/ansi-tokenize';
++import { RENDER_CURSOR_AT_POSITION_SEQUENCE_PREFIX, extractCursorShape } from './cursor-helpers.js';
+ class OutputCaches {
+     widths = new Map();
+     blockWidths = new Map();
+@@ -84,6 +85,7 @@ export default class Output {
+             output.push(row);
+         }
+         const clips = [];
++        let cursor = undefined;
+         for (const operation of this.operations) {
+             if (operation.type === 'clip') {
+                 clips.push(operation.clip);
+@@ -116,9 +118,10 @@ export default class Output {
+                     if (clipHorizontally) {
+                         lines = lines.map(line => {
+                             const from = x < clip.x1 ? clip.x1 - x : 0;
++                            const hasCursor = line.includes(RENDER_CURSOR_AT_POSITION_SEQUENCE_PREFIX);
+                             const width = this.caches.getStringWidth(line);
+                             const to = x + width > clip.x2 ? clip.x2 - x : width;
+-                            return sliceAnsi(line, from, to);
++                            return sliceAnsi(line, from, hasCursor ? to + 1 : to);
+                         });
+                         if (x < clip.x1) {
+                             x = clip.x1;
+@@ -169,6 +172,18 @@ export default class Output {
+                         currentLine[offsetX - 1] = spaceCell;
+                     }
+                     for (const character of characters) {
++                        const shape = extractCursorShape(character);
++                        if (shape != null) {
++                            cursor = { x: x + offsetX, y: y + offsetY, shape };
++                            globalThis.cursorData = {
++                                text,
++                                line,
++                                lines,
++                                characters
++                            }
++                            continue;
++                        }
++
+                         currentLine[offsetX] = character;
+                         // Determine printed width using string-width to align with measurement
+                         const characterWidth = Math.max(1, this.caches.getStringWidth(character.value));
+@@ -202,6 +217,7 @@ export default class Output {
+         return {
+             output: generatedOutput,
+             height: output.length,
++            cursor,
+         };
+     }
+ }
+diff --git a/build/renderer.js b/build/renderer.js
+index bf232469cfbd949f7d0717b4084623e1dbc21f1d..04afd8b02b45e1899d6b4c33de1d34b3d074974a 100644
+--- a/build/renderer.js
++++ b/build/renderer.js
+@@ -36,10 +36,11 @@ const renderer = (node, isScreenReaderEnabled) => {
+                 skipStaticElements: false,
+             });
+         }
+-        const { output: generatedOutput, height: outputHeight } = output.get();
++        const { output: generatedOutput, height: outputHeight, cursor } = output.get();
+         return {
+             output: generatedOutput,
+             outputHeight,
++            cursor,
+             // Newline at the end is needed, because static output doesn't have one, so
+             // interactive output will override last line of static output
+             staticOutput: staticOutput ? `${staticOutput.get().output}\n` : '',
