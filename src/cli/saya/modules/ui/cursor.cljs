@@ -49,7 +49,7 @@
   ; that doesn't seem to consistently happen in time...?
   (reset! shape-ref shape)
 
-  [:> k/Cursor {:shape (case shape
+  [:> k/Cursor {:shape (case (or shape :block)
                          :block/blink "blockBlink"
                          :underscore/blink "underscoreBlink"
                          :pipe/blink "pipeBlink"
