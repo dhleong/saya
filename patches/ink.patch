@@ -1,9 +1,9 @@
 diff --git a/build/components/Cursor.js b/build/components/Cursor.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..0c2d370c399464fcf191f13fb858a5a500ab201c
+index 0000000000000000000000000000000000000000..cedf4ed408d7b4b0526a32d5623942cfc4809154
 --- /dev/null
 +++ b/build/components/Cursor.js
-@@ -0,0 +1,20 @@
+@@ -0,0 +1,19 @@
 +import React from 'react';
 +import { buildRenderCursorAtPositionSequence } from '../cursor-helpers.js';
 +const shapeToCode = {
@@ -21,14 +21,13 @@ index 0000000000000000000000000000000000000000..0c2d370c399464fcf191f13fb858a5a5
 +        throw new Error(`No such cursor shape ${shape}`);
 +    }
 +    const content = buildRenderCursorAtPositionSequence(code);
-+    globalThis.lastContent = content;
 +    return (React.createElement("ink-text", { style: { flexGrow: 0, flexShrink: 1, flexDirection: 'row', textWrap: 'wrap' } }, content));
 +}
 diff --git a/build/cursor-helpers.js b/build/cursor-helpers.js
-index be493545f0a22d2972a36ad858d2e4bbc4c9326a..ece510c58ba8ed9cf5a52cb468968297adcd15fc 100644
+index be493545f0a22d2972a36ad858d2e4bbc4c9326a..a13c12cd30f6bac40a3b75dec5460779a1378ed4 100644
 --- a/build/cursor-helpers.js
 +++ b/build/cursor-helpers.js
-@@ -1,11 +1,38 @@
+@@ -1,11 +1,37 @@
  import ansiEscapes from 'ansi-escapes';
 +
 +// Special URL with zero-width string
@@ -42,7 +41,6 @@ index be493545f0a22d2972a36ad858d2e4bbc4c9326a..ece510c58ba8ed9cf5a52cb468968297
 +        return;
 +    }
 +
-+    globalThis.lastChar = char;
 +    for (const style of char.styles) {
 +        if (style.code.startsWith(RENDER_CURSOR_AT_POSITION_SEQUENCE_PREFIX)) {
 +            const cursorShape = style.code.substring(RENDER_CURSOR_AT_POSITION_SEQUENCE_PREFIX.length, style.code.length - 2);
@@ -68,7 +66,7 @@ index be493545f0a22d2972a36ad858d2e4bbc4c9326a..ece510c58ba8ed9cf5a52cb468968297
  /**
  Build escape sequence to move cursor from bottom of output to the target position and show it.
  Assumes cursor is at (col 0, line visibleLineCount) — i.e. just after the last output line.
-@@ -17,7 +44,7 @@ export const buildCursorSuffix = (visibleLineCount, cursorPosition) => {
+@@ -17,7 +43,7 @@ export const buildCursorSuffix = (visibleLineCount, cursorPosition) => {
      const moveUp = visibleLineCount - cursorPosition.y;
      return ((moveUp > 0 ? ansiEscapes.cursorUp(moveUp) : '') +
          ansiEscapes.cursorTo(cursorPosition.x) +
@@ -106,7 +104,7 @@ index 0082666b281ec2db77b875d6b8460bcc19a59ce7..4208a11e8f95d5641e6c2b5748c3c87e
          const hasStaticOutput = staticOutput && staticOutput !== '\n';
          if (this.options.debug) {
 diff --git a/build/output.js b/build/output.js
-index c763b7763c5fc133c7fbb53c54c466cdf51c282b..2b7d1c45e521bb01b1a46f5c6d9506fbadb0a541 100644
+index c763b7763c5fc133c7fbb53c54c466cdf51c282b..ba7714c495151e958deafcaa72b0e293f878cd2b 100644
 --- a/build/output.js
 +++ b/build/output.js
 @@ -1,6 +1,7 @@
@@ -137,26 +135,39 @@ index c763b7763c5fc133c7fbb53c54c466cdf51c282b..2b7d1c45e521bb01b1a46f5c6d9506fb
                          });
                          if (x < clip.x1) {
                              x = clip.x1;
-@@ -169,6 +172,18 @@ export default class Output {
+@@ -165,10 +168,18 @@ export default class Output {
+                     if (currentLine[offsetX]?.value === '' &&
+                         offsetX > 0 &&
+                         this.caches.getStringWidth(currentLine[offsetX - 1]?.value ?? '') >
+-                            1) {
++                        1) {
                          currentLine[offsetX - 1] = spaceCell;
                      }
                      for (const character of characters) {
 +                        const shape = extractCursorShape(character);
 +                        if (shape != null) {
-+                            cursor = { x: x + offsetX, y: y + offsetY, shape };
-+                            globalThis.cursorData = {
-+                                text,
-+                                line,
-+                                lines,
-+                                characters
-+                            }
++                            // NOTE: setCursorPosition is 1-indexed; this y
++                            // offset is 0-indexed
++                            cursor = { x: x + offsetX, y: y + offsetY + 1, shape };
 +                            continue;
 +                        }
 +
                          currentLine[offsetX] = character;
                          // Determine printed width using string-width to align with measurement
                          const characterWidth = Math.max(1, this.caches.getStringWidth(character.value));
-@@ -202,6 +217,7 @@ export default class Output {
+@@ -194,14 +205,15 @@ export default class Output {
+         }
+         const generatedOutput = output
+             .map(line => {
+-            // See https://github.com/vadimdemedes/ink/pull/564#issuecomment-1637022742
+-            const lineWithoutEmptyItems = line.filter(item => item !== undefined);
+-            return styledCharsToString(lineWithoutEmptyItems).trimEnd();
+-        })
++                // See https://github.com/vadimdemedes/ink/pull/564#issuecomment-1637022742
++                const lineWithoutEmptyItems = line.filter(item => item !== undefined);
++                return styledCharsToString(lineWithoutEmptyItems);
++            })
+             .join('\n');
          return {
              output: generatedOutput,
              height: output.length,

@@ -32,11 +32,11 @@
                app
                #js {:alternateScreen true
                     :stdout ink/original-stdout
-                    :onRender (j/fn [^:js {:keys [cursor]}]
+                    :onRender (j/fn [^:js {{:keys [x y]} :cursor}]
+                                ; ink cursor is 1-indexed; ours is 0-indexed
                                 (>evt [:saya.events/set-global-cursor
-                                       (js->clj cursor :keywordize-keys true)])
-                                (def last-c cursor)
-                                #_(println x y shape))})
+                                       {:x x :y (dec y)}]))})
+
               #_(ink/render-alternate app #js {:exitOnCtrlC false
                                                :patchConsole false})))))
 
