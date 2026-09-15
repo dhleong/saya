@@ -49,12 +49,12 @@
   ; that doesn't seem to consistently happen in time...?
   (reset! shape-ref shape)
 
-  [:> k/Cursor {:shape (case (or shape :block)
-                         :block/blink "blockBlink"
-                         :underscore/blink "underscoreBlink"
-                         :pipe/blink "pipeBlink"
-                         (name shape))}]
-  #_[:> k/Text cursor-text])
+  [:> k/Cursor (when shape
+                 {:shape (case shape
+                           :block/blink "blockBlink"
+                           :underscore/blink "underscoreBlink"
+                           :pipe/blink "pipeBlink"
+                           (name shape))})])
 
 (defn cursor
   ([] [cursor :block])
