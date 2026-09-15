@@ -35,10 +35,7 @@
                     :onRender (j/fn [^:js {{:keys [x y]} :cursor}]
                                 ; ink cursor is 1-indexed; ours is 0-indexed
                                 (>evt [:saya.events/set-global-cursor
-                                       {:x x :y (dec y)}]))})
-
-              #_(ink/render-alternate app #js {:exitOnCtrlC false
-                                               :patchConsole false})))))
+                                       {:x x :y (dec y)}]))})))))
 
 (defn- -main [args]
   (perf/init!)
