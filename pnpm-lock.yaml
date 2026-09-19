@@ -11,7 +11,7 @@ overrides:
   sha.js@<=2.4.11: '>=2.4.12'
   cipher-base@<=1.0.4: '>=1.0.5'
   elliptic@<6.6.0: '>=6.6.0'
-  ink: github:dhleong/ink#5b420b3
+  ink: github:dhleong/ink#faf39ae
 
 importers:
 
@@ -39,11 +39,11 @@ importers:
         specifier: 11.0.1
         version: 11.0.1
       ink:
-        specifier: github:dhleong/ink#d660f2f
-        version: https://codeload.github.com/dhleong/ink/tar.gz/d660f2f(react@19.2.8)
+        specifier: github:dhleong/ink#faf39ae
+        version: https://codeload.github.com/dhleong/ink/tar.gz/faf39ae(react@19.2.8)
       ink-spinner:
         specifier: ^5.0.0
-        version: 5.0.0(ink@https://codeload.github.com/dhleong/ink/tar.gz/d660f2f(react@19.2.8))(react@19.2.8)
+        version: 5.0.0(ink@https://codeload.github.com/dhleong/ink/tar.gz/faf39ae(react@19.2.8))(react@19.2.8)
       react:
         specifier: ^19.2.8
         version: 19.2.8
@@ -415,11 +415,11 @@ packages:
     version: 5.0.0
     engines: {node: '>=14.16'}
     peerDependencies:
-      ink: github:dhleong/ink#5b420b3
+      ink: github:dhleong/ink#faf39ae
       react: '>=18.0.0'
 
-  ink@https://codeload.github.com/dhleong/ink/tar.gz/d660f2f:
-    resolution: {tarball: https://codeload.github.com/dhleong/ink/tar.gz/d660f2f}
+  ink@https://codeload.github.com/dhleong/ink/tar.gz/faf39ae:
+    resolution: {tarball: https://codeload.github.com/dhleong/ink/tar.gz/faf39ae}
     version: 7.1.1
     engines: {node: '>=22'}
     peerDependencies:
@@ -1310,13 +1310,13 @@ snapshots:
 
   inherits@2.0.4: {}
 
-  ink-spinner@5.0.0(ink@https://codeload.github.com/dhleong/ink/tar.gz/d660f2f(react@19.2.8))(react@19.2.8):
+  ink-spinner@5.0.0(ink@https://codeload.github.com/dhleong/ink/tar.gz/faf39ae(react@19.2.8))(react@19.2.8):
     dependencies:
       cli-spinners: 2.9.2
-      ink: https://codeload.github.com/dhleong/ink/tar.gz/d660f2f(react@19.2.8)
+      ink: https://codeload.github.com/dhleong/ink/tar.gz/faf39ae(react@19.2.8)
       react: 19.2.8
 
-  ink@https://codeload.github.com/dhleong/ink/tar.gz/d660f2f(react@19.2.8):
+  ink@https://codeload.github.com/dhleong/ink/tar.gz/faf39ae(react@19.2.8):
     dependencies:
       '@alcalzone/ansi-tokenize': 0.3.0
       ansi-escapes: 7.3.0
