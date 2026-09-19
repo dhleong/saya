@@ -5,7 +5,6 @@
    ["strip-ansi" :default strip-ansi]
    [applied-science.js-interop :as j]
    [archetype.util :refer [>evt]]
-   [saya.modules.ui.cursor :refer [strip-cursor]]
    [saya.reagent :as reagent]
    [saya.util.ink :as ink]
    [clojure.string :as str]
@@ -58,7 +57,7 @@
 
     (let [{:keys [ansi?]} (merge opts new-opts)]
       (when-let [output (:last-output @ink-state)]
-        (cond-> (strip-cursor output)
+        (cond-> output
           (not ansi?) (strip-ansi)))))
 
   (resize [_this width height]

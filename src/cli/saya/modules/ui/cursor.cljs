@@ -1,45 +1,25 @@
 (ns saya.modules.ui.cursor
   (:require
-   ["ink" :as k]
-   ["strip-ansi" :default strip-ansi]
-   [clojure.string :as str]))
+   ["ink" :as k]))
 
 (defonce ^:private shape-ref (atom :block))
 
-; We use a couple zero-width characters that are highly unlikely
-; to actually be used together:
-; - Zero-width space
-; - Zero-width non-joiner (should be between characters that normally
-;   are rendered together with ligatures)
-; - Another zero-width space
-(def ^:private cursor-text "\u200B\u200C\u200B")
-
-(defn extract-cursor-position [lines]
-  (loop [y 0
-         lines lines]
-    (when-some [line (first lines)]
-      (if-let [x (str/index-of (strip-ansi line) cursor-text)]
-        {:x x :y y}
-        (recur (inc y)
-               (next lines))))))
-
+; NOTE: Kept around in case we need it in a transitional state
+#_{:clojure-lsp/ignore [:clojure-lsp/unused-public-var]}
 (defn get-cursor-shape []
   (or @shape-ref :block))
-
-(defn strip-cursor
-  "Trying to actually render our cursor text can cause lines
-   to break in ways that the renderer can't diff correctly, so
-   we just strip it out before rendering."
-  [s]
-  (when s
-    (str/replace s cursor-text "")))
 
 (defn- f>cursor [shape]
   ; HACKS: This should *really* be a useLayoutEffect, but
   ; that doesn't seem to consistently happen in time...?
   (reset! shape-ref shape)
 
-  [:> k/Text cursor-text])
+  [:> k/Cursor (when shape
+                 {:shape (case shape
+                           :block/blink "blockBlink"
+                           :underscore/blink "underscoreBlink"
+                           :pipe/blink "pipeBlink"
+                           (name shape))})])
 
 (defn cursor
   ([] [cursor :block])
