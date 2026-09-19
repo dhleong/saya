@@ -1,9 +1,30 @@
-(ns saya.util.ink)
+(ns saya.util.ink
+  (:require
+   [applied-science.js-interop :as j]))
 
 ; Grab a reference at declare time to avoid conflict with
 ; log patching
 (def original-stdout js/process.stdout)
 
+(defn stdout
+  ([] (stdout {} original-stdout))
+  ([opts ^js out]
+   (stdout opts (atom {:out out}) out))
+  ([_opts state ^js out]
+   ; (reset! last-state state)
+
+   (js/Object.defineProperties
+    (j/obj .-write (partial swap! state
+                            (fn [_ str]
+                              (.write out str)
+                              {:last-output str}))
+           .-on (.bind (.-on out) out)
+           .-off (.bind (.-off out) out)
+           :original-stream out
+           :saya? true)
+    #js {:rows #js {:get #(.-rows out)}
+         :columns #js {:get #(.-columns out)}
+         :isTTY #js {:get #(.-isTTY out)}})))
 (defn- ansi-cursor [v]
   (str "\u001B[" v " q"))
 
