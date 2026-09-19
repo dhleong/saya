@@ -7,7 +7,8 @@
    [re-frame.core :as rf]
    [saya.prelude]
    [saya.util.ink-testing-utils :refer [render->string]]
-   [saya.views :as views]))
+   [saya.views :as views]
+   [clojure.string :as str]))
 
 (deftest basic-render-test
   (testing "Basic rendering"
@@ -37,8 +38,10 @@
     (rft/run-test-sync
      (initialize-buffer "\u001B[32mHi there")
      (is (= "\u001B[32mHi there\u001b[39m"
-            (render->string
-             {:width 21
-              :height 1
-              :ansi? true}
-             [views/main]))))))
+            (-> (render->string
+                 {:width 21
+                  :height 1
+                  :ansi? true}
+                 [views/main])
+                ; FIXME: Clean this up once we migrate ink
+                (str/replace "]8;;" "")))))))
