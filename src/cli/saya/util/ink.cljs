@@ -1,5 +1,9 @@
 (ns saya.util.ink)
 
+; Grab a reference at declare time to avoid conflict with
+; log patching
+(def original-stdout js/process.stdout)
+
 (defn- ansi-cursor [v]
   (str "\u001B[" v " q"))
 
