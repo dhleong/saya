@@ -7,8 +7,7 @@
    [re-frame.core :as rf]
    [saya.prelude]
    [saya.util.ink-testing-utils :refer [render->string]]
-   [saya.views :as views]
-   [clojure.string :as str]))
+   [saya.views :as views]))
 
 (deftest basic-render-test
   (testing "Basic rendering"
