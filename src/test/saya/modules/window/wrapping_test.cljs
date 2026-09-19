@@ -38,10 +38,8 @@
     (rft/run-test-sync
      (initialize-buffer "\u001B[32mHi there")
      (is (= "\u001B[32mHi there\u001b[39m"
-            (-> (render->string
-                 {:width 21
-                  :height 1
-                  :ansi? true}
-                 [views/main])
-                ; FIXME: Clean this up once we migrate ink
-                (str/replace "]8;;" "")))))))
+            (render->string
+             {:width 21
+              :height 1
+              :ansi? true}
+             [views/main]))))))
