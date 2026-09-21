@@ -11,7 +11,7 @@
  ::set-current-tab-layout
  [unwrap]
  (fn [{:keys [db]} {:keys [layout script-file state-atom]}]
-   (let [layout-id 0 ; TODO: 
+   (let [layout-id 0 ; TODO: multi-tab support
          old-ref (get-in db [:layouts layout-id :layout/state-atom])
          new-ref? (not (identical? state-atom old-ref))
          db' (update-in db [:layouts layout-id]

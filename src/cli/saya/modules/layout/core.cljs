@@ -71,8 +71,15 @@
             (if existing-mapping
               db
               (let [[db {:keys [buffer window]}] (create-blank db {:focus? focus})]
-                (assoc-in db [:layout/keys full-key] {:bufnr (:id buffer)
-                                                      :winnr (:id window)}))))))
+                (->
+                 db
+                 (assoc-in [:layout/keys full-key]
+                           {:bufnr (:id buffer)
+                            :winnr (:id window)})
+                 (assoc-in [:layout/lookup-keys :bufnr (:id buffer)]
+                           full-key)
+                 (assoc-in [:layout/lookup-keys :winnr (:id buffer)]
+                           full-key)))))))
 
 (defn install [db {:layout/keys [id component state-atom]}]
   (let [rendered (component @state-atom)]
