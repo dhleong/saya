@@ -123,7 +123,7 @@
   (first (zip/node loc)))
 
 (defn find-sibling-in-ancestors [loc axis zipper-next]
-  {:pre [({:horizontal :vertical} axis)]}
+  {:pre [(#{:horizontal :vertical} axis)]}
   (when loc
     (let [expected-component (case axis
                                :horizontal components/horizontal
@@ -140,7 +140,7 @@
 ; position and the actual size of windows to more
 ; precisely navigate
 (defn navigate-axis [loc axis zipper-next]
-  {:pre [({:horizontal :vertical} axis)]}
+  {:pre [(#{:horizontal :vertical} axis)]}
   ; The algorithm is:
   ; 1. Recurse upward until we find a zipper-next sibling,
   ;    or reach the root
@@ -151,5 +151,14 @@
       loc
       (recur (zip/down loc)))))
 
+(defn navigate-left [loc]
+  (navigate-axis loc :horizontal zip/left))
+
 (defn navigate-right [loc]
   (navigate-axis loc :horizontal zip/right))
+
+(defn navigate-up [loc]
+  (navigate-axis loc :vertical zip/left))
+
+(defn navigate-down [loc]
+  (navigate-axis loc :vertical zip/right))

@@ -31,10 +31,13 @@
     :editable (when-not (= bufnr [:conn/input connr])
                 (get-in cofx [:db :buffers [:conn/input connr]]))
     :search (select-keys (get-in cofx [:db :search])
-                         [:direction :query])}
+                         [:direction :query])
+    :layout (get-in cofx [:db :layouts 0])}
    (-> cofx
        :db
-       (select-keys [:mode :pending-operator :registers :histories]))))
+       (select-keys [:mode :pending-operator :registers :histories
+                     :layout/keys
+                     :layout/lookup-keys]))))
 
 (defn perform [{:keys [bufnr winnr] :as cofx} f]
   (try
@@ -62,7 +65,8 @@
                  (merge (select-keys context' [:mode
                                                :pending-operator
                                                :pending-operator/from-mode
-                                               :registers]))
+                                               :registers
+                                               :current-winnr]))
                  (cond->
                   (:editable context')
                    (assoc-in [:buffers (:id (:editable context'))]
