@@ -8,8 +8,10 @@
    [clojure.string :as str]
    [promesa.core :as p]
    [saya.modules.echo.core :refer [echo]]
-   [saya.modules.logging.core :refer [log]]
-   [saya.modules.window.view :refer [window-view]]))
+   [saya.modules.logging.core :refer [log]]))
+
+(def window-view
+  (delay (resolve 'saya.modules.window.view/window-view)))
 
 (defn- build-box [{:keys [background-color flex-direction height width]}]
   [:> k/Box {:flex-direction flex-direction
@@ -61,7 +63,7 @@
                :flex-grow 1
                :width :100%
                :flex 1}
-     [window-view winnr]
+     [@window-view winnr]
      [:> k/Text filename "#" winnr]
      ; TODO:
      #_[:> k/Text "TODO: file@" (str filename)
