@@ -65,7 +65,17 @@
       (is (= [0 :horizontal 1 :vertical 0 {:file "honor.json"}]
              (-> zip
                  (layout/navigate-right)
-                 (layout/zipper-key)))))))
+                 (layout/zipper-key))))))
+
+  (testing "Gracefully handle no navigation destination"
+    (let [layout (evaluated-layout)
+          grayskull-key [0 :vertical 1 :horizontal 0 {:file "grayskull.json"}]
+          zip (layout/zipper-at-key
+               layout
+               grayskull-key)]
+      (is (nil?
+           (-> zip
+               (layout/navigate-left)))))))
 
 (deftest find-sibling-test
   (testing "Find sibling in shared parent"

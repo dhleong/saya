@@ -147,9 +147,10 @@
   ; 2. If we found a sibling, recurse down into it
   ;    until we find a leaf
   (loop [loc (find-sibling-in-ancestors loc axis zipper-next)]
-    (if (some? (zipper-key loc))
-      loc
-      (recur (zip/down loc)))))
+    (when loc
+      (if (some? (zipper-key loc))
+        loc
+        (recur (zip/down loc))))))
 
 (defn navigate-left [loc]
   (navigate-axis loc :horizontal zip/left))
