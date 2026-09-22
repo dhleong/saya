@@ -1,6 +1,7 @@
 (ns saya.modules.layout.core
   (:require
    [clojure.core.match :as m]
+   [clojure.zip :as zip :refer [zipper]]
    [saya.modules.buffers.events :refer [create-blank]]
    [saya.modules.layout.components :as components]))
 
@@ -84,3 +85,71 @@
 (defn install [db {:layout/keys [id component state-atom]}]
   (let [rendered (component @state-atom)]
     (install-form db [id] rendered)))
+
+; ======= Navigate =========================================
+
+(defn- hiccup-zip [hic]
+  (zipper
+    ; TODO: *probably* check that the component
+    ; is a layout component
+   vector?
+   #(subvec % 2)
+   (fn [node children] (with-meta
+                         (vec children)
+                         (meta node)))
+   hic))
+
+(defn- nth-child-node [loc n]
+  (reduce
+   (fn [l' _]
+     (zip/right l'))
+   (zip/down loc)
+   (range n)))
+
+(defn zipper-at-key [evaluated-layout at-key]
+  (loop [zipper (hiccup-zip evaluated-layout)
+         ; The first element is the root layout ID
+         [_layout-kind idx & remaining] (next at-key)]
+    (if (some? idx)
+      (recur
+       (nth-child-node zipper idx)
+       remaining)
+      zipper)))
+
+(defn zipper-key [loc]
+  (:key (second (zip/node loc))))
+
+(defn zipper-component [loc]
+  (first (zip/node loc)))
+
+(defn find-sibling-in-ancestors [loc axis zipper-next]
+  {:pre [({:horizontal :vertical} axis)]}
+  (when loc
+    (let [expected-component (case axis
+                               :horizontal components/horizontal
+                               :vertical components/vertical)]
+      (loop [loc loc]
+        (when-let [parent (zip/up loc)]
+          (if (and (identical? (zipper-component parent)
+                               expected-component)
+                   (some? (zipper-next loc)))
+            (zipper-next loc)
+            (recur parent)))))))
+
+; TODO: These need to take into account the cursor
+; position and the actual size of windows to more
+; precisely navigate
+(defn navigate-axis [loc axis zipper-next]
+  {:pre [({:horizontal :vertical} axis)]}
+  ; The algorithm is:
+  ; 1. Recurse upward until we find a zipper-next sibling,
+  ;    or reach the root
+  ; 2. If we found a sibling, recurse down into it
+  ;    until we find a leaf
+  (loop [loc (find-sibling-in-ancestors loc axis zipper-next)]
+    (if (some? (zipper-key loc))
+      loc
+      (recur (zip/down loc)))))
+
+(defn navigate-right [loc]
+  (navigate-axis loc :horizontal zip/right))
