@@ -33,10 +33,21 @@
 (reg-event-fx
  ::set-keyed-buffer-contents
  [unwrap]
- (fn [{:keys [db]} {:keys [key string]}]
+ (fn [{:keys [db]} {:keys [key content string]}]
    (log key "->" (get-in db [:layout/keys key :bufnr]) "?")
    (when-let [bufnr (get-in db [:layout/keys key :bufnr])]
-     (let [lines (str/split-lines string)]
+     (let [lines (cond
+                   (some? string)
+                   (str/split-lines string)
+
+                   (string? content)
+                   (str/split-lines content)
+
+                   (vector? content)
+                   content
+
+                   (sequential? content)
+                   (vec content))]
        (log key "->" bufnr (count lines) "lines")
        {:dispatch [::buffer-events/set-string-lines
                    {:id bufnr
