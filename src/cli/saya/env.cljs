@@ -6,7 +6,8 @@
    [saya.modules.scripting.layout :as _]
    [saya.modules.scripting.core :refer [*script-file*]]
    [saya.util.paths :as paths]
-   [sci.core :as sci]))
+   [sci.core :as sci]
+   [reagent.core :as r]))
 
 (def ^:private scripting-namespaces
   {'saya.core (let [core-ns (sci/create-ns 'saya.core)]
@@ -14,14 +15,16 @@
    'saya.layout (let [layout-ns (sci/create-ns 'saya.layout)]
                   (sci/copy-ns saya.modules.scripting.layout layout-ns))})
 
-(def ^:private context-opts {:namespaces scripting-namespaces
+(def ^:private context-opts
+  {:namespaces (assoc scripting-namespaces
+                      'clojure.core {'atom r/atom})
 
-                             ; Convenience to convert `#send "string"` into
-                             ; a mapping that sends "string" to the connection
-                             :readers
-                             {'send (fn [text]
-                                      `(fn do-send [conn#]
-                                         (~'saya.core/send conn# ~text)))}})
+   ; Convenience to convert `#send "string"` into
+   ; a mapping that sends "string" to the connection
+   :readers
+   {'send (fn [text]
+            `(fn do-send [conn#]
+               (~'saya.core/send conn# ~text)))}})
 
 (defn- read-init []
   (-> (p/let [init-path (paths/user-config "init.clj")

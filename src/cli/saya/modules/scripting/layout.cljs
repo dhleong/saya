@@ -5,9 +5,10 @@
    [saya.modules.scripting.core :refer [*script-file*]]))
 
 (defn configure
-  ([static-layout] (configure (atom nil) (constantly static-layout)))
-  ([state-atom layout-fn]
-   (>evt [::layout-events/set-current-tab-layout
-          {:layout layout-fn
-           :script-file *script-file*
-           :state-atom state-atom}])))
+  [component-or-layout-fn]
+  (let [layout-fn (if (fn? component-or-layout-fn)
+                    component-or-layout-fn
+                    (constantly component-or-layout-fn))]
+    (>evt [::layout-events/set-current-tab-layout
+           {:layout layout-fn
+            :script-file *script-file*}])))

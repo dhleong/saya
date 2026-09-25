@@ -50,8 +50,8 @@
                 [{:content s}] [components/edit-ref-view props s])
               {:key k}))))
 
-(defn evaluate [{:keys [id component script-file state-atom]}]
-  (let [rendered (component @state-atom)]
+(defn evaluate [{:keys [id component script-file]}]
+  (let [rendered (component)]
     (evaluate-form
      {:script-file script-file}
      [id]
@@ -90,8 +90,8 @@
                  (assoc-in [:layout/lookup-keys :winnr (:id buffer)]
                            full-key)))))))
 
-(defn install [db {:keys [id component state-atom]}]
-  (let [rendered (component @state-atom)]
+(defn install [db {:keys [id component]}]
+  (let [rendered (component)]
     (install-form db [id] rendered)))
 
 ; ======= Navigate =========================================
