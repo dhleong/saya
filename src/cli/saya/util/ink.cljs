@@ -40,5 +40,7 @@
     :pipe (ansi-cursor 6)))
 
 (defn ->exit-promise [^js instance]
+  (js/process.once "exit" (fn []
+                            (.unmount instance)))
   (.waitUntilExit instance))
 
