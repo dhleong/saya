@@ -30,9 +30,8 @@
   ([] (evaluated-layout sample-layout))
   ([static-layout]
    (layout/evaluate
-    {:layout/id 0
-     :layout/component (constantly static-layout)
-     :layout/state-atom (atom nil)})))
+    {:id 0
+     :component (constantly static-layout)})))
 
 (deftest navigation-test
   (testing "Find zipper leaf"
