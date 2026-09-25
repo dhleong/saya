@@ -191,8 +191,10 @@
 (reg-event-db
  ::set-string-lines
  [unwrap buffer-path]
- (fn [buffer {:keys [lines]}]
-   (assoc buffer :lines (mapv buffer-line lines))))
+ (fn [buffer {:keys [file-path lines]}]
+   (cond-> (assoc buffer :lines (mapv buffer-line lines))
+     file-path
+     (assoc :file-path file-path))))
 
 (comment
   (re-frame.core/dispatch [::clear-partial-line {:id 0}])

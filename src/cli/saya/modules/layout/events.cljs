@@ -21,7 +21,7 @@
 (reg-event-fx
  ::set-keyed-buffer-contents
  [unwrap]
- (fn [{:keys [db]} {:keys [key content string]}]
+ (fn [{:keys [db]} {:keys [key content file-path string]}]
    (when-let [bufnr (get-in db [:layout/keys key :bufnr])]
      (let [lines (cond
                    (some? string)
@@ -37,4 +37,5 @@
                    (vec content))]
        {:dispatch [::buffer-events/set-string-lines
                    {:id bufnr
+                    :file-path file-path
                     :lines lines}]}))))
