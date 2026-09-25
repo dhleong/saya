@@ -15,8 +15,10 @@
 
 (defn- build-box [{:keys [background-color flex-direction height width]}]
   [:> k/Box {:flex-direction flex-direction
-             :flex-grow (when-not (number? height)
+             :flex-grow (if (number? height)
+                          0
                           1)
+             :flex-shrink 1
              :background-color (when (or (string? background-color)
                                          (keyword? background-color))
                                  background-color)
@@ -26,8 +28,7 @@
                             (keyword? width))
                       width
                       :100%)
-             :overflow :hidden
-             :flex 1}])
+             :overflow :hidden}])
 
 (defn horizontal [opts & children]
   (into (build-box (assoc opts :flex-direction :row))
@@ -37,11 +38,14 @@
   (into (build-box (assoc opts :flex-direction :column))
         children))
 
-(defn- container [& children]
-  (into [:> k/Box {:flex-direction :column
-                   :flex-grow 1
-                   :width :100%
-                   :flex 1}]
+(defn- container [props & children]
+  (into [:> k/Box (merge
+                   {:flex-direction :column
+                    :flex-grow 1
+                    :flex-shrink 1
+                    :flex-basis 1
+                    :width :100%}
+                   props)]
         children))
 
 (defn- keyed-window-view [k]
@@ -67,7 +71,7 @@
      js/undefined)
    #js [key filename])
 
-  [container
+  [container {}
    [keyed-window-view key]
    ; TODO: Better, more consistent statuslines
    [:> k/Text {:dim-color true} filename]])
@@ -80,7 +84,7 @@
              :content content}])
      js/undefined)
    #js [key content])
-  [container
+  [container {}
    [keyed-window-view key]])
 
 (defn- read-ref-safely [the-ref]
