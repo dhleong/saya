@@ -60,10 +60,12 @@
      (-> (p/let [script-dir (or (when script-file
                                   (path/dirname script-file))
                                 "./")
-                 contents (fs/readFile (path/join script-dir filename)
+                 file-path (path/join script-dir filename)
+                 contents (fs/readFile file-path
                                        #js {:encoding "utf-8"})]
            (>evt [:saya.modules.layout.events/set-keyed-buffer-contents
                   {:key key
+                   :file-path file-path
                    :string contents}]))
          (p/catch (fn [e]
                     (echo :exception "Failed to load " filename ": " e))))
