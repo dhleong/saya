@@ -51,15 +51,13 @@
   (log "render edit-file-view " filename " into " key)
   (React/useEffect
    (fn []
-      ; HACKS: Load file into buffer with key
-     (log "read " filename " into " key)
-     ; FIXME: load relative to script file
+     ; NOTE: Is it hacky to do this as a use-effect like this?
+     ; ... Probably
      (-> (p/let [script-dir (or (when script-file
                                   (path/dirname script-file))
                                 "./")
                  contents (fs/readFile (path/join script-dir filename)
                                        #js {:encoding "utf-8"})]
-           (log "read from " filename " " (count contents))
            (>evt [:saya.modules.layout.events/set-keyed-buffer-contents
                   {:key key
                    :string contents}]))
@@ -70,10 +68,8 @@
 
   [container
    [keyed-window-view key]
-   [:> k/Text filename]
-   ; TODO:
-   #_[:> k/Text "TODO: file@" (str filename)
-      winnr]])
+   ; TODO: Better, more consistent statuslines
+   [:> k/Text {:dim-color true} filename]])
 
 (defn edit-string-view [{:keys [key]} content]
   ; TODO: Store content in DB state for window

@@ -4,8 +4,7 @@
    [re-frame.core :refer [reg-event-fx unwrap]]
    [saya.modules.buffers.events :as buffer-events]
    [saya.modules.layout.core :as layout]
-   [saya.modules.layout.fx :as fx]
-   [saya.modules.logging.core :refer [log]]))
+   [saya.modules.layout.fx :as fx]))
 
 (reg-event-fx
  ::set-current-tab-layout
@@ -14,15 +13,14 @@
    (let [layout-id 0 ; TODO: multi-tab support
          old-ref (get-in db [:layouts layout-id :layout/state-atom])
          new-ref? (not (identical? state-atom old-ref))
-         db' (update-in db [:layouts layout-id]
+         db-path [:layouts layout-id]
+         db' (update-in db db-path
                         assoc
                         :script-file script-file
-                        :layout/id layout-id
-                        :layout/component layout
-                        :layout/state-atom state-atom)]
-     {:db (layout/install db' {:layout/id layout-id
-                               :layout/component layout
-                               :layout/state-atom state-atom})
+                        :id layout-id
+                        :component layout
+                        :state-atom state-atom)]
+     {:db (layout/install db' (get-in db' db-path))
       :fx [(when new-ref?
              [::fx/subscribe-to-layout-atom
               {:layout-id layout-id
@@ -34,7 +32,6 @@
  ::set-keyed-buffer-contents
  [unwrap]
  (fn [{:keys [db]} {:keys [key content string]}]
-   (log key "->" (get-in db [:layout/keys key :bufnr]) "?")
    (when-let [bufnr (get-in db [:layout/keys key :bufnr])]
      (let [lines (cond
                    (some? string)
@@ -48,7 +45,6 @@
 
                    (sequential? content)
                    (vec content))]
-       (log key "->" bufnr (count lines) "lines")
        {:dispatch [::buffer-events/set-string-lines
                    {:id bufnr
                     :lines lines}]}))))
