@@ -78,7 +78,8 @@
          :fx [(when-let [e (:error context')]
                 (echo-fx :exception "ERROR:" e))
 
-              (when (:mode context')
+              (when (not= (:mode context)
+                          (:mode context'))
                 [:dispatch [::echo-events/ack-echo]])
 
               (when (and (clipboard/cofx-enabled-integration? cofx)
