@@ -3,30 +3,20 @@
    [clojure.string :as str]
    [re-frame.core :refer [reg-event-fx unwrap]]
    [saya.modules.buffers.events :as buffer-events]
-   [saya.modules.layout.core :as layout]
-   [saya.modules.layout.fx :as fx]))
+   [saya.modules.layout.core :as layout]))
 
 (reg-event-fx
  ::set-current-tab-layout
  [unwrap]
- (fn [{:keys [db]} {:keys [layout script-file state-atom]}]
+ (fn [{:keys [db]} {:keys [layout script-file]}]
    (let [layout-id 0 ; TODO: multi-tab support
-         old-ref (get-in db [:layouts layout-id :layout/state-atom])
-         new-ref? (not (identical? state-atom old-ref))
          db-path [:layouts layout-id]
          db' (update-in db db-path
                         assoc
                         :script-file script-file
                         :id layout-id
-                        :component layout
-                        :state-atom state-atom)]
-     {:db (layout/install db' (get-in db' db-path))
-      :fx [(when new-ref?
-             [::fx/subscribe-to-layout-atom
-              {:layout-id layout-id
-               :state-atom state-atom}])
-           (when new-ref?
-             [::fx/unsubscribe-from-layout-atom state-atom])]})))
+                        :component layout)]
+     {:db (layout/install db' (get-in db' db-path))})))
 
 (reg-event-fx
  ::set-keyed-buffer-contents

@@ -7,8 +7,7 @@
    [archetype.util :refer [<sub >evt]]
    [promesa.core :as p]
    [saya.modules.echo.core :refer [echo]]
-   [saya.modules.logging.core :refer [log]]
-   [saya.util.hooks :refer [use-mount-effect!]]))
+   [saya.modules.logging.core :refer [log]]))
 
 (def window-view
   (delay (resolve 'saya.modules.window.view/window-view)))
@@ -87,18 +86,10 @@
   [container {}
    [keyed-window-view key]])
 
-(defn- read-ref-safely [the-ref]
-  (try @the-ref
-       (catch :default e
-         (str "ERROR: Unable to deref reference: " e))))
-
-(defn edit-ref-view [{:keys [key] :as params} the-ref]
-  (let [[v set-v!] (React/useState (read-ref-safely the-ref))]
-    (use-mount-effect!
-     (add-watch the-ref
-                key
-                (fn [_ _ _ new-value]
-                  (set-v! new-value)))
-     (fn []
-       (remove-watch the-ref key)))
+(defn edit-ref-view [params the-ref]
+  ; NOTE: the-ref is a ratom, so deref'ing here
+  ; automatically makes this component reactive
+  (let [v (try @the-ref
+               (catch :default e
+                 (str "ERROR: Unable to deref reference: " e)))]
     [edit-string-view params v]))
