@@ -72,14 +72,13 @@
    [:> k/Text {:dim-color true} filename]])
 
 (defn edit-string-view [{:keys [key]} content]
-  ; TODO: Store content in DB state for window
   (React/useEffect
    (fn []
      (>evt [:saya.modules.layout.events/set-keyed-buffer-contents
             {:key key
              :content content}])
      js/undefined)
-   #js [content])
+   #js [key content])
   [container
    [keyed-window-view key]])
 
