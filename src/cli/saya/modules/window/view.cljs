@@ -207,11 +207,17 @@
                                                                    :start (:row (first lines))
                                                                    :end last-row}])]
           [:> k/Box {:flex-direction :column
+                     :flex-grow 1
+                     :flex-shrink 1
+                     :flex-basis 1
                      :height :100%
                      :width :100%}
            [:> k/Box {:ref ref
                       :flex-direction :column
                       :flex-grow 1
+                      :flex-shrink 1
+                      :flex-basis 1
+                      :height :100%
                       :width :100%}
             (for [{:keys [row col line last-of-row?] :as data} lines]
               (let [input-line? (and (= last-row row)
