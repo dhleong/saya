@@ -22,32 +22,40 @@
 
 (declare ^:private evaluate-form)
 
-(defn- unpack-evaluate-layout [parent-key component-type args]
+(defn- unpack-evaluate-layout [context parent-key component-type args]
   (let [[opts args] (unpack-component-args args)]
     (into [component-type opts]
           (map-indexed
            (fn [i v]
-             (evaluate-form (conj parent-key i) v))
+             (evaluate-form context (conj parent-key i) v))
            args))))
 
-(defn- evaluate-form [parent-key [component & args]]
+(defn- evaluate-form [context parent-key [component & args]]
   (case component
-    :horizontal (unpack-evaluate-layout (conj parent-key :horizontal)
-                                        components/horizontal args)
-    :vertical (unpack-evaluate-layout (conj parent-key :vertical)
-                                      components/vertical args)
-    :edit (let [k (conj parent-key (key-for-params (first args)))]
+    :horizontal (unpack-evaluate-layout
+                 context
+                 (conj parent-key :horizontal)
+                 components/horizontal args)
+    :vertical (unpack-evaluate-layout
+               context
+               (conj parent-key :vertical)
+               components/vertical args)
+    :edit (let [k (conj parent-key (key-for-params (first args)))
+                props (merge context {:key k})]
             (with-meta
               (m/match [(first args)]
-                [{:file path}] [components/edit-file-view {:key k} path]
-                [{:content (s :guard string?)}] [components/edit-string-view {:key k} s]
-                [{:content (s :guard coll?)}] [components/edit-string-view {:key k} s]
-                [{:content s}] [components/edit-ref-view {:key k} s])
+                [{:file path}] [components/edit-file-view props path]
+                [{:content (s :guard string?)}] [components/edit-string-view props s]
+                [{:content (s :guard coll?)}] [components/edit-string-view props s]
+                [{:content s}] [components/edit-ref-view props s])
               {:key k}))))
 
-(defn evaluate [{:layout/keys [id component state-atom]}]
+(defn evaluate [{:keys [id component script-file state-atom]}]
   (let [rendered (component @state-atom)]
-    (evaluate-form [id] rendered)))
+    (evaluate-form
+     {:script-file script-file}
+     [id]
+     rendered)))
 
 ; ======= install ==========================================
 
@@ -82,7 +90,7 @@
                  (assoc-in [:layout/lookup-keys :winnr (:id buffer)]
                            full-key)))))))
 
-(defn install [db {:layout/keys [id component state-atom]}]
+(defn install [db {:keys [id component state-atom]}]
   (let [rendered (component @state-atom)]
     (install-form db [id] rendered)))
 
