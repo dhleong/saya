@@ -95,3 +95,8 @@
                (catch :default e
                  (str "ERROR: Unable to deref reference: " e)))]
     [edit-string-view params v]))
+
+(defn script-connection [{:keys [script-file]}]
+  (let [winnr (<sub [:saya.modules.layout.subs/connection-window-for-script-file
+                     script-file])]
+    [@window-view winnr]))

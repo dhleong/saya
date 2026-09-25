@@ -112,13 +112,10 @@
  (fn [buffer]
    (->> (:lines buffer)
         (str/join "\n"))))
-(reg-sub
- ::connections
- :-> :connections)
 
 (reg-sub
  ::connection-by-id
- :<- [::connections]
+ :<- [:connections]
  :=> get)
 
 (reg-sub
