@@ -40,6 +40,10 @@
                context
                (conj parent-key :vertical)
                components/vertical args)
+    :connection (let [k (conj parent-key (key-for-params (first args)))]
+                  (with-meta
+                    [components/script-connection context]
+                    {:key k}))
     :edit (let [k (conj parent-key (key-for-params (first args)))
                 props (merge context {:key k})]
             (with-meta
@@ -73,6 +77,10 @@
   (case component
     :horizontal (install-layout-part db (conj parent-key :horizontal) args)
     :vertical (install-layout-part db (conj parent-key :vertical) args)
+    ; TODO: Do we need to allocate a window? Store a
+    ; simpler lookup for connection-window-for-script-file
+    ; to use?
+    :connection db
     :edit (let [{:keys [focus file] :as params} (first args)
                 child-key (key-for-params params)
                 full-key (conj parent-key child-key)
