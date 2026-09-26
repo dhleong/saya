@@ -97,7 +97,8 @@
       (is (= [components/vertical
               nil
               [components/edit-file-view
-               {:key [0 :horizontal 1 :vertical 0
+               {:script-file nil
+                :key [0 :horizontal 1 :vertical 0
                       {:file "honor.json"}]}
                "honor.json"]]
              (-> zip
