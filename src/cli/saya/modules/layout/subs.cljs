@@ -32,21 +32,24 @@
  :<- [::all-keys]
  :=> get)
 
+(reg-sub ::script-files :-> :script-files)
+
 (reg-sub
  ::script-file-data
- :<- [:script-files]
+ :<- [::script-files]
  :=> get)
 
 (reg-sub
  ::connection-window-for-script-file
- (fn [[script-file]]
+ (fn [[_ script-file]]
    [(subscribe [:windows])
     (subscribe [:connections])
     (subscribe [::script-file-data script-file])])
  (fn [[windows connections {:keys [connection-id]}]]
     ; TODO: This... won't work well if we support
     ; multi-window for a buffer
-   (let [expected-bufnr (get connections connection-id)]
+   (let [expected-bufnr (get-in connections
+                                [connection-id :bufnr])]
      (some
       (fn [{:keys [id bufnr]}]
         (when (= bufnr expected-bufnr)
