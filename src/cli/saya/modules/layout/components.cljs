@@ -12,21 +12,24 @@
 (def window-view
   (delay (resolve 'saya.modules.window.view/window-view)))
 
-(defn- build-box [{:keys [background-color flex-direction height width]}]
+(defn- build-box [{:keys [background-color flex-direction height width max-width max-height]}]
   [:> k/Box {:flex-direction flex-direction
              :flex-grow (if (number? height)
                           0
                           1)
              :flex-shrink 1
+             :align-items :stretch
              :background-color (when (or (string? background-color)
                                          (keyword? background-color))
                                  background-color)
-             :height (when (number? height)
+             :height (when (or (number? height)
+                               (keyword? height))
                        height)
-             :width (if (or (number? width)
-                            (keyword? width))
-                      width
-                      :100%)
+             :width (when (or (number? width)
+                              (keyword? width))
+                      width)
+             :max-width (or max-width js/undefined)
+             :max-height (or max-height js/undefined)
              :overflow :hidden}])
 
 (defn horizontal [opts & children]

@@ -20,10 +20,9 @@
     (cond
       (some? layout)
       [:> k/Box {:flex-direction :column
-                 :height :100%
-                 :width :100%
+                 :flex-grow 1
                  :justify-content :center
-                 :align-items :center}
+                 :align-items :stretch}
        [error-boundary
         ; TODO: tab id?
         [layout-view 0]]]
