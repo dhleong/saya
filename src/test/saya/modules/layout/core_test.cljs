@@ -103,4 +103,20 @@
                "honor.json"]]
              (-> zip
                  (layout/find-sibling-in-ancestors :horizontal zip/right)
-                 (zip/node)))))))
+                 (zip/node))))))
+
+  (testing "Find sibling from connection"
+    (let [layout (evaluated-layout
+                  [:horizontal
+                   [:vertical
+                    [:connection]]
+                   [:vertical {:width :40%}
+                    [:edit {:file "notes"}]]])
+          connection-key [0 :horizontal 0 :vertical 0 :connection]
+          zip (layout/zipper-at-key
+               layout
+               connection-key)]
+      (is (= [0 :horizontal 1 :vertical 0 {:file "notes"}]
+             (-> zip
+                 (layout/find-sibling-in-ancestors :horizontal zip/right)
+                 (layout/zipper-key)))))))
