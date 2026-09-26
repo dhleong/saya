@@ -99,4 +99,6 @@
 (defn script-connection [{:keys [script-file]}]
   (let [winnr (<sub [:saya.modules.layout.subs/connection-window-for-script-file
                      script-file])]
-    [@window-view winnr]))
+    ; TODO: Placeholder?
+    (when winnr
+      [@window-view winnr])))
