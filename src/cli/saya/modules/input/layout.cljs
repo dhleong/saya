@@ -3,11 +3,15 @@
    [saya.modules.layout.core :as layout]))
 
 (defn- move-cursor [navigate-fn]
-  (fn move-cursor-fn [{:keys [layout window
+  (fn move-cursor-fn [{:keys [layout window buffer
                               :layout/lookup-keys
                               :layout/keys]}]
+    (def last-state [(:connection-id buffer) layout lookup-keys])
     (let [evaluated (layout/evaluate layout)
-          src-key (get-in lookup-keys [:winnr (:id window)])
+          src-key (or (get-in lookup-keys [:winnr (:id window)])
+                      (when (:connection-id buffer)
+                        (when-some [script-file (:script-file layout)]
+                          (get-in lookup-keys [:script-file/connection script-file]))))
           z (layout/zipper-at-key
              evaluated
              src-key)]

@@ -55,3 +55,17 @@
         (when (= bufnr expected-bufnr)
           id))
       (vals windows)))))
+
+(reg-sub
+ :layout/lookup-keys
+ :-> :layout/lookup-keys)
+
+(reg-sub
+ ::lookup-keys-by-type
+ :<- [:layout/lookup-keys]
+ :=> get)
+
+(reg-sub
+ ::connection-key-for-script-file
+ :<- [::lookup-keys-by-type :script-file/connection]
+ :=> get)
