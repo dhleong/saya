@@ -39,22 +39,30 @@
  :<- [::script-files]
  :=> get)
 
+(defn connection-window-for-script-file
+  [{:keys [windows connections]
+    {:keys [connection-id]} :script-file-data}]
+  ; TODO: This... won't work well if we support
+  ; multi-window for a buffer
+  (let [expected-bufnr (get-in connections
+                               [connection-id :bufnr])]
+    (some
+     (fn [{:keys [id bufnr]}]
+       (when (= bufnr expected-bufnr)
+         id))
+     (vals windows))))
+
 (reg-sub
  ::connection-window-for-script-file
  (fn [[_ script-file]]
    [(subscribe [:windows])
     (subscribe [:connections])
     (subscribe [::script-file-data script-file])])
- (fn [[windows connections {:keys [connection-id]}]]
-    ; TODO: This... won't work well if we support
-    ; multi-window for a buffer
-   (let [expected-bufnr (get-in connections
-                                [connection-id :bufnr])]
-     (some
-      (fn [{:keys [id bufnr]}]
-        (when (= bufnr expected-bufnr)
-          id))
-      (vals windows)))))
+ (fn [[windows connections script-file-data]]
+   (connection-window-for-script-file
+    {:windows windows
+     :connections connections
+     :script-file-data script-file-data})))
 
 (reg-sub
  :layout/lookup-keys

@@ -32,7 +32,8 @@
                 (get-in cofx [:db :buffers [:conn/input connr]]))
     :search (select-keys (get-in cofx [:db :search])
                          [:direction :query])
-    :layout (get-in cofx [:db :layouts 0])}
+    :layout (get-in cofx [:db :layouts 0])
+    :readonly/db (:db cofx)}
    (-> cofx
        :db
        (select-keys [:mode :pending-operator :registers :histories
@@ -50,6 +51,7 @@
           context' (-> context'
                        (maybe-enqueue-undo context)
                        (dissoc :yanked)
+                       (dissoc :readonly/db)
                        (cond->
                          ; Store yanked in a register, if set
                         (some? yanked)
