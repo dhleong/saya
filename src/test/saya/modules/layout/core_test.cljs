@@ -31,6 +31,7 @@
   ([static-layout]
    (layout/evaluate
     {:id 0
+     :script-file "core-test.cljs"
      :component (constantly static-layout)})))
 
 (deftest navigation-test
@@ -74,7 +75,23 @@
                grayskull-key)]
       (is (nil?
            (-> zip
-               (layout/navigate-left)))))))
+               (layout/navigate-left))))))
+
+  (testing "Navigate from connection"
+    (let [layout (evaluated-layout
+                  [:horizontal
+                   [:vertical
+                    [:connection]]
+                   [:vertical {:width :40%}
+                    [:edit {:file "notes"}]]])
+          connection-key [0 :horizontal 0 :vertical 0 {:connection "core-test.cljs"}]
+          zip (layout/zipper-at-key
+               layout
+               connection-key)]
+      (is (= [0 :horizontal 1 :vertical 0 {:file "notes"}]
+             (-> zip
+                 (layout/navigate-right)
+                 (layout/zipper-key)))))))
 
 (deftest find-sibling-test
   (testing "Find sibling in shared parent"
@@ -97,26 +114,10 @@
       (is (= [components/vertical
               nil
               [components/edit-file-view
-               {:script-file nil
+               {:script-file "core-test.cljs"
                 :key [0 :horizontal 1 :vertical 0
                       {:file "honor.json"}]}
                "honor.json"]]
              (-> zip
                  (layout/find-sibling-in-ancestors :horizontal zip/right)
-                 (zip/node))))))
-
-  (testing "Find sibling from connection"
-    (let [layout (evaluated-layout
-                  [:horizontal
-                   [:vertical
-                    [:connection]]
-                   [:vertical {:width :40%}
-                    [:edit {:file "notes"}]]])
-          connection-key [0 :horizontal 0 :vertical 0 :connection]
-          zip (layout/zipper-at-key
-               layout
-               connection-key)]
-      (is (= [0 :horizontal 1 :vertical 0 {:file "notes"}]
-             (-> zip
-                 (layout/find-sibling-in-ancestors :horizontal zip/right)
-                 (layout/zipper-key)))))))
+                 (zip/node)))))))

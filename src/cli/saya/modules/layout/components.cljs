@@ -96,9 +96,16 @@
                  (str "ERROR: Unable to deref reference: " e)))]
     [edit-string-view params v]))
 
-(defn script-connection [{:keys [script-file]}]
-  (let [winnr (<sub [:saya.modules.layout.subs/connection-window-for-script-file
+(defn script-connection [{:keys [key script-file]}]
+  (let [expected-key (<sub [:saya.modules.layout.subs/connection-key-for-script-file
+                            script-file])
+        winnr (<sub [:saya.modules.layout.subs/connection-window-for-script-file
                      script-file])]
-    ; TODO: Placeholder?
-    (when winnr
-      [@window-view winnr])))
+    (if (not= key expected-key)
+      [:> k/Box {:flex-grow 1}
+       [:> k/Text {:color :red}
+        "ERROR: Multiple [:connection] windows not supported"]]
+
+      ; TODO: Placeholder?
+      (when winnr
+        [@window-view winnr]))))

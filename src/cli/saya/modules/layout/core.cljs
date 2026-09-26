@@ -40,9 +40,10 @@
                context
                (conj parent-key :vertical)
                components/vertical args)
-    :connection (let [k (conj parent-key (key-for-params (first args)))]
+    :connection (let [k (conj parent-key {:connection (:script-file context)})
+                      props (merge context {:key k})]
                   (with-meta
-                    [components/script-connection context]
+                    [components/script-connection props]
                     {:key k}))
     :edit (let [k (conj parent-key (key-for-params (first args)))
                 props (merge context {:key k})]
@@ -65,48 +66,56 @@
 
 (declare ^:private install-form)
 
-(defn- install-layout-part [db parent-key args]
+(defn- install-layout-part [context db parent-key args]
   (let [[_ children] (unpack-component-args args)]
     (reduce
      (fn [db' [i child]]
-       (install-form db' (conj parent-key i) child))
+       (install-form context db' (conj parent-key i) child))
      db
      (map-indexed vector children))))
 
-(defn- install-form [db parent-key [component & args]]
-  (case component
-    :horizontal (install-layout-part db (conj parent-key :horizontal) args)
-    :vertical (install-layout-part db (conj parent-key :vertical) args)
-    ; TODO: Do we need to allocate a window? Store a
-    ; simpler lookup for connection-window-for-script-file
-    ; to use?
-    :connection db
-    :edit (let [{:keys [focus file] :as params} (first args)
-                child-key (key-for-params params)
-                full-key (conj parent-key child-key)
-                existing-mapping (get-in db [:layout/keys full-key])]
-            (if existing-mapping
-              db
-              (let [[db {:keys [buffer window]}]
-                    (create-blank
-                     db
-                     {:focus? focus
-                      :buffer
-                      (when-not file
-                        {:flags #{:readonly}})})]
-                (->
-                 db
-                 (assoc-in [:layout/keys full-key]
-                           {:bufnr (:id buffer)
-                            :winnr (:id window)})
-                 (assoc-in [:layout/lookup-keys :bufnr (:id buffer)]
-                           full-key)
-                 (assoc-in [:layout/lookup-keys :winnr (:id buffer)]
-                           full-key)))))))
+(defn- install-connection [{:keys [script-file]} db parent-key]
+  (let [full-key (conj parent-key {:connection script-file})]
+    ; TODO: This doesn't support split windows on connections,
+    ; but... maybe that's fine to not support
+    (-> db
+        (assoc-in [:layout/lookup-keys :script-file/connection script-file]
+                  full-key))))
 
-(defn install [db {:keys [id component]}]
+(defn- install-edit [db parent-key args]
+  (let [{:keys [focus file] :as params} (first args)
+        child-key (key-for-params params)
+        full-key (conj parent-key child-key)
+        existing-mapping (get-in db [:layout/keys full-key])]
+    (if existing-mapping
+      db
+      (let [[db {:keys [buffer window]}]
+            (create-blank
+             db
+             {:focus? focus
+              :buffer
+              (when-not file
+                {:flags #{:readonly}})})]
+        (->
+         db
+         (assoc-in [:layout/keys full-key]
+                   {:bufnr (:id buffer)
+                    :winnr (:id window)})
+         (assoc-in [:layout/lookup-keys :bufnr (:id buffer)]
+                   full-key)
+         (assoc-in [:layout/lookup-keys :winnr (:id buffer)]
+                   full-key))))))
+
+(defn- install-form [context db parent-key [component & args]]
+  (case component
+    :horizontal (install-layout-part context db (conj parent-key :horizontal) args)
+    :vertical (install-layout-part context db (conj parent-key :vertical) args)
+    :connection (install-connection context db parent-key)
+    :edit (install-edit db parent-key args)))
+
+(defn install [db {:keys [id component script-file]}]
   (let [rendered (component)]
-    (install-form db [id] rendered)))
+    (install-form {:script-file script-file} db [id] rendered)))
 
 ; ======= Navigate =========================================
 
