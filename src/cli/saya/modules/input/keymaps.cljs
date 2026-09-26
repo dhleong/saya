@@ -53,7 +53,10 @@
                        (cond->
                          ; Store yanked in a register, if set
                         (some? yanked)
-                         (assoc-in [:registers yanked-register] yanked)))]
+                         (assoc-in [:registers yanked-register] yanked)
+
+                         (nil? (get context' :current-winnr ::unset))
+                         (dissoc :current-winnr)))]
 
       (if-not (= context context')
         {:db (-> (:db cofx)
