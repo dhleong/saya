@@ -12,6 +12,7 @@
                                        update-cursor]]
    [saya.modules.input.insert :refer [line->string update-buffer-line-string
                                       update-cursor-line-string]]
+   [saya.modules.input.layout :refer [layout-keymaps]]
    [saya.modules.input.motions.word :refer [big-word-boundary?
                                             end-of-word-movement
                                             small-word-boundary? word-movement]]
@@ -418,7 +419,8 @@
    operator-keymaps
    edit-keymaps
    scroll-keymaps
-   undo-keymaps))
+   undo-keymaps
+   layout-keymaps))
 
 #_{:clj-kondo/ignore [:unresolved-namespace]}
 (comment

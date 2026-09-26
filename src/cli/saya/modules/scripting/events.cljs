@@ -18,7 +18,9 @@
                            [nil e]))]
      {:db (cond-> db
             :always
-            (assoc-in [:connections connection-id :script-file] script-file)
+            (-> (assoc-in [:connections connection-id :script-file] script-file)
+                (assoc-in [:script-files script-file]
+                          {:connection-id connection-id}))
 
             keymaps
             (assoc-in [:buffers bufnr :keymaps] keymaps))

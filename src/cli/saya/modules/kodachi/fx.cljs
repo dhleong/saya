@@ -46,10 +46,11 @@
 (reg-fx
  ::set-window-size!
  (fn [{:keys [connection-id width height]}]
-   (api/dispatch! {:type :WindowSize
-                   :connection_id connection-id
-                   :width width
-                   :height height})))
+   (when (and width height)
+     (api/dispatch! {:type :WindowSize
+                     :connection_id connection-id
+                     :width width
+                     :height height}))))
 
 (defn- load-persisted-range!
   [{:keys [bufnr key start end]}]
