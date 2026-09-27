@@ -2,8 +2,11 @@
   (:require
    [clojure.core.match :as m]
    [clojure.zip :as zip :refer [zipper]]
+   [re-frame.db :as rfdb]
    [saya.modules.buffers.events :refer [create-blank]]
-   [saya.modules.layout.components :as components]))
+   [saya.modules.echo.core :refer [echo-fx]]
+   [saya.modules.layout.components :as components]
+   [saya.modules.scripting.config :refer [format-user-keymaps]]))
 
 (defn- unpack-component-args [args]
   (if (map? (first args))
@@ -66,56 +69,91 @@
 
 (declare ^:private install-form)
 
-(defn- install-layout-part [context db parent-key args]
+(defn- install-layout-part [context cofx parent-key args]
   (let [[_ children] (unpack-component-args args)]
     (reduce
-     (fn [db' [i child]]
-       (install-form context db' (conj parent-key i) child))
-     db
+     (fn [cofx' [i child]]
+       (install-form context cofx' (conj parent-key i) child))
+     cofx
      (map-indexed vector children))))
 
-(defn- install-connection [{:keys [script-file]} db parent-key]
+(defn- install-connection [{:keys [script-file]} cofx parent-key]
   (let [full-key (conj parent-key {:connection script-file})]
     ; TODO: This doesn't support split windows on connections,
     ; but... maybe that's fine to not support
-    (-> db
-        (assoc-in [:layout/lookup-keys :script-file/connection script-file]
+    (-> cofx
+        (assoc-in [:db :layout/lookup-keys :script-file/connection script-file]
                   full-key))))
 
-(defn- install-edit [db parent-key args]
-  (let [{:keys [focus file] :as params} (first args)
+(defn- resolve-connr-for-script [script-file]
+  ; hurray for hacks
+  (get-in @rfdb/app-db [:script-files script-file :connection-id]))
+
+(defn- install-keymaps [cofx {:keys [script-file bufnr]} keys]
+  (let [[keymaps err] (try
+                        [(format-user-keymaps
+                          (partial resolve-connr-for-script script-file)
+                          keys)
+                         nil]
+                        (catch :default e
+                          [nil e]))]
+    {:db (cond-> (:db cofx)
+           (some? keymaps)
+           (assoc-in [:buffers bufnr :keymaps] keymaps))
+     :fx (cond-> (:fx cofx)
+           err
+           ((fnil conj [])
+            (echo-fx :error "Error parsing keymaps: " err)))}))
+
+(defn- install-edit [context cofx parent-key args]
+  (let [{:keys [keys focus file] :as params} (first args)
         child-key (key-for-params params)
         full-key (conj parent-key child-key)
-        existing-mapping (get-in db [:layout/keys full-key])]
+        existing-mapping (get-in cofx [:db :layout/keys full-key])]
     (if existing-mapping
-      db
+      ; Just update :keys
+      (-> cofx
+          (install-keymaps
+           (merge context existing-mapping)
+           keys))
+
       (let [[db {:keys [buffer window]}]
             (create-blank
-             db
+             (:db cofx)
              {:focus? focus
               :buffer
               (when-not file
                 {:flags #{:readonly}})})]
+
         (->
-         db
-         (assoc-in [:layout/keys full-key]
-                   {:bufnr (:id buffer)
-                    :winnr (:id window)})
-         (assoc-in [:layout/lookup-keys :bufnr (:id buffer)]
-                   full-key)
-         (assoc-in [:layout/lookup-keys :winnr (:id buffer)]
-                   full-key))))))
+         cofx
 
-(defn- install-form [context db parent-key [component & args]]
+         (assoc
+          :db
+          (->
+           db
+           (assoc-in [:layout/keys full-key]
+                     {:bufnr (:id buffer)
+                      :winnr (:id window)})
+           (assoc-in [:layout/lookup-keys :bufnr (:id buffer)]
+                     full-key)
+           (assoc-in [:layout/lookup-keys :winnr (:id buffer)]
+                     full-key)))
+
+         (install-keymaps
+          (assoc context :bufnr (:id buffer))
+          keys))))))
+
+(defn- install-form [context cofx parent-key [component & args]]
   (case component
-    :horizontal (install-layout-part context db (conj parent-key :horizontal) args)
-    :vertical (install-layout-part context db (conj parent-key :vertical) args)
-    :connection (install-connection context db parent-key)
-    :edit (install-edit db parent-key args)))
+    :horizontal (install-layout-part context cofx (conj parent-key :horizontal) args)
+    :vertical (install-layout-part context cofx (conj parent-key :vertical) args)
+    :connection (install-connection context cofx parent-key)
+    :edit (install-edit context cofx parent-key args)))
 
-(defn install [db {:keys [id component script-file]}]
+(defn install [cofx {:keys [id component script-file]}]
   (let [rendered (component)]
-    (install-form {:script-file script-file} db [id] rendered)))
+    (install-form {:script-file script-file} cofx [id] rendered)))
 
 ; ======= Navigate =========================================
 

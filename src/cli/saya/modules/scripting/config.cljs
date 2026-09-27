@@ -6,10 +6,17 @@
 (def ^:private core-send (delay
                            (resolve 'saya.modules.scripting.core/send)))
 
+(defn- resolve-connr [connr]
+  (if (number? connr)
+    connr
+    (connr)))
+
 (defn- rhs->callable [connr {:keys [send]}]
   (fn send-callable [ctx]
-    (@core-send connr send)
-    ctx))
+    (if-some [nr (resolve-connr connr)]
+      (do (@core-send nr send)
+          ctx)
+      {:error "No active connection"})))
 
 (defn- format-user-keymap [connr ->f user-keymap]
   ; TODO: Consider a spec?
@@ -35,7 +42,7 @@
                         {:rhs rhs}))
 
               (fn? rhs) (fn [ctx]
-                          (rhs connr)
+                          (rhs (resolve-connr connr))
                           ctx)
 
               (and (map? rhs)
@@ -63,6 +70,9 @@
       [mode {lhs rhs}])))
 
 (defn format-user-keymaps
+  "connr may be either a little connr or a function that
+  resolves the appropriate connr. The function may return
+  nil if there is no active connection"
   ([connr user-keymaps] (format-user-keymaps connr rhs->callable user-keymaps))
   ([connr ->f user-keymaps]
    (->> user-keymaps

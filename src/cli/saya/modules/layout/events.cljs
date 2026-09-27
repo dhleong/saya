@@ -8,15 +8,15 @@
 (reg-event-fx
  ::set-current-tab-layout
  [unwrap]
- (fn [{:keys [db]} {:keys [layout script-file]}]
+ (fn [cofx {:keys [layout script-file]}]
    (let [layout-id 0 ; TODO: multi-tab support
-         db-path [:layouts layout-id]
-         db' (update-in db db-path
-                        assoc
-                        :script-file script-file
-                        :id layout-id
-                        :component layout)]
-     {:db (layout/install db' (get-in db' db-path))})))
+         db-path [:db :layouts layout-id]
+         cofx' (update-in cofx db-path
+                          assoc
+                          :script-file script-file
+                          :id layout-id
+                          :component layout)]
+     (layout/install cofx' (get-in cofx' db-path)))))
 
 (reg-event-fx
  ::set-keyed-buffer-contents
