@@ -18,7 +18,6 @@
    [saya.modules.perf.core :as perf]
    [saya.modules.search.subs :as search-subs]
    [saya.modules.ui.cursor :refer [cursor]]
-   [saya.modules.ui.placeholders :as placeholders]
    [saya.modules.window.events :as window-events]
    [saya.modules.window.subs :as subs]))
 
@@ -266,9 +265,6 @@
 
               (and scrolled? input-connr)
               [input-placeholder input-connr]
-
-              scrolled?
-              [placeholders/line]
 
               ; NOTE: We *may* actually want to render something here to avoid the
               ; window size changing when we scroll... For now, though...
