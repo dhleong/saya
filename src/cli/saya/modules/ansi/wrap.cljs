@@ -1,10 +1,12 @@
 (ns saya.modules.ansi.wrap
   (:require
+   [applied-science.js-interop :as j]
    [clojure.string :as str]
+   [saya.modules.ansi.split :refer [styled-chars->strings]]
    [taoensso.tufte :as tufte]))
 
-(defn- is-space? [part]
-  (str/ends-with? part " "))
+(j/defn ^:private is-space? [^:js {:keys [value]}]
+  (str/ends-with? value " "))
 
 (defn- ->word-lengths [ansi-chars]
   (tufte/p
@@ -16,6 +18,9 @@
           (remove #(is-space? (first %)))
           (map count))))))
 
+(defn- conj-finished-line [dest finished-line]
+  (conj dest (styled-chars->strings finished-line)))
+
 (defn wrap-ansi-chars [ansi-chars width]
   {:pre [(number? width)]}
   (loop [lines []
@@ -26,7 +31,7 @@
 
     (if (empty? ansi-chars)
       ; Done!
-      (conj lines current-line)
+      (conj-finished-line lines current-line)
 
       (let [word-len (first word-lengths)
             want-to-take (inc word-len)
@@ -39,7 +44,7 @@
         (if (> (+ current-line-width word-len 1)
                width)
           ; Wrap
-          (recur (conj lines current-line)
+          (recur (conj-finished-line lines current-line)
                  (into [] (take to-take ansi-chars))
                  to-take ; new line initial length
                  (drop to-take ansi-chars)

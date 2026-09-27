@@ -16,7 +16,7 @@
 (defn wrap-ansi [s width]
   (-> s
       (split/->ansi-tokens)
-      (split/tokens->chars-with-ansi)
+      (split/tokens->styled-chars)
       (wrap-ansi-chars width)
       (->> (map str/join)
            (map simplify-line))))
@@ -27,7 +27,7 @@
            (#'wrap/->word-lengths
             (-> "\u001b[38;5;002mFor the honor of Grayskull!"
                 (split/->ansi-tokens)
-                (split/tokens->chars-with-ansi)))))))
+                (split/tokens->styled-chars)))))))
 
 (deftest wrap-ansi-test
   (testing "Wrap, preserving complex ansi"

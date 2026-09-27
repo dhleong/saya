@@ -19,7 +19,8 @@
    [saya.modules.search.subs :as search-subs]
    [saya.modules.ui.cursor :refer [cursor]]
    [saya.modules.window.events :as window-events]
-   [saya.modules.window.subs :as subs]))
+   [saya.modules.window.subs :as subs]
+   [clojure.string :as str]))
 
 (def system-messages
   {:connecting (fn connecting [uri]
@@ -110,6 +111,11 @@
         ; we have a cursor to render there
         line (or (seq line)
                  [""])]
+    (when (and line
+               (not= line [""])
+               (not (keyword? (ffirst line)))
+               (not= "S" (ffirst line)))
+      (def last-line line))
     (into
      [:> k/Box {:min-height 0
                 :width :100%
