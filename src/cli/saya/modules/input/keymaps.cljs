@@ -31,10 +31,14 @@
     :editable (when-not (= bufnr [:conn/input connr])
                 (get-in cofx [:db :buffers [:conn/input connr]]))
     :search (select-keys (get-in cofx [:db :search])
-                         [:direction :query])}
+                         [:direction :query])
+    :layout (get-in cofx [:db :layouts 0])
+    :readonly/db (:db cofx)}
    (-> cofx
        :db
-       (select-keys [:mode :pending-operator :registers :histories]))))
+       (select-keys [:mode :pending-operator :registers :histories
+                     :layout/keys
+                     :layout/lookup-keys]))))
 
 (defn perform [{:keys [bufnr winnr] :as cofx} f]
   (try
@@ -47,10 +51,14 @@
           context' (-> context'
                        (maybe-enqueue-undo context)
                        (dissoc :yanked)
+                       (dissoc :readonly/db)
                        (cond->
                          ; Store yanked in a register, if set
                         (some? yanked)
-                         (assoc-in [:registers yanked-register] yanked)))]
+                         (assoc-in [:registers yanked-register] yanked)
+
+                         (nil? (get context' :current-winnr ::unset))
+                         (dissoc :current-winnr)))]
 
       (if-not (= context context')
         {:db (-> (:db cofx)
@@ -62,7 +70,8 @@
                  (merge (select-keys context' [:mode
                                                :pending-operator
                                                :pending-operator/from-mode
-                                               :registers]))
+                                               :registers
+                                               :current-winnr]))
                  (cond->
                   (:editable context')
                    (assoc-in [:buffers (:id (:editable context'))]
@@ -74,7 +83,8 @@
          :fx [(when-let [e (:error context')]
                 (echo-fx :exception "ERROR:" e))
 
-              (when (:mode context')
+              (when (not= (:mode context)
+                          (:mode context'))
                 [:dispatch [::echo-events/ack-echo]])
 
               (when (and (clipboard/cofx-enabled-integration? cofx)

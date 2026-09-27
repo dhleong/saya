@@ -4,7 +4,7 @@
            :redundant-ignore {:exclude [:clojure-lsp/unused-public-var]}
 
            :clojure-lsp/unused-public-var {:level :warning
-                                           :exclude-regex #{"saya\\.modules\\.scripting\\..*"}}}
+                                           :exclude-regex #{"saya\\.modules\\.scripting\\.(core|layout).*"}}}
 
  :lint-as {applied-science.js-interop/defn clojure.core/defn
            applied-science.js-interop/let clojure.core/let

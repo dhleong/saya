@@ -18,7 +18,6 @@
    [saya.modules.perf.core :as perf]
    [saya.modules.search.subs :as search-subs]
    [saya.modules.ui.cursor :refer [cursor]]
-   [saya.modules.ui.placeholders :as placeholders]
    [saya.modules.window.events :as window-events]
    [saya.modules.window.subs :as subs]))
 
@@ -207,11 +206,17 @@
                                                                    :start (:row (first lines))
                                                                    :end last-row}])]
           [:> k/Box {:flex-direction :column
+                     :flex-grow 1
+                     :flex-shrink 1
+                     :flex-basis 1
                      :height :100%
                      :width :100%}
            [:> k/Box {:ref ref
                       :flex-direction :column
                       :flex-grow 1
+                      :flex-shrink 1
+                      :flex-basis 1
+                      :height :100%
                       :width :100%}
             (for [{:keys [row col line last-of-row?] :as data} lines]
               (let [input-line? (and (= last-row row)
@@ -260,9 +265,6 @@
 
               (and scrolled? input-connr)
               [input-placeholder input-connr]
-
-              scrolled?
-              [placeholders/line]
 
               ; NOTE: We *may* actually want to render something here to avoid the
               ; window size changing when we scroll... For now, though...
