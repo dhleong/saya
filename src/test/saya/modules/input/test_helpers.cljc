@@ -7,8 +7,11 @@
 (declare ^:private do-find-error)
 
 (defmacro has-no-error? [& where]
-  `(cljs.test/is (nil? (~'error))
-                 (str "Expected no error" ~@where)))
+  (let [[opts & where] (if (map? (first where))
+                         where
+                         (cons {} where))]
+    `(cljs.test/is (nil? (~'error ~opts))
+                   (str "Expected no error" ~@where))))
 
 (defmacro with-session [setup & body]
   `(let [cofx# (atom (make-keymap-cofx
@@ -20,9 +23,10 @@
                         ~'state)
          ~'mode (comp :mode ~'state)
          ~'error (partial do-find-error cofx#)
-         ~'feed-keys (fn [the-keys#]
+         ~'feed-keys (fn [the-keys# & {:keys [~'allow-error?]}]
                        (let [output# (do-feed-keys cofx# the-keys#)]
-                         (has-no-error? " feeding keys: " the-keys#)
+                         (has-no-error? {:types #{:exception}}
+                                        " feeding keys: " the-keys#)
                          output#))
          ; Ignore unused keys:
          ~'_ [~'mode ~'feed-keys ~'buffer ~'error]]

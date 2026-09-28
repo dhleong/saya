@@ -156,7 +156,8 @@
     ; Return the updated buffer, for simple tests
    (get-cofx-buffer)))
 
-(defn do-find-error [cofx-ref]
+(defn do-find-error [cofx-ref {:keys [types]
+                               :or {types #{:exception :error}}}]
   (->> @cofx-ref
        :fx
        (keep (fn [[event args]]
@@ -164,7 +165,7 @@
                  (when (= :echo (first args))
                    args))))
        (keep (fn [[_echo kind & msg]]
-               (when (#{:exception :error} kind)
+               (when (types kind)
                  ; always inserted by the {:error} "fx"
                  (str/join " " (next msg)))))
        (last)))
