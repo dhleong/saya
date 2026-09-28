@@ -15,6 +15,7 @@
 
 (defn styled-chars->strings [tokenized-chars]
   (->> tokenized-chars
+       (remove vector?)
        (reduce
         (j/fn [[last-styles rv] ^:js {:keys [value styles]}]
           (let [diff (ansi/diffAnsiCodes last-styles styles)
