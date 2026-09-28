@@ -237,8 +237,9 @@
                                                (str/join))))))
 
   (ansi-chars [this]
-    (split/tokens->styled-chars
-     (tokenized-parts this)))
+    (split/styled-chars->strings
+     (split/tokens->styled-chars
+      (tokenized-parts this))))
 
   (length [this]
     (count (ansi-chars this)))
