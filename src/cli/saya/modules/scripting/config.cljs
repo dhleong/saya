@@ -20,7 +20,8 @@
 
 (defn- format-user-keymap [connr ->f user-keymap]
   ; TODO: Consider a spec?
-  {:pre [(vector? user-keymap)]}
+  {:pre [(or (vector? user-keymap)
+             (map-entry? user-keymap))]}
   (let [[lhs rhs opts] user-keymap
         opts (merge (when (map? rhs)
                       rhs)
