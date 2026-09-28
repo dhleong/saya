@@ -81,7 +81,7 @@
                    (assoc-in [:buffers (:id (:normal-buffer context'))]
                              (:normal-buffer context'))))
          :fx [(when-let [e (:error context')]
-                (echo-fx :exception "ERROR:" e))
+                (echo-fx :error "ERROR:" e))
 
               (when (not= (:mode context)
                           (:mode context'))

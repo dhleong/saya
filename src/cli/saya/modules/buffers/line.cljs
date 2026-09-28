@@ -121,7 +121,7 @@
 
        (sequence
         (comp
-         (partition-by string?)
+         (partition-by vector?)
          (map
           (fn [group]
             (if (vector? (first group))
@@ -129,18 +129,18 @@
 
               {:strings
                (wrap-ansi-chars
-                (split/tokens->chars-with-ansi group)
+                (split/tokens->styled-chars group)
                 width)})))
 
-       ; From above, `strings` will be a sequence of split lines,
-       ; with each line being a sequence of chars-with-ansi;
-       ; `systems` will be a sequence of system message vectors
-       ; (basically, hiccup data).
-       ; We know this was all meant to be a single line, so here
-       ; we collapse the `systems` sequences *into* the preceeding
-       ; line sequence (if any). This does mean that on a narrow
-       ; screen a trailing system message could get clipped, but
-       ; that's probably fine.
+         ; From above, `strings` will be a sequence of split lines,
+         ; with each line being a sequence of chars-with-ansi;
+         ; `systems` will be a sequence of system message vectors
+         ; (basically, hiccup data).
+         ; We know this was all meant to be a single line, so here
+         ; we collapse the `systems` sequences *into* the preceeding
+         ; line sequence (if any). This does mean that on a narrow
+         ; screen a trailing system message could get clipped, but
+         ; that's probably fine.
          (compose-systems-onto-prior-strings)
 
          ; When doing a hard split, we might end up with eg:
@@ -186,9 +186,8 @@
           (if (= "\u001B[0m" (.-code last-tok))
             "" ; Hacks...?
             (.-code last-tok)))
-        (let [parts (split/tokens->chars-with-ansi tokens)]
-          (when-some [last-char (last parts)]
-            (subs last-char 0 (dec (count last-char))))))))
+        (let [parts (split/tokens->styled-chars tokens)]
+          (split/styled-chars->trailing-ansi parts)))))
 
 (defn- clean-part [o]
   (cond
@@ -238,8 +237,9 @@
                                                (str/join))))))
 
   (ansi-chars [this]
-    (split/tokens->chars-with-ansi
-     (tokenized-parts this)))
+    (split/styled-chars->strings
+     (split/tokens->styled-chars
+      (tokenized-parts this))))
 
   (length [this]
     (count (ansi-chars this)))
