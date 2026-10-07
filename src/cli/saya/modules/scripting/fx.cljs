@@ -9,6 +9,16 @@
    [saya.util.paths :as paths]))
 
 (reg-fx
+ ::call-handler
+ (fn [{:keys [f args]}]
+   (js/setImmediate
+    (fn []
+      (try
+        (apply f args)
+        (catch :default e
+          (echo :error "Error invoking handler:" e)))))))
+
+(reg-fx
  ::trigger-callback
  (fn [{:keys [connection-id callback-kind]}]
    (trigger-callback connection-id callback-kind)))

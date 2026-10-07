@@ -1,8 +1,10 @@
 (ns saya.modules.kodachi.fx
   (:require
    [archetype.util :refer [>evt]]
+   [clojure.core.match :as m]
    [promesa.core :as p]
    [re-frame.core :refer [reg-fx]]
+   [saya.modules.echo.core :refer [echo]]
    [saya.modules.kodachi.api :as api]
    [saya.modules.kodachi.events :as events]
    [saya.modules.logging.core :refer [log]]))
@@ -97,3 +99,29 @@
             (assoc :timeout (js/setTimeout
                              (partial flush-load! bufnr key)
                              50))))))))
+
+(reg-fx
+ ::configure-connection!
+ (fn [{:keys [connr triggers]}]
+   (p/do
+     (api/dispatch! {:type :Clear
+                     :connection_id connr})
+
+     (p/doseq [[id {:keys [match consume?]}] (map-indexed vector triggers)]
+       (-> (api/request!
+            {:type :RegisterTrigger
+             :connection_id connr
+             :handler_id id
+             :matcher (merge
+                       (when consume?
+                         {:consume consume?})
+                       (m/match [match]
+                         [(_ :guard regexp?)]
+                         {:type :Regex
+                          :source (.-source ^js match)}
+
+                         [(_ :guard string?)]
+                         {:type :Simple
+                          :source match}))})
+           (p/catch (fn [e]
+                      (echo :error "Error registering trigger: " e))))))))
