@@ -6,7 +6,8 @@
    [saya.modules.echo.core :refer [echo]]
    [saya.modules.logging.core :refer [log]]
    [saya.modules.scripting.callbacks :refer [trigger-callback]]
-   [saya.util.paths :as paths]))
+   [saya.util.paths :as paths]
+   [saya.modules.kodachi.api :as api]))
 
 (reg-fx
  ::call-handler
@@ -17,6 +18,22 @@
         (apply f args)
         (catch :default e
           (echo :error "Error invoking handler:" e)))))))
+
+(reg-fx
+ ::process-alias-handler
+ (fn [{:keys [f args handler-id request-id]}]
+   (js/setImmediate
+    (fn []
+      (-> (p/let [result (apply f args)]
+            (api/dispatch!
+             {:type :AliasMatchHandled
+              :request-id request-id
+              :hander-id handler-id
+              :replacement (if (string? result)
+                             result
+                             "")}))
+          (p/catch (fn [e]
+                     (echo :error "Error invoking alias handler:" e))))))))
 
 (reg-fx
  ::trigger-callback

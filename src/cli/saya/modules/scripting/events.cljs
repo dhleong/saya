@@ -59,6 +59,17 @@
              "triggers" err2}))})))
 
 (reg-event-fx
+ ::alias-matched
+ [unwrap]
+ (fn [{:keys [db]} {:keys [connr handler-id request-id context]}]
+   (when-let [alias-handler (get-in db [:connections connr :aliases handler-id :call])]
+     {:fx [[:saya.modules.scripting.fx/process-alias-handler
+            {:f alias-handler
+             :args [context]
+             :handler-id handler-id
+             :request-id request-id}]]})))
+
+(reg-event-fx
  ::trigger-matched
  [unwrap]
  (fn [{:keys [db]} {:keys [connr handler-id context]}]

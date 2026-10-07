@@ -124,8 +124,8 @@
               :connection_id connr
               :matcher (format-matcher match)}
              (m/match [alias]
-               {:call _handler} {:handler_id id}
-               {:replace rhs} {:replacement_pattern rhs})))))
+               [{:call _handler}] {:handler_id id}
+               [{:replace rhs}] {:replacement_pattern rhs})))))
 
      (p/doseq [[id {:keys [match consume?]}] (map-indexed vector triggers)]
        (-> (api/request!

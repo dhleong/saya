@@ -143,6 +143,15 @@
              :context (-> (:context params)
                           (update :indexed vecify-indexed-map))}]]]}
 
+    {:type "HandleAliasMatch"}
+    {:fx [[:dispatch
+           [:saya.modules.scripting.events/alias-matched
+            {:connr connr
+             :handler-id (:handler_id params)
+             :request-id (:id params)
+             :context (-> (:context params)
+                          (update :indexed vecify-indexed-map))}]]]}
+
 ; TODO:
     :else
     nil))
