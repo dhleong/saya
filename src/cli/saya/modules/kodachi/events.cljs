@@ -51,8 +51,10 @@
              {:id bufnr
               :system [:connecting uri]}]]]})))
 
-(defn- intify [k]
-  (parse-long (name k)))
+(defn- vecify-indexed-map [m]
+  (->> (range (count m))
+       (mapv (fn [idx]
+               (get m (keyword (str idx)))))))
 
 (defn- process-message [db connr bufnr params]
   (m/match params
@@ -139,7 +141,7 @@
             {:connr connr
              :handler-id (:handler_id params)
              :context (-> (:context params)
-                          (update :indexed update-keys intify))}]]]}
+                          (update :indexed vecify-indexed-map))}]]]}
 
 ; TODO:
     :else
