@@ -3,7 +3,8 @@
    [re-frame.core :refer [reg-event-fx unwrap]]
    [saya.modules.echo.core :refer [echo-fx]]
    [saya.modules.kodachi.fx :as kodachi-fx]
-   [saya.modules.scripting.config :refer [format-user-keymaps
+   [saya.modules.scripting.config :refer [format-user-aliases
+                                          format-user-keymaps
                                           format-user-triggers]]))
 
 (defn- apply-packing-errors [f & args]
@@ -24,7 +25,11 @@
          [triggers err2] (apply-packing-errors
                           format-user-triggers
                           connection-id
-                          (:triggers params))]
+                          (:triggers params))
+         [aliases err3] (apply-packing-errors
+                         format-user-aliases
+                         connection-id
+                         (:triggers params))]
      {:db (cond-> db
             :always
             (-> (assoc-in [:connections connection-id :script-file] script-file)
@@ -34,19 +39,23 @@
             keymaps
             (assoc-in [:buffers bufnr :keymaps] keymaps)
 
-            ; TODO: pass to kodachi
+            aliases
+            (assoc-in [:connections connection-id :aliases] aliases)
+
             triggers
             (assoc-in [:connections connection-id :triggers] triggers))
       :fx (into
            [[::kodachi-fx/configure-connection!
              {:connr connection-id
+              :aliases aliases
               :triggers triggers}]]
 
            (keep
             (fn [[what err]]
               (when err
                 (echo-fx :error "Error parsing " what ": " err)))
-            {"keymaps" err1
+            {"aliases" err3
+             "keymaps" err1
              "triggers" err2}))})))
 
 (reg-event-fx

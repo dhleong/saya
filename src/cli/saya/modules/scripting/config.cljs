@@ -125,3 +125,20 @@
   ([connr user-triggers]
    (->> user-triggers
         (mapv (partial format-user-trigger connr)))))
+
+(defn- format-user-alias
+  [user-alias]
+  (let [[lhs rhs] user-alias]
+    (when-not (valid-pattern? lhs)
+      (throw (ex-info (str "Invalid alias pattern: " lhs)
+                      {:lhs lhs})))
+    (cond
+      (ifn? rhs) {:match lhs
+                  :call rhs}
+      (string? rhs) {:match lhs
+                     :replace rhs})))
+
+(defn format-user-aliases
+  [user-aliases]
+  (->> user-aliases
+       (mapv format-user-alias)))

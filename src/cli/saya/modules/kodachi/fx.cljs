@@ -100,12 +100,32 @@
                              (partial flush-load! bufnr key)
                              50))))))))
 
+(defn- format-matcher [match]
+  (m/match [match]
+    [(_ :guard regexp?)]
+    {:type :Regex
+     :source (.-source ^js match)}
+
+    [(_ :guard string?)]
+    {:type :Simple
+     :source match}))
+
 (reg-fx
  ::configure-connection!
- (fn [{:keys [connr triggers]}]
+ (fn [{:keys [connr aliases triggers]}]
    (p/do
      (api/dispatch! {:type :Clear
                      :connection_id connr})
+
+     (p/doseq [[id {:keys [match] :as alias}] (map-indexed vector aliases)]
+       (-> (api/request!
+            (merge
+             {:type "RegisterAlias"
+              :connection_id connr
+              :matcher (format-matcher match)}
+             (m/match [alias]
+               {:call _handler} {:handler_id id}
+               {:replace rhs} {:replacement_pattern rhs})))))
 
      (p/doseq [[id {:keys [match consume?]}] (map-indexed vector triggers)]
        (-> (api/request!
@@ -115,13 +135,6 @@
              :matcher (merge
                        (when consume?
                          {:consume consume?})
-                       (m/match [match]
-                         [(_ :guard regexp?)]
-                         {:type :Regex
-                          :source (.-source ^js match)}
-
-                         [(_ :guard string?)]
-                         {:type :Simple
-                          :source match}))})
+                       (format-matcher match))})
            (p/catch (fn [e]
                       (echo :error "Error registering trigger: " e))))))))
