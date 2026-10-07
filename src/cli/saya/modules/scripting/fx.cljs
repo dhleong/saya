@@ -27,8 +27,8 @@
       (-> (p/let [result (apply f args)]
             (api/dispatch!
              {:type :AliasMatchHandled
-              :request-id request-id
-              :hander-id handler-id
+              :request_id request-id
+              :hander_id handler-id
               :replacement (if (string? result)
                              result
                              "")}))

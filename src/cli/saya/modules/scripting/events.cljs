@@ -28,8 +28,7 @@
                           (:triggers params))
          [aliases err3] (apply-packing-errors
                          format-user-aliases
-                         connection-id
-                         (:triggers params))]
+                         (:aliases params))]
      {:db (cond-> db
             :always
             (-> (assoc-in [:connections connection-id :script-file] script-file)

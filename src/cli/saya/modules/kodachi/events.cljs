@@ -150,7 +150,11 @@
              :handler-id (:handler_id params)
              :request-id (:id params)
              :context (-> (:context params)
-                          (update :indexed vecify-indexed-map))}]]]}
+                          (update :indexed vecify-indexed-map)
+                          ; NOTE: For aliases, :ansi should always
+                          ; be = :plain
+                          (update :indexed update-vals :plain)
+                          (update :named update-vals :plain))}]]]}
 
 ; TODO:
     :else
