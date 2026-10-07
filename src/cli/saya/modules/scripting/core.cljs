@@ -72,9 +72,12 @@
                                (when-some [cb (get config kind)]
                                  (cb conn))))
 
-    (>evt [::events/reconfigure-connection {:connection-id connr
-                                            :script-file *script-file*
-                                            :keymaps keymaps}])))
+    (>evt [::events/reconfigure-connection
+           (merge
+            (select-keys config [:aliases :triggers])
+            {:connection-id connr
+             :script-file *script-file*
+             :keymaps keymaps})])))
 
 (defn- current-buffer [db]
   (let [current-window (get-in db [:windows (:current-winnr db)])]

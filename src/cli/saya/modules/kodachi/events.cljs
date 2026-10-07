@@ -51,6 +51,9 @@
              {:id bufnr
               :system [:connecting uri]}]]]})))
 
+(defn- intify [k]
+  (parse-long (name k)))
+
 (defn- process-message [db connr bufnr params]
   (m/match params
     {:type "ExternalUI"
@@ -130,7 +133,15 @@
                        (:group_id params) (:index params)]
                    (get-in params [:content :ansi]))}
 
-  ; TODO:
+    {:type "TriggerMatched"}
+    {:fx [[:dispatch
+           [:saya.modules.scripting.events/trigger-matched
+            {:connr connr
+             :handler-id (:handler_id params)
+             :context (-> (:context params)
+                          (update :indexed update-keys intify))}]]]}
+
+; TODO:
     :else
     nil))
 

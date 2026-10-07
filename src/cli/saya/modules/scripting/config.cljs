@@ -1,7 +1,8 @@
 (ns saya.modules.scripting.config
   (:require
    [clojure.string :as str]
-   [saya.modules.scripting.keys :refer [->keys]]))
+   [saya.modules.scripting.keys :refer [->keys]]
+   [clojure.core.match :as m]))
 
 (def ^:private core-send (delay
                            (resolve 'saya.modules.scripting.core/send)))
@@ -83,3 +84,44 @@
            (update m k merge v))
          {}))))
 
+(defn- valid-pattern? [v]
+  (or (string? v)
+      (regexp? v)))
+
+(defn- format-user-trigger [connr entry]
+  (letfn [(wrap-handler [f]
+            (fn wrapped-handler [m]
+              (f (assoc m :connr connr))))]
+    (m/match [entry]
+      [{:match _}] (update entry :do wrap-handler)
+      [(_ :guard map?)] (let [expanded (reduce-kv
+                                        (fn [m k v]
+                                          (if (valid-pattern? k)
+                                            (assoc m
+                                                   :match k
+                                                   :do (wrap-handler v))
+                                            ; Option
+                                            (assoc m k v)))
+                                        {}
+                                        entry)]
+                          (when-not (:match expanded)
+                            (throw (ex-info (str "Missing match clause in trigger map: " entry)
+                                            {:entry entry})))
+                          expanded)
+
+      [[(pattern :guard valid-pattern?)
+        (handler :guard fn?)]]
+      {:match pattern
+       :do (wrap-handler handler)}
+
+      [[(pattern :guard valid-pattern?)
+        (handler :guard fn?)
+        (opts :guard map?)]]
+      (merge opts
+             {:match pattern
+              :do (wrap-handler handler)}))))
+
+(defn format-user-triggers
+  ([connr user-triggers]
+   (->> user-triggers
+        (mapv (partial format-user-trigger connr)))))
