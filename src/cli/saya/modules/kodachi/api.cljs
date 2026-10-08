@@ -67,9 +67,11 @@
                                             ; so let's just always do this
                                            :DEBUG "*"}
 
-                                           ; Forward this along for debugging:
+                                           ; Forward these along for debugging:
                                            (seq js/process.env.KODACHI_DUMP)
-                                           (assoc :KODACHI_DUMP js/process.env.KODACHI_DUMP))})]
+                                           (assoc :KODACHI_DUMP js/process.env.KODACHI_DUMP)
+                                           (seq js/process.env.KODACHI_DUMP_SENT)
+                                           (assoc :KODACHI_DUMP_SENT js/process.env.KODACHI_DUMP_SENT))})]
         (swap! instance
                (fn [^js old]
                  (when old
