@@ -32,15 +32,10 @@
                app
                #js {:alternateScreen true
                     :stdout ink/original-stdout
+                    :exitOnCtrlC false
                     :onCursorUpdated  (j/fn [^:js {:keys [x y]}]
-                                ; ink cursor is 1-indexed; ours is 0-indexed
                                         (>evt [:saya.events/set-global-cursor
-                                               {:x x :y y}]))
-                    ; :onRender (j/fn [^:js {{:keys [x y]} :cursor}]
-                    ;             ; ink cursor is 1-indexed; ours is 0-indexed
-                    ;             (>evt [:saya.events/set-global-cursor
-                    ;                    {:x x :y y}]))
-                    })))))
+                                               {:x x :y y}]))})))))
 
 (defn- -main [args]
   (perf/init!)
