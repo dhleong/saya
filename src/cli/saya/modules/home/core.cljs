@@ -5,6 +5,7 @@
    [saya.modules.command.view :refer [command-line-mode-view]]
    [saya.modules.echo.view :refer [echo-window]]
    [saya.modules.input.cmdline :refer [cmdline-window]]
+   [saya.modules.input.views.keymap :refer [keymap-preview]]
    [saya.modules.kodachi.subs :as kodachi]
    [saya.modules.layout.subs :as layout-subs]
    [saya.modules.layout.view :refer [layout-view]]
@@ -55,6 +56,9 @@
        :search [search-mode-view]
        (when-not has-echo?
          [placeholders/line]))
+     [:> k/Box {:position :absolute
+                :right 4}
+      [keymap-preview]]
      [echo-window]]))
 
 (defn home-view []

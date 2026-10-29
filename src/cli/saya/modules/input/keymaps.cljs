@@ -123,21 +123,27 @@
             (assoc :key key)
             ; NOTE: Pop the getkey *first* in case the handler pushes another
             (update-in [:db :pending-getkey] pop)
-            (perform (peek (:pending-getkey db))))
+            (perform (peek (:pending-getkey db)))
+            (dissoc :key))
 
         keymap
-        (let [cofx' (perform cofx keymap)]
+        (let [{db' :db :as cofx'} (perform cofx keymap)]
           (cond-> cofx'
-            (seq (get-in cofx' [:db :pending-getkey]))
-            (update (fnil :db db) assoc
-                    :keymap-buffer new-buffer)))
+            (or (seq (:pending-getkey db'))
+                (and (not= (:mode db') (:mode db))
+                     (= :operator-pending (:mode db'))))
+            (update :db (fnil assoc db)
+                    :consumed-keymap-buffer new-buffer)))
 
         (possible? combined-maps new-buffer)
         {:db (assoc db :keymap-buffer new-buffer)}
 
         :else
         (-> cofx
-            (update :db dissoc :keymap-buffer :pending-operator)
+            (update :db dissoc
+                    :consumed-keymap-buffer
+                    :keymap-buffer
+                    :pending-operator)
             (with-unhandled)
             (select-keys [:db]))))))
 
