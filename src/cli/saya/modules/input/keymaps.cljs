@@ -33,10 +33,13 @@
     :search (select-keys (get-in cofx [:db :search])
                          [:direction :query])
     :layout (get-in cofx [:db :layouts 0])
+    :pending-getkey (get-in cofx [:db :pending-getkey])
+    :readonly/key (:key cofx)
     :readonly/db (:db cofx)}
    (-> cofx
        :db
-       (select-keys [:mode :pending-operator :registers :histories
+       (select-keys [:mode :pending-operator :pending-getkey
+                     :registers :histories
                      :layout/keys
                      :layout/lookup-keys]))))
 
@@ -65,9 +68,11 @@
                  (assoc-in [:buffers bufnr] (:buffer context'))
                  (assoc-in [:windows winnr] (:window context'))
                  (dissoc :keymap-buffer
+                         :pending-getkey
                          :pending-operator
                          :pending-operator/from-mode)
                  (merge (select-keys context' [:mode
+                                               :pending-getkey
                                                :pending-operator
                                                :pending-operator/from-mode
                                                :registers
@@ -93,12 +98,14 @@
 
         {:db (-> (:db cofx)
                  ; Still clear this even if nothing happened:
-                 (dissoc :keymap-buffer :pending-operator))}))
+                 (dissoc :keymap-buffer :pending-operator :pending-getkey))}))
 
     (catch :default e
       #_{:clj-kondo/ignore [:inline-def]}
       (def last-exception e)
-      {:fx [(echo-fx :exception "ERROR performing" f ":" e)]})))
+      {:db (-> (:db cofx)
+               (dissoc :pending-getkey))
+       :fx [(echo-fx :exception "ERROR performing" f ":" e)]})))
 
 (defn maybe-perform-with-keymap-buffer [& {:keys [keymaps keymap-buffer cofx
                                                   mode with-unhandled key]
@@ -111,8 +118,19 @@
           combined-maps (merge keymaps user-maps)
           keymap (get combined-maps new-buffer)]
       (cond
+        (seq (:pending-getkey db))
+        (-> cofx
+            (assoc :key key)
+            ; NOTE: Pop the getkey *first* in case the handler pushes another
+            (update-in [:db :pending-getkey] pop)
+            (perform (peek (:pending-getkey db))))
+
         keymap
-        (perform cofx keymap)
+        (let [cofx' (perform cofx keymap)]
+          (cond-> cofx'
+            (seq (get-in cofx' [:db :pending-getkey]))
+            (update (fnil :db db) assoc
+                    :keymap-buffer new-buffer)))
 
         (possible? combined-maps new-buffer)
         {:db (assoc db :keymap-buffer new-buffer)}

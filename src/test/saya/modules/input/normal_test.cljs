@@ -1,10 +1,11 @@
 (ns saya.modules.input.normal-test
   (:require
-   [cljs.test :refer-macros [deftest testing]]
+   [cljs.test :refer-macros [deftest testing is]]
    [saya.modules.buffers.line :refer [buffer-line]]
    [saya.modules.input.helpers :refer [update-cursor]]
    [saya.modules.input.normal :as normal :refer [delete-operator update-scroll]]
-   [saya.modules.input.test-helpers :refer [with-keymap-compare-buffer]]))
+   [saya.modules.input.test-helpers :refer [with-keymap-compare-buffer
+                                            with-session]]))
 
 (defn with-keys-compare-buffer [keys before after & args]
   (let [f (get normal/keymaps keys)]
@@ -271,3 +272,18 @@
       "|"
       "|I don't know"
       :registers {\" {:lines [(buffer-line "I don't know")]}})))
+
+(deftest find-test
+  (testing "Find by character"
+    (with-session {:buffer "|for the honor"}
+      (feed-keys "f")
+      (is (seq (state :pending-getkey)))
+      (is (= "for |the honor"
+             (feed-keys "t")))
+      (is (nil? (seq (:pending-getkey (state :pending-getkey))))
+          ":pending-getkey should get reset")))
+
+  (testing "til by character"
+    (with-session {:buffer "|for the honor"}
+      (is (= "for the h|onor"
+             (feed-keys "tn"))))))

@@ -42,13 +42,19 @@
      :else cursor)))
 
 (defn update-cursor
-  ([{:keys [cursor] :as buffer} pred]
-   (assoc buffer :cursor (update-cursor buffer cursor pred)))
-  ([{:keys [lines] :as buffer} cursor pred]
+  ([{:keys [cursor] :as buffer} opts pred]
+   (assoc buffer :cursor (update-cursor buffer opts cursor pred)))
+  ([{:keys [lines] :as buffer} opts cursor pred]
    (let [cursor' (update cursor :col pred)]
-     (if-not (nil? (char-at buffer cursor'))
+     (cond
+       (some? (char-at buffer cursor'))
        cursor'
 
+       ; No match on line and :cross-lines? is disabled; don't move!
+       (false? (:cross-lines? opts))
+       cursor
+
+       :else
        (let [cursor' (update cursor :row pred)]
          (cond
            ; Past the end of the buffer; don't move!
