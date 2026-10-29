@@ -6,7 +6,8 @@
    [saya.modules.input.op :as op]
    [saya.modules.input.test-helpers :refer [get-cofx-buffer make-keymap-cofx
                                             perform-cofx-key
-                                            with-keymap-compare-buffer]]))
+                                            with-keymap-compare-buffer
+                                            with-session]]))
 
 (deftest delete-operator-op-test
   (testing "Simple delete integration"
@@ -73,3 +74,14 @@
       "For the hono|r of Grayskull"
       "For the |of Grayskull"
       :pending-operator #'delete-operator)))
+
+(deftest find-char-test
+  (testing "find motion is inclusive"
+    (with-session {:buffer "For the| honor of Grayskull!"}
+      (is (= "For the| Grayskull!"
+             (feed-keys "dff")))))
+
+  (testing "til motion is inclusive"
+    (with-session {:buffer "For the| honor of Grayskull!"}
+      (is (= "For the| of Grayskull!"
+             (feed-keys "dt "))))))

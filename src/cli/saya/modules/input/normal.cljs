@@ -13,6 +13,7 @@
    [saya.modules.input.insert :refer [line->string update-buffer-line-string
                                       update-cursor-line-string]]
    [saya.modules.input.layout :refer [layout-keymaps]]
+   [saya.modules.input.motions.find :refer [perform-find-ch perform-until-ch]]
    [saya.modules.input.motions.word :refer [big-word-boundary?
                                             end-of-word-movement
                                             small-word-boundary? word-movement]]
@@ -280,6 +281,35 @@
                (update-cursor :col inc))
    ["P"] (paste-selected-register :before)})
 
+; ======= "Find" keymaps ===================================
+
+(defn- enqueue-getkey [flags callback]
+  (fn getkey-keymap [context]
+    (-> context
+        (update :pending-getkey (fnil conj [])
+                (with-meta
+                  callback
+                  flags)))))
+
+(defn- perform-find [search-fn increment {:keys [:readonly/key] :as context}]
+  (search-fn
+   context
+   {:require-match? true
+    :cross-lines? false}
+   increment
+   (partial = key)))
+
+(defn enqueue-find [search-fn increment]
+  (enqueue-getkey
+   {:inclusive? true}
+   (partial perform-find search-fn increment)))
+
+(def find-keymaps
+  {["f"] (enqueue-find perform-find-ch inc)
+   ["F"] (enqueue-find perform-find-ch dec)
+   ["t"] (enqueue-find perform-until-ch inc)
+   ["T"] (enqueue-find perform-until-ch dec)})
+
 ; ======= Scroll keymaps ===================================
 
 (defn- last-visible-offset [{:keys [buffer window]}]
@@ -418,6 +448,7 @@
    movement-keymaps
    operator-keymaps
    edit-keymaps
+   find-keymaps
    scroll-keymaps
    undo-keymaps
    layout-keymaps))
