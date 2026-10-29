@@ -283,12 +283,13 @@
 
 ; ======= "Find" keymaps ===================================
 
-(defn- enqueue-getkey [callback]
+(defn- enqueue-getkey [flags callback]
   (fn getkey-keymap [context]
     (-> context
-        ; (assoc :mode :getkey-pending)
-        ; (update :pending-getkey/from-mode (fnil conj []) (:mode context))
-        (update :pending-getkey (fnil conj []) callback))))
+        (update :pending-getkey (fnil conj [])
+                (with-meta
+                  callback
+                  flags)))))
 
 (defn- perform-find [search-fn increment {:keys [:readonly/key] :as context}]
   (search-fn
@@ -300,6 +301,7 @@
 
 (defn enqueue-find [search-fn increment]
   (enqueue-getkey
+   {:inclusive? true}
    (partial perform-find search-fn increment)))
 
 (def find-keymaps

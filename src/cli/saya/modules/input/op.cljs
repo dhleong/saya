@@ -40,6 +40,29 @@
               [k (movement->motion v)]))
        (into {})))
 
+; ======= getkey -> motions ================================
+
+(defn- getkey-handler->motion [ctx]
+  (let [move-cursor (peek (:pending-getkey ctx))]
+    (-> ctx
+        (update :pending-getkey pop)
+        (update :pending-getkey conj
+                (movement->motion move-cursor)))))
+
+(defn- getkey->motion [f]
+  (fn [ctx]
+    (let [ctx' (f ctx)]
+      (cond-> ctx'
+        (> (count (:pending-getkey ctx'))
+           (count (:pending-getkey ctx)))
+        (getkey-handler->motion)))))
+
+(def getkey-keymaps
+  (->> normal/find-keymaps
+       (map (fn [[k v]]
+              [k (getkey->motion v)]))
+       (into {})))
+
 ; ======= Word text objects ================================
 
 (defn- ->cursor [ctx]
@@ -96,6 +119,7 @@
 (def keymaps
   (merge
    movement-keymaps
+   getkey-keymaps
    word-object-keymaps))
 
 (def full-line-keymap
