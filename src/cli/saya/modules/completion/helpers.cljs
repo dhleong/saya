@@ -39,3 +39,8 @@
                        (log "ERROR in completion: " e)
                        (>evt [::events/on-error {:bufnr bufnr
                                                  :error e}]))))))))
+
+(defn clear-buffer [bufnr]
+  (>evt [::events/on-candidates {:bufnr bufnr
+                                 :explicit? true
+                                 :candidates []}]))

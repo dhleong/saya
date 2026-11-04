@@ -8,7 +8,7 @@
    [saya.cli.text-input :refer [text-input]]
    [saya.errors :as errors]
    [saya.modules.completion.events :as completion-events]
-   [saya.modules.completion.helpers :refer [refresh-completion]]
+   [saya.modules.completion.helpers :as completion :refer [refresh-completion]]
    [saya.modules.completion.subs :as completion-subs]
    [saya.modules.echo.core :refer [echo]]
    [saya.modules.input.core :as input]
@@ -70,6 +70,8 @@
                      (fn [v cursor completion-opts change-opts]
                        (when-let [compl (.-current current-completion)]
                          (refresh-completion compl bufnr v cursor completion-opts))
+                       (when (:for-submit? change-opts)
+                         (completion/clear-buffer bufnr))
                        (set-input! v)
                        (reset! cursor-ref cursor)
                        (when on-persist-value

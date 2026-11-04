@@ -3,6 +3,7 @@
    [clojure.string :as str]
    [re-frame.core :refer [reg-event-fx unwrap]]
    [saya.modules.buffers.events :as buffer-events]
+   [saya.modules.completion.events :as completion-events]
    [saya.modules.input.events :as input-events]
    [saya.modules.window.events :as window-events]))
 
@@ -19,7 +20,10 @@
                   (->> (get-in db [:buffers bufnr :lines])
                        (str/join "\n")))]
      (when connr
-       {:fx [[:dispatch
+       {:db (-> db
+                ; Clear any active history search or completion state
+                (dissoc :history-search))
+        :fx [[:dispatch
               ; NOTE: Ensure input is cleared; on-persist-value *may not*
               ; be called from the cmdline window. This is kinda hacks,
               ; but fixing properly in input-window feels... annoying
@@ -35,4 +39,6 @@
                 :cursor {:row 0 :col 0}}]]
              [:dispatch
               [:connection/send {:connr connr
-                                 :text text}]]]}))))
+                                 :text text}]]
+             [:dispatch
+              [::completion-events/reset {:bufnr bufnr}]]]}))))
