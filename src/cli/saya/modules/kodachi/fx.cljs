@@ -46,6 +46,13 @@
                   :persist persist?})))
 
 (reg-fx
+ ::set-history!
+ (fn [{:keys [connection-id history-entries]}]
+   (api/request! {:type :SetHistory
+                  :connection_id connection-id
+                  :entries history-entries})))
+
+(reg-fx
  ::set-window-size!
  (fn [{:keys [connection-id width height]}]
    (when (and width height)

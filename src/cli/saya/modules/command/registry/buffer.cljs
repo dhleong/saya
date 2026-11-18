@@ -29,6 +29,20 @@
        (some? connr)
        {:fx [(echo-fx :exception "Invalid in a connection window")]}
 
+       (and (vector? bufnr)
+            (= :conn/input (first bufnr)))
+       (let [connr (second bufnr)
+             lines (->> buffer
+                        :lines
+                        (keep str)
+                        (filter seq))]
+         {:db (assoc-in db [:histories bufnr] lines)
+          :fx [[:dispatch
+                [:connection/set-history
+                 {:connr connr
+                  :history-entries lines}]]
+               (echo-fx "Updated input history.")]})
+
        (buffers/readonly? buffer)
        {:fx [(echo-fx :exception "Invalid in a read-only buffer")]}
 

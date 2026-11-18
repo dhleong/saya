@@ -90,6 +90,13 @@
                          :persist? persist?}})))
 
 (reg-event-fx
+ :connection/set-history
+ [unwrap]
+ (fn [_ {:keys [connr history-entries]}]
+   {::kodachi-fx/set-history! {:connection-id connr
+                               :history-entries history-entries}}))
+
+(reg-event-fx
  :connection/set-window-size
  [unwrap]
  (fn [_ {:keys [connr width height]}]
