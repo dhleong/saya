@@ -11,7 +11,7 @@
    [saya.modules.logging.core :refer [log]]))
 
 (def ^:private default-paths
-  ["../kodachi/target/release/kodachi"
+  ["../kodachi/target/debug/kodachi"
    "../kodachi/target/release/kodachi"])
 
 (defonce ^:private instance (atom nil))
